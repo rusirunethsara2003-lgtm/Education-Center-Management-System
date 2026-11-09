@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Edit Student
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+    <style>
+
+        .student-edit-shell {
+            width: min(
+                900px,
+                calc(100% - 30px)
+            );
+
+            margin: auto;
+
+            padding: 35px 0 70px;
+        }
+
+        .student-edit-card {
+            margin-top: 20px;
+
+            padding: 24px;
+
+            background: #18181b;
+
+            border: 1px solid #2f2f34;
+
+            border-radius: 18px;
+        }
+
+        .student-edit-grid {
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 16px;
+        }
+
+        .student-edit-grid label {
+            display: block;
+
+            font-size: 11px;
+
+            font-weight: 700;
+        }
+
+        .student-edit-grid input,
+        .student-edit-grid select,
+        .student-edit-grid textarea {
+            width: 100%;
+
+            box-sizing: border-box;
+
+            margin-top: 7px;
+        }
+
+        .student-edit-full {
+            grid-column: 1 / -1;
+        }
+
+        .student-edit-note {
+            margin-top: 18px;
+
+            padding: 14px;
+
+            background: #101012;
+
+            border-radius: 10px;
+        }
+
+        .student-edit-note span {
+            display: block;
+
+            color: #71717a;
+
+            font-size: 9px;
+        }
+
+        .student-edit-note strong {
+            display: block;
+
+            margin-top: 5px;
+
+            color: #34d399;
+        }
+
+        .student-edit-actions {
+            display: flex;
+
+            gap: 10px;
+
+            margin-top: 20px;
+        }
+
+        .student-edit-actions button,
+        .student-edit-actions a {
+            padding: 12px 18px;
+
+            border-radius: 9px;
+
+            font-size: 11px;
+
+            font-weight: 800;
+        }
+
+        .student-edit-actions a {
+            text-decoration: none;
+
+            color: white;
+
+            background: #27272a;
+
+            border: 1px solid #3f3f46;
+        }
+
+        .student-edit-actions button {
+            border: 0;
+
+            background: #34d399;
+
+            color: #04120d;
+
+            cursor: pointer;
+        }
+
+        @media (max-width: 650px) {
+
+            .student-edit-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .student-edit-full {
+                grid-column: auto;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body class="public-page">
+
+
+<div class="student-edit-shell">
+
+
+    <div class="registration-header">
+
+
+        <div>
+
+            <div class="eyebrow">
+                Sri Sumana Education Center
+            </div>
+
+            <h1>
+                Edit Student
+            </h1>
+
+            <p>
+
+                {{ student.student_code }}
+
+                ·
+
+                {{ student.status }}
+
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for(
+                'student_profile',
+                student_id=student.id
+            ) }}"
+            class="back-link"
+        >
+            ← Student Profile
+        </a>
+
+
+    </div>
+
+
+    {% with messages =
+        get_flashed_messages(
+            with_categories=true
+        )
+    %}
+
+        {% for category, message in messages %}
+
+        <div class="alert {{ category }}">
+            {{ message }}
+        </div>
+
+        {% endfor %}
+
+    {% endwith %}
+
+
+    <form
+        method="POST"
+        class="student-edit-card"
+    >
+
+
+        <div class="student-edit-grid">
+
+
+            <label>
+
+                Student Name *
+
+                <input
+                    type="text"
+                    name="full_name"
+                    value="{{ student.full_name }}"
+                    required
+                >
+
+            </label>
+
+
+            <label>
+
+                Student Phone *
+
+                <input
+                    type="tel"
+                    name="phone"
+                    value="{{ student.phone }}"
+                    required
+                >
+
+            </label>
+
+
+            <label>
+
+                Parent / Guardian Name *
+
+                <input
+                    type="text"
+                    name="parent_name"
+                    value="{{ student.parent_name }}"
+                    required
+                >
+
+            </label>
+
+
+            <label>
+
+                Parent Phone *
+
+                <input
+                    type="tel"
+                    name="parent_phone"
+                    value="{{ student.parent_phone }}"
+                    required
+                >
+
+            </label>
+
+
+            <label>
+
+                School
+
+                <input
+                    type="text"
+                    name="school"
+                    value="{{ student.school or '' }}"
+                >
+
+            </label>
+
+
+            <label>
+
+                Grade *
+
+                <select
+                    name="grade"
+                    required
+                >
+
+                    {% for number in range(1, 14) %}
+
+                    <option
+                        value="Grade {{ number }}"
+
+                        {% if
+                            student.grade
+                            ==
+                            'Grade ' ~ number
+                        %}
+                            selected
+                        {% endif %}
+                    >
+                        Grade {{ number }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </label>
+
+
+            <label class="student-edit-full">
+
+                Address
+
+                <textarea
+                    name="address"
+                    rows="4"
+                >{{ student.address or '' }}</textarea>
+
+            </label>
+
+
+        </div>
+
+
+        <div class="student-edit-note">
+
+            <span>
+                Student ID
+            </span>
+
+            <strong>
+                {{ student.student_code }}
+            </strong>
+
+        </div>
+
+
+        <div class="student-edit-actions">
+
+
+            <button type="submit">
+                Save Changes
+            </button>
+
+
+            <a
+                href="{{ url_for(
+                    'student_profile',
+                    student_id=student.id
+                ) }}"
+            >
+                Cancel
+            </a>
+
+
+        </div>
+
+
+    </form>
+
+
+</div>
+
+
+</body>
+
+</html>

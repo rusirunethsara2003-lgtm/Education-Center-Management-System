@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Portal Account - {{ teacher.full_name }}{% endblock %}
+{% block page_title %}Teacher Portal Account{% endblock %}
+{% block page_subtitle %}{{ teacher.teacher_code }} · {{ teacher.full_name }}{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('teacher_profile', teacher_id=teacher.id) }}" class="btn btn-secondary">← Teacher Profile</a>
+<a href="{{ url_for('teacher_login') }}" class="btn btn-secondary" target="_blank" rel="noopener">Open Teacher Login</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .portal-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:12px}.portal-card{border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden}.portal-head{padding:15px 16px;border-bottom:1px solid var(--border)}.portal-head h3{margin:0;font-size:14px}.portal-head p{margin:5px 0 0;color:var(--muted);font-size:9px;line-height:1.5}.portal-body{padding:16px}.portal-field{margin-bottom:12px}.portal-field label{display:block;margin-bottom:6px;color:var(--muted);font-size:9px;font-weight:700}.portal-field input{width:100%;min-height:40px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);font-size:11px}.portal-note{padding:12px;border-radius:9px;background:var(--primary-soft);color:var(--primary);font-size:9px;line-height:1.6}.status-pill{display:inline-flex;padding:6px 9px;border-radius:999px;font-size:8px;font-weight:800}.status-pill.active{background:var(--green-soft);color:var(--green)}.status-pill.inactive{background:var(--red-soft);color:var(--red)}.info-list{display:grid;gap:8px}.info-row{padding:10px;border:1px solid var(--border);border-radius:8px;background:#fafafa}.info-row span{display:block;color:var(--muted);font-size:8px}.info-row strong{display:block;margin-top:4px;font-size:10px}.portal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.portal-actions button{min-height:38px;padding:0 12px;border-radius:8px;font-size:9px;font-weight:800;cursor:pointer}.save-btn{border:0;background:var(--primary);color:#fff}.toggle-btn{border:1px solid var(--border);background:#fff;color:var(--text)}@media(max-width:850px){.portal-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="portal-grid">
+    <section class="portal-card">
+        <div class="portal-head">
+            <h3>{{ 'Update Teacher Login' if account else 'Create Teacher Login' }}</h3>
+            <p>This account can access only the Teacher Portal. It does not receive Owner or Staff permissions.</p>
+        </div>
+        <div class="portal-body">
+            <form method="POST" action="{{ url_for('teacher_portal_account', teacher_id=teacher.id) }}">
+                <input type="hidden" name="action" value="save">
+
+                <div class="portal-field">
+                    <label for="username">Username</label>
+                    <input id="username" name="username" type="text" required maxlength="40" value="{{ account.username if account else teacher.teacher_code|lower }}">
+                </div>
+
+                <div class="portal-field">
+                    <label for="password">{{ 'New Password (leave blank to keep current password)' if account else 'Password' }}</label>
+                    <input id="password" name="password" type="password" {{ '' if account else 'required' }} autocomplete="new-password">
+                </div>
+
+                <div class="portal-note">Password must contain at least 10 characters, including uppercase, lowercase and a number.</div>
+
+                <div class="portal-actions">
+                    <button class="save-btn" type="submit">{{ 'Save Changes' if account else 'Create Teacher Account' }}</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <aside class="portal-card">
+        <div class="portal-head">
+            <h3>Account Status</h3>
+        </div>
+        <div class="portal-body">
+            <div class="info-list">
+                <div class="info-row"><span>Teacher</span><strong>{{ teacher.full_name }}</strong></div>
+                <div class="info-row"><span>Teacher Code</span><strong>{{ teacher.teacher_code }}</strong></div>
+                <div class="info-row"><span>Portal Account</span><strong>{% if account %}<span class="status-pill {{ account.status|lower }}">{{ account.status }}</span>{% else %}Not Created{% endif %}</strong></div>
+                {% if account %}<div class="info-row"><span>Username</span><strong>{{ account.username }}</strong></div><div class="info-row"><span>Last Login</span><strong>{{ account.last_login_at or 'Never' }}</strong></div>{% endif %}
+            </div>
+
+            {% if account %}
+            <form method="POST" action="{{ url_for('teacher_portal_account', teacher_id=teacher.id) }}" class="portal-actions">
+                <input type="hidden" name="action" value="toggle">
+                <button class="toggle-btn" type="submit" onclick="return confirm('Change this Teacher Portal account status?')">{{ 'Disable Account' if account.status == 'ACTIVE' else 'Enable Account' }}</button>
+            </form>
+            {% endif %}
+        </div>
+    </aside>
+</div>
+{% endblock %}

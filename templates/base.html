@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}
+            Sri Sumana Education Center
+        {% endblock %}
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+
+    <style>
+
+        /* =====================================================
+           SYSTEM THEME
+        ====================================================== */
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        :root {
+
+            --app-bg: #f4f5f7;
+
+            --surface: #ffffff;
+            --surface-soft: #fafafa;
+
+            --text: #161616;
+
+            --muted: #737373;
+            --muted-light: #a3a3a3;
+
+            --border: #e5e7eb;
+            --border-strong: #d4d4d8;
+
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-soft: #eef2ff;
+
+            --green: #16a34a;
+            --green-soft: #ecfdf3;
+
+            --orange: #ea580c;
+            --orange-soft: #fff7ed;
+
+            --red: #dc2626;
+            --red-soft: #fef2f2;
+
+            --blue: #2563eb;
+            --blue-soft: #eff6ff;
+
+            --radius: 12px;
+
+        }
+
+
+        html,
+        body {
+
+            margin: 0;
+
+            min-height: 100%;
+
+        }
+
+
+        body {
+
+            background: var(--app-bg);
+
+            color: var(--text);
+
+            font-family:
+                Inter,
+                ui-sans-serif,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            font-size: 14px;
+
+        }
+
+
+        a {
+            color: inherit;
+        }
+
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+
+        /* =====================================================
+           APPLICATION
+        ====================================================== */
+
+        .system-shell {
+
+            width: calc(100% - 36px);
+
+            max-width: 1530px;
+
+            min-height: calc(100vh - 36px);
+
+            margin: 18px auto;
+
+            display: grid;
+
+            grid-template-columns:
+                245px
+                minmax(0, 1fr);
+
+            overflow: hidden;
+
+            background: var(--surface);
+
+            border: 1px solid var(--border);
+
+            border-radius: 16px;
+
+            box-shadow:
+                0 8px 30px
+                rgba(0, 0, 0, 0.04);
+
+        }
+
+
+        /* =====================================================
+           SIDEBAR
+        ====================================================== */
+
+        .system-sidebar {
+
+            min-height: calc(100vh - 36px);
+
+            display: flex;
+            flex-direction: column;
+
+            background: #ffffff;
+
+            border-right: 1px solid var(--border);
+
+        }
+
+
+        .sidebar-brand {
+
+            min-height: 72px;
+
+            padding: 13px 14px;
+
+            display: flex;
+            align-items: center;
+
+            border-bottom: 1px solid var(--border);
+
+        }
+
+
+        .brand-card {
+
+            width: 100%;
+
+            padding: 9px 10px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 10px;
+
+            border: 1px solid var(--border);
+
+            border-radius: 9px;
+
+            background: #ffffff;
+
+        }
+
+
+        .brand-logo {
+
+            width: 28px;
+            height: 28px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            flex: 0 0 28px;
+
+            border-radius: 7px;
+
+            background: var(--primary);
+
+            color: #ffffff;
+
+            font-size: 10px;
+            font-weight: 800;
+
+        }
+
+
+        .brand-copy {
+
+            min-width: 0;
+
+            flex: 1;
+
+        }
+
+
+        .brand-copy strong {
+
+            display: block;
+
+            font-size: 12px;
+            font-weight: 750;
+
+        }
+
+
+        .brand-copy span {
+
+            display: block;
+
+            margin-top: 2px;
+
+            color: var(--muted);
+
+            font-size: 8px;
+
+        }
+
+
+        /* =====================================================
+           NAVIGATION
+        ====================================================== */
+
+        .sidebar-scroll {
+
+            padding: 11px 9px 20px;
+
+            flex: 1;
+
+            overflow-y: auto;
+
+        }
+
+
+        .nav-group {
+
+            margin-bottom: 16px;
+
+        }
+
+
+        .nav-group:last-child {
+
+            margin-bottom: 0;
+
+        }
+
+
+        .nav-group-title {
+
+            padding: 4px 10px 6px;
+
+            color: #a3a3a3;
+
+            font-size: 8px;
+            font-weight: 800;
+
+            letter-spacing: 0.08em;
+
+            text-transform: uppercase;
+
+        }
+
+
+        .nav-link {
+
+            position: relative;
+
+            min-height: 36px;
+
+            margin-bottom: 2px;
+
+            padding: 7px 9px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 10px;
+
+            border-radius: 8px;
+
+            color: #404040;
+
+            text-decoration: none;
+
+            font-size: 11px;
+            font-weight: 520;
+
+            transition:
+                background 0.15s ease,
+                color 0.15s ease;
+
+        }
+
+
+        .nav-link:hover {
+
+            background: #f6f6f7;
+
+            color: #111111;
+
+        }
+
+
+        .nav-link.active {
+
+            background: #f1f1f3;
+
+            color: #111111;
+
+            font-weight: 700;
+
+        }
+
+
+        .nav-link.active::before {
+
+            content: "";
+
+            position: absolute;
+
+            left: -9px;
+            top: 8px;
+
+            width: 3px;
+            height: 20px;
+
+            border-radius: 0 3px 3px 0;
+
+            background: #111111;
+
+        }
+
+
+        .nav-icon {
+
+            width: 22px;
+            height: 22px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            flex: 0 0 22px;
+
+            border-radius: 6px;
+
+            color: #525252;
+
+            font-size: 12px;
+
+        }
+
+
+        .nav-link.active .nav-icon {
+
+            background: #ffffff;
+
+        }
+
+
+        /* =====================================================
+           SIDEBAR ACCOUNT
+        ====================================================== */
+
+        .sidebar-account {
+
+            padding: 10px;
+
+            border-top: 1px solid var(--border);
+
+        }
+
+
+        .account-card {
+
+            padding: 8px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 9px;
+
+            border-radius: 9px;
+
+        }
+
+
+        .account-card:hover {
+
+            background: #f7f7f7;
+
+        }
+
+
+        .account-avatar {
+
+            width: 30px;
+            height: 30px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            flex: 0 0 30px;
+
+            border-radius: 50%;
+
+            background: #18181b;
+
+            color: #ffffff;
+
+            font-size: 9px;
+            font-weight: 800;
+
+        }
+
+
+        .account-info {
+
+            min-width: 0;
+
+            flex: 1;
+
+        }
+
+
+        .account-info strong {
+
+            display: block;
+
+            font-size: 10px;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+        }
+
+
+        .account-info span {
+
+            display: block;
+
+            margin-top: 2px;
+
+            color: var(--muted);
+
+            font-size: 8px;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+        }
+
+
+        .logout-small {
+
+            color: var(--muted);
+
+            text-decoration: none;
+
+            font-size: 11px;
+
+        }
+
+
+        .logout-small:hover {
+
+            color: var(--red);
+
+        }
+
+
+        /* =====================================================
+           MAIN
+        ====================================================== */
+
+        .system-main {
+
+            min-width: 0;
+
+            background: #ffffff;
+
+        }
+
+
+        /* =====================================================
+           TOPBAR
+        ====================================================== */
+
+        .system-topbar {
+
+            min-height: 72px;
+
+            padding: 0 20px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 18px;
+
+            border-bottom: 1px solid var(--border);
+
+            background: #ffffff;
+
+        }
+
+
+        .topbar-left {
+
+            min-width: 0;
+
+            display: flex;
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+        .page-heading {
+
+            min-width: 0;
+
+        }
+
+
+        .page-heading h1 {
+
+            margin: 0;
+
+            font-size: 20px;
+            font-weight: 750;
+
+            letter-spacing: -0.02em;
+
+        }
+
+
+        .page-heading p {
+
+            margin: 4px 0 0;
+
+            color: var(--muted);
+
+            font-size: 9px;
+
+        }
+
+
+        .page-actions {
+
+            display: flex;
+            align-items: center;
+
+            gap: 8px;
+
+            flex-wrap: wrap;
+
+        }
+
+
+        /* =====================================================
+           BUTTONS
+        ====================================================== */
+
+        .btn {
+
+            min-height: 36px;
+
+            padding: 0 13px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            gap: 7px;
+
+            border-radius: 8px;
+
+            text-decoration: none;
+
+            font-size: 10px;
+            font-weight: 700;
+
+            cursor: pointer;
+
+        }
+
+
+        .btn-secondary {
+
+            border: 1px solid var(--border);
+
+            background: #ffffff;
+
+            color: #262626;
+
+        }
+
+
+        .btn-secondary:hover {
+
+            background: #fafafa;
+
+        }
+
+
+        .btn-primary {
+
+            border: 1px solid var(--primary);
+
+            background: var(--primary);
+
+            color: #ffffff;
+
+        }
+
+
+        .btn-primary:hover {
+
+            background: var(--primary-hover);
+
+        }
+
+
+        /* =====================================================
+           MOBILE MENU
+        ====================================================== */
+
+        .mobile-menu-btn {
+
+            display: none;
+
+            width: 35px;
+            height: 35px;
+
+            border: 1px solid var(--border);
+
+            border-radius: 8px;
+
+            background: #ffffff;
+
+            cursor: pointer;
+
+        }
+
+
+        .sidebar-overlay {
+
+            display: none;
+
+        }
+
+
+        /* =====================================================
+           PAGE CONTENT
+        ====================================================== */
+
+        .system-content {
+
+            padding: 18px;
+
+        }
+
+
+        /* =====================================================
+           COMMON PANEL
+        ====================================================== */
+
+        .ui-panel {
+
+            overflow: hidden;
+
+            background: #ffffff;
+
+            border: 1px solid var(--border);
+
+            border-radius: var(--radius);
+
+        }
+
+
+        .ui-panel-header {
+
+            min-height: 54px;
+
+            padding: 12px 14px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 12px;
+
+            border-bottom: 1px solid var(--border);
+
+        }
+
+
+        .ui-panel-header h2 {
+
+            margin: 0;
+
+            font-size: 13px;
+            font-weight: 730;
+
+        }
+
+
+        .ui-panel-header p {
+
+            margin: 3px 0 0;
+
+            color: var(--muted);
+
+            font-size: 8px;
+
+        }
+
+
+        .ui-panel-link {
+
+            color: var(--primary);
+
+            text-decoration: none;
+
+            font-size: 9px;
+            font-weight: 700;
+
+        }
+
+
+        /* =====================================================
+           FINANCE TABS
+        ====================================================== */
+
+        .finance-tabs {
+
+            margin-bottom: 14px;
+
+            padding: 5px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 4px;
+
+            overflow-x: auto;
+            overflow-y: hidden;
+
+            border: 1px solid var(--border);
+
+            border-radius: 10px;
+
+            background: #ffffff;
+
+        }
+
+
+        .finance-tab {
+
+            min-height: 35px;
+
+            padding: 0 13px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            flex: 0 0 auto;
+
+            border-radius: 7px;
+
+            color: var(--muted);
+
+            text-decoration: none;
+
+            font-size: 9px;
+            font-weight: 650;
+
+            white-space: nowrap;
+
+        }
+
+
+        .finance-tab:hover {
+
+            background: #f5f5f5;
+
+            color: #262626;
+
+        }
+
+
+        .finance-tab.active {
+
+            background: var(--primary-soft);
+
+            color: var(--primary);
+
+            font-weight: 750;
+
+        }
+
+
+        /* =====================================================
+           FLASH MESSAGES
+        ====================================================== */
+
+        .system-alert {
+
+            margin-bottom: 12px;
+
+            padding: 10px 12px;
+
+            border: 1px solid #bbf7d0;
+
+            border-radius: 8px;
+
+            background: #f0fdf4;
+
+            color: #166534;
+
+            font-size: 10px;
+
+        }
+
+
+        .system-alert.error {
+
+            border-color: #fecaca;
+
+            background: #fef2f2;
+
+            color: #991b1b;
+
+        }
+
+
+        .system-alert.warning {
+
+            border-color: #fed7aa;
+
+            background: #fff7ed;
+
+            color: #9a3412;
+
+        }
+
+
+        /* =====================================================
+           RESPONSIVE
+        ====================================================== */
+
+        @media (max-width: 900px) {
+
+            .system-shell {
+
+                width: 100%;
+
+                min-height: 100vh;
+
+                margin: 0;
+
+                display: block;
+
+                border: 0;
+
+                border-radius: 0;
+
+            }
+
+
+            .system-sidebar {
+
+                position: fixed;
+
+                z-index: 200;
+
+                left: -260px;
+                top: 0;
+
+                width: 245px;
+
+                height: 100vh;
+
+                min-height: 100vh;
+
+                transition:
+                    left
+                    0.2s
+                    ease;
+
+                box-shadow:
+                    12px
+                    0
+                    30px
+                    rgba(0, 0, 0, 0.08);
+
+            }
+
+
+            body.sidebar-open .system-sidebar {
+
+                left: 0;
+
+            }
+
+
+            .sidebar-overlay {
+
+                position: fixed;
+
+                z-index: 190;
+
+                inset: 0;
+
+                background:
+                    rgba(
+                        0,
+                        0,
+                        0,
+                        0.25
+                    );
+
+            }
+
+
+            body.sidebar-open .sidebar-overlay {
+
+                display: block;
+
+            }
+
+
+            .mobile-menu-btn {
+
+                display: inline-flex;
+
+                align-items: center;
+                justify-content: center;
+
+            }
+
+
+            .system-topbar {
+
+                min-height: 64px;
+
+                padding: 0 12px;
+
+            }
+
+
+            .system-content {
+
+                padding: 12px;
+
+            }
+
+        }
+
+
+        @media (max-width: 560px) {
+
+            .page-heading h1 {
+
+                font-size: 17px;
+
+            }
+
+
+            .page-heading p {
+
+                display: none;
+
+            }
+
+
+            .finance-tab {
+
+                min-height: 34px;
+
+                padding: 0 11px;
+
+                font-size: 8px;
+
+            }
+
+        }
+
+    </style>
+
+
+    {% block extra_css %}
+    {% endblock %}
+
+</head>
+
+
+<body>
+
+
+{% if current_user and current_user.role == 'STAFF' %}
+
+    {% set dashboard_endpoint = 'staff_dashboard' %}
+
+{% else %}
+
+    {% set dashboard_endpoint = 'dashboard' %}
+
+{% endif %}
+
+
+<div class="system-shell">
+
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside class="system-sidebar">
+
+
+        <!-- =================================================
+             BRAND
+        ================================================== -->
+
+        <div class="sidebar-brand">
+
+            <div class="brand-card">
+
+
+                <div class="brand-logo">
+                    SS
+                </div>
+
+
+                <div class="brand-copy">
+
+                    <strong>
+                        Sri Sumana
+                    </strong>
+
+                    <span>
+                        Education Center
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             NAVIGATION
+        ================================================== -->
+
+        <div class="sidebar-scroll">
+
+
+            <!-- =================================================
+                 DASHBOARD
+            ================================================== -->
+
+            <div class="nav-group">
+
+
+                <div class="nav-group-title">
+                    Dashboard
+                </div>
+
+
+                <!-- OVERVIEW -->
+
+                <a
+                    href="{{ url_for(dashboard_endpoint) }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint in [
+                            'dashboard',
+                            'staff_dashboard'
+                        ] %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ▦
+                    </span>
+
+                    Overview
+
+                </a>
+
+            </div>
+
+
+            <!-- =================================================
+                 STUDENTS
+            ================================================== -->
+
+            <div class="nav-group">
+
+
+                <div class="nav-group-title">
+                    Students
+                </div>
+
+
+                <a
+                    href="{{ url_for('students') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint in [
+                            'students',
+                            'student_profile',
+                            'edit_student',
+                            'student_qr_pass'
+                        ] %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ◎
+                    </span>
+
+                    All Students
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('register_student') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'register_student' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        +
+                    </span>
+
+                    New Registration
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('pending_approvals') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint in [
+                            'pending_approvals',
+                            'approval_detail'
+                        ] %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ✓
+                    </span>
+
+                    Pending Approvals
+
+                </a>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 CLASSES / TEACHERS
+            ================================================== -->
+
+            {% if current_user and current_user.role == 'OWNER' %}
+
+
+            <div class="nav-group">
+
+
+                <div class="nav-group-title">
+                    Classes
+                </div>
+
+
+                <a
+                    href="{{ url_for('class_management') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint in [
+                            'class_management',
+                            'new_class',
+                            'edit_class',
+                            'class_profile'
+                        ] %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ▤
+                    </span>
+
+                    Class Management
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('timetable') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'timetable' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ◫
+                    </span>
+
+                    Timetable
+
+                </a>
+
+
+            </div>
+
+
+            <div class="nav-group">
+
+
+                <div class="nav-group-title">
+                    Teachers
+                </div>
+
+
+                <a
+                    href="{{ url_for('teachers') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint in [
+                            'teachers',
+                            'teacher_profile',
+                            'new_teacher',
+                            'edit_teacher'
+                        ] %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ♙
+                    </span>
+
+                    Teacher Directory
+
+                </a>
+
+
+            </div>
+
+
+            {% else %}
+
+
+            <div class="nav-group">
+
+
+                <div class="nav-group-title">
+                    Schedule
+                </div>
+
+
+                <a
+                    href="{{ url_for('timetable') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'timetable' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ◫
+                    </span>
+
+                    Timetable
+
+                </a>
+
+
+            </div>
+
+
+            {% endif %}
+
+
+            <!-- =================================================
+                 ATTENDANCE
+            ================================================== -->
+
+            <div class="nav-group">
+
+
+                <div class="nav-group-title">
+                    Attendance
+                </div>
+
+
+                <a
+                    href="{{ url_for('attendance_today') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'attendance_today' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ◉
+                    </span>
+
+                    Today
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('scan_qr') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'scan_qr' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ⌗
+                    </span>
+
+                    Scan QR
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('class_attendance') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'class_attendance' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ▦
+                    </span>
+
+                    Class Attendance
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('attendance_list') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'attendance_list' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ◷
+                    </span>
+
+                    History
+
+                </a>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 FINANCE
+            ================================================== -->
+
+            <div class="nav-group">
+
+
+                <div class="nav-group-title">
+                    Finance
+                </div>
+
+
+                <a
+                    href="{{ url_for('finance_overview') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'finance_overview' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ▦
+                    </span>
+
+                    Overview
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('payments') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint in [
+                            'payments',
+                            'new_payment',
+                            'payment_balance',
+                            'payment_receipt'
+                        ] %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        Rs
+                    </span>
+
+                    Payments
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('finance_outstanding') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'finance_outstanding' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        !
+                    </span>
+
+                    Outstanding
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('free_cards') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint in [
+                            'free_cards',
+                            'new_free_card_request',
+                            'free_card_detail'
+                        ] %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ◇
+                    </span>
+
+                    Free Cards
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('finance_history') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'finance_history' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ◷
+                    </span>
+
+                    Payment History
+
+                </a>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 OWNER ONLY
+            ================================================== -->
+
+            {% if current_user and current_user.role == 'OWNER' %}
+
+
+            <!-- =================================================
+                 REPORTS
+            ================================================== -->
+
+            <div class="nav-group">
+
+
+                <div class="nav-group-title">
+                    Reports
+                </div>
+
+
+                <a
+                    href="{{ url_for('reports') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'reports' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ▥
+                    </span>
+
+                    Owner Reports
+
+                </a>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 ADMINISTRATION
+            ================================================== -->
+
+            <div class="nav-group">
+
+
+                <div class="nav-group-title">
+                    Administration
+                </div>
+
+
+                <a
+                    href="{{ url_for('administration_overview') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'administration_overview' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ▦
+                    </span>
+
+                    Admin Overview
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('staff_access') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint in [
+                            'staff_access',
+                            'new_staff',
+                            'toggle_staff',
+                            'reset_staff_password'
+                        ] %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ⚙
+                    </span>
+
+                    Staff & Access
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('audit_logs') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'audit_logs' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ≡
+                    </span>
+
+                    Audit Logs
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('security_center') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint in [
+                            'security_center',
+                            'security_create_backup'
+                        ] %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ◈
+                    </span>
+
+                    Security
+
+                </a>
+
+
+            </div>
+
+
+            {% endif %}
+
+
+            <!-- =================================================
+                 ACCOUNT
+            ================================================== -->
+
+            <div class="nav-group">
+
+
+                <div class="nav-group-title">
+                    Account
+                </div>
+
+
+                <a
+                    href="{{ url_for('change_password') }}"
+
+                    class="
+                        nav-link
+
+                        {% if request.endpoint == 'change_password' %}
+                            active
+                        {% endif %}
+                    "
+                >
+
+                    <span class="nav-icon">
+                        ⚿
+                    </span>
+
+                    Change Password
+
+                </a>
+
+
+            </div>
+
+
+        </div>
+
+
+        <!-- =================================================
+             LOGGED IN ACCOUNT
+        ================================================== -->
+
+        <div class="sidebar-account">
+
+
+            {% if current_user %}
+
+
+            <div class="account-card">
+
+
+                <div class="account-avatar">
+
+                    {{
+                        (
+                            current_user.full_name
+                            or
+                            'User'
+                        )[:2]
+                        | upper
+                    }}
+
+                </div>
+
+
+                <div class="account-info">
+
+                    <strong>
+                        {{ current_user.full_name }}
+                    </strong>
+
+                    <span>
+                        {{ current_user.role }}
+                    </span>
+
+                </div>
+
+
+                <a
+                    href="{{ url_for('logout') }}"
+
+                    class="logout-small"
+
+                    title="Logout"
+                >
+                    ↪
+                </a>
+
+
+            </div>
+
+
+            {% endif %}
+
+
+        </div>
+
+
+    </aside>
+
+
+    <!-- =====================================================
+         MOBILE SIDEBAR OVERLAY
+    ====================================================== -->
+
+    <div
+        class="sidebar-overlay"
+        onclick="closeSidebar()"
+    ></div>
+
+
+    <!-- =====================================================
+         MAIN AREA
+    ====================================================== -->
+
+    <main class="system-main">
+
+
+        <!-- =================================================
+             TOPBAR
+        ================================================== -->
+
+        <header class="system-topbar">
+
+
+            <div class="topbar-left">
+
+
+                <button
+                    type="button"
+
+                    class="mobile-menu-btn"
+
+                    onclick="toggleSidebar()"
+
+                    aria-label="Open navigation"
+                >
+                    ☰
+                </button>
+
+
+                <div class="page-heading">
+
+
+                    <h1>
+
+                        {% block page_title %}
+
+                            Sri Sumana
+
+                        {% endblock %}
+
+                    </h1>
+
+
+                    <p>
+
+                        {% block page_subtitle %}
+
+                            Education Center Management System
+
+                        {% endblock %}
+
+                    </p>
+
+
+                </div>
+
+
+            </div>
+
+
+            <div class="page-actions">
+
+
+                {% if request.endpoint != 'front_desk' %}
+
+                <a
+                    href="{{ url_for('front_desk') }}"
+                    class="btn btn-secondary"
+                >
+                    ⚡ Quick Access
+                </a>
+
+                {% endif %}
+
+
+                {% block page_actions %}
+                {% endblock %}
+
+
+            </div>
+
+
+        </header>
+
+
+        <!-- =================================================
+             PAGE CONTENT
+        ================================================== -->
+
+        <section class="system-content">
+
+
+            <!-- =================================================
+                 FLASH MESSAGES
+            ================================================== -->
+
+            {% with
+                messages =
+                    get_flashed_messages(
+                        with_categories=true
+                    )
+            %}
+
+
+                {% for category, message in messages %}
+
+
+                <div
+                    class="
+                        system-alert
+                        {{ category }}
+                    "
+                >
+
+                    {{ message }}
+
+                </div>
+
+
+                {% endfor %}
+
+
+            {% endwith %}
+
+
+            <!-- =================================================
+                 CHILD TEMPLATE CONTENT
+            ================================================== -->
+
+            {% block content %}
+            {% endblock %}
+
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+
+<!-- =====================================================
+     BASE JAVASCRIPT
+====================================================== -->
+
+<script>
+
+    function toggleSidebar() {
+
+        document.body.classList.toggle(
+            "sidebar-open"
+        );
+
+    }
+
+
+    function closeSidebar() {
+
+        document.body.classList.remove(
+            "sidebar-open"
+        );
+
+    }
+
+
+    document.addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key
+                ===
+                "Escape"
+            ) {
+
+                closeSidebar();
+
+            }
+
+        }
+    );
+
+
+    window.addEventListener(
+        "resize",
+        function() {
+
+            if (
+                window.innerWidth
+                >
+                900
+            ) {
+
+                closeSidebar();
+
+            }
+
+        }
+    );
+
+</script>
+
+
+{% block scripts %}
+{% endblock %}
+
+
+</body>
+
+</html>

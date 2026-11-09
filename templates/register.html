@@ -1,0 +1,1844 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Student Registration - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Student Registration
+{% endblock %}
+
+
+{% block page_subtitle %}
+Register a new student for review and approval
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('pending_approvals') }}"
+    class="btn btn-secondary"
+>
+    Pending Approvals
+</a>
+
+<a
+    href="{{ url_for('students') }}"
+    class="btn btn-primary"
+>
+    All Students
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       PAGE
+    ====================================================== */
+
+    .registration-page {
+
+        display: flex;
+        flex-direction: column;
+
+        gap: 12px;
+
+    }
+
+
+    /* =====================================================
+       STUDENT TABS
+    ====================================================== */
+
+    .student-tabs {
+
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+
+        border-radius: 10px;
+
+        background: #ffffff;
+
+    }
+
+
+    .student-tab {
+
+        min-height: 35px;
+
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+
+    }
+
+
+    .student-tab:hover {
+
+        background: #f5f5f5;
+
+        color: var(--text);
+
+    }
+
+
+    .student-tab.active {
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-weight: 750;
+
+    }
+
+
+    /* =====================================================
+       STEP PANEL
+    ====================================================== */
+
+    .registration-section {
+
+        overflow: hidden;
+
+        border: 1px solid var(--border);
+
+        border-radius: 12px;
+
+        background: #ffffff;
+
+    }
+
+
+    .registration-section-header {
+
+        min-height: 62px;
+
+        padding: 13px 15px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 11px;
+
+        border-bottom: 1px solid var(--border);
+
+    }
+
+
+    .registration-step {
+
+        width: 32px;
+        height: 32px;
+
+        flex: 0 0 32px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 8px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 9px;
+        font-weight: 800;
+
+    }
+
+
+    .registration-section-header h2 {
+
+        margin: 0;
+
+        font-size: 12px;
+        font-weight: 750;
+
+    }
+
+
+    .registration-section-header p {
+
+        margin: 3px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+
+    }
+
+
+    /* =====================================================
+       FORM
+    ====================================================== */
+
+    .registration-body {
+
+        padding: 16px;
+
+    }
+
+
+    .registration-grid {
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 14px;
+
+    }
+
+
+    .registration-field {
+
+        min-width: 0;
+
+    }
+
+
+    .registration-field.full {
+
+        grid-column: 1 / -1;
+
+    }
+
+
+    .registration-field label {
+
+        display: block;
+
+        margin-bottom: 6px;
+
+        color: var(--text);
+
+        font-size: 8px;
+        font-weight: 750;
+
+    }
+
+
+    .required-mark {
+
+        color: var(--red);
+
+    }
+
+
+    .registration-input,
+    .registration-select,
+    .registration-textarea {
+
+        width: 100%;
+
+        border: 1px solid var(--border);
+
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        outline: none;
+
+        font-size: 9px;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+
+    }
+
+
+    .registration-input,
+    .registration-select {
+
+        min-height: 42px;
+
+        padding: 0 11px;
+
+    }
+
+
+    .registration-textarea {
+
+        min-height: 86px;
+
+        padding: 10px 11px;
+
+        resize: vertical;
+
+        line-height: 1.5;
+
+    }
+
+
+    .registration-input:focus,
+    .registration-select:focus,
+    .registration-textarea:focus {
+
+        border-color: var(--primary);
+
+        box-shadow:
+            0 0 0 3px
+            rgba(79, 70, 229, 0.08);
+
+    }
+
+
+    .registration-input::placeholder,
+    .registration-textarea::placeholder {
+
+        color: var(--muted-light);
+
+    }
+
+
+    .field-help {
+
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        line-height: 1.5;
+
+    }
+
+
+    /* =====================================================
+       CLASS FILTER BAR
+    ====================================================== */
+
+    .class-filter-info {
+
+        margin-bottom: 13px;
+
+        padding: 11px 12px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border: 1px solid var(--border);
+
+        border-radius: 8px;
+
+        background: #fafafa;
+
+    }
+
+
+    .class-filter-info strong {
+
+        display: block;
+
+        font-size: 8px;
+
+    }
+
+
+    .class-filter-info span {
+
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+    }
+
+
+    .selected-count {
+
+        min-height: 26px;
+
+        padding: 0 9px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 7px;
+        font-weight: 800;
+
+        white-space: nowrap;
+
+    }
+
+
+    /* =====================================================
+       CLASS CARDS
+    ====================================================== */
+
+    .class-grid {
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 10px;
+
+    }
+
+
+    .class-option {
+
+        position: relative;
+
+        display: block;
+
+    }
+
+
+    .class-option.hidden {
+
+        display: none;
+
+    }
+
+
+    .class-option input {
+
+        position: absolute;
+
+        opacity: 0;
+
+        pointer-events: none;
+
+    }
+
+
+    .class-card {
+
+        min-height: 128px;
+
+        padding: 13px;
+
+        display: flex;
+        flex-direction: column;
+
+        border: 1px solid var(--border);
+
+        border-radius: 10px;
+
+        background: #ffffff;
+
+        cursor: pointer;
+
+        transition:
+            border-color 0.15s ease,
+            background 0.15s ease,
+            box-shadow 0.15s ease;
+
+    }
+
+
+    .class-card:hover {
+
+        border-color: #c7d2fe;
+
+        background: #fafaff;
+
+    }
+
+
+    .class-option input:checked + .class-card {
+
+        border-color: var(--primary);
+
+        background: var(--primary-soft);
+
+        box-shadow:
+            0 0 0 2px
+            rgba(79, 70, 229, 0.06);
+
+    }
+
+
+    .class-card-top {
+
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+
+        gap: 10px;
+
+    }
+
+
+    .class-code {
+
+        min-height: 23px;
+
+        padding: 0 7px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 6px;
+
+        background: #f4f4f5;
+
+        color: #52525b;
+
+        font-size: 7px;
+        font-weight: 800;
+
+    }
+
+
+    .class-check {
+
+        width: 21px;
+        height: 21px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border-strong);
+
+        border-radius: 6px;
+
+        background: #ffffff;
+
+        color: transparent;
+
+        font-size: 8px;
+        font-weight: 900;
+
+    }
+
+
+    .class-option input:checked + .class-card .class-check {
+
+        border-color: var(--primary);
+
+        background: var(--primary);
+
+        color: #ffffff;
+
+    }
+
+
+    .class-subject {
+
+        margin-top: 10px;
+
+        font-size: 10px;
+        font-weight: 750;
+
+    }
+
+
+    .class-teacher {
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+    }
+
+
+    .class-meta {
+
+        margin-top: auto;
+        padding-top: 10px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 8px;
+
+    }
+
+
+    .class-schedule {
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+    }
+
+
+    .class-fee {
+
+        color: var(--text);
+
+        font-size: 8px;
+        font-weight: 750;
+
+        white-space: nowrap;
+
+    }
+
+
+    /* =====================================================
+       EMPTY CLASS STATE
+    ====================================================== */
+
+    .class-empty {
+
+        min-height: 150px;
+
+        padding: 30px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        text-align: center;
+
+        border: 1px dashed var(--border-strong);
+
+        border-radius: 10px;
+
+        background: #fafafa;
+
+    }
+
+
+    .class-empty-icon {
+
+        width: 38px;
+        height: 38px;
+
+        margin-bottom: 9px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 9px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 10px;
+        font-weight: 800;
+
+    }
+
+
+    .class-empty strong {
+
+        font-size: 9px;
+
+    }
+
+
+    .class-empty span {
+
+        max-width: 330px;
+
+        margin-top: 5px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        line-height: 1.55;
+
+    }
+
+
+    /* =====================================================
+       SUBMISSION
+    ====================================================== */
+
+    .registration-submit-panel {
+
+        padding: 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 16px;
+
+        border: 1px solid var(--border);
+
+        border-radius: 12px;
+
+        background: #ffffff;
+
+    }
+
+
+    .registration-status {
+
+        display: flex;
+        align-items: flex-start;
+
+        gap: 10px;
+
+    }
+
+
+    .registration-status-icon {
+
+        width: 32px;
+        height: 32px;
+
+        flex: 0 0 32px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 8px;
+
+        background: var(--orange-soft);
+
+        color: var(--orange);
+
+        font-size: 8px;
+        font-weight: 800;
+
+    }
+
+
+    .registration-status strong {
+
+        display: block;
+
+        font-size: 9px;
+
+    }
+
+
+    .registration-status p {
+
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        line-height: 1.55;
+
+    }
+
+
+    .submit-actions {
+
+        display: flex;
+        align-items: center;
+
+        gap: 8px;
+
+        flex: 0 0 auto;
+
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 900px) {
+
+        .class-grid {
+
+            grid-template-columns: 1fr;
+
+        }
+
+    }
+
+
+    @media (max-width: 700px) {
+
+        .registration-grid {
+
+            grid-template-columns: 1fr;
+
+        }
+
+
+        .registration-field.full {
+
+            grid-column: auto;
+
+        }
+
+
+        .registration-submit-panel {
+
+            align-items: stretch;
+
+            flex-direction: column;
+
+        }
+
+
+        .submit-actions {
+
+            width: 100%;
+
+            flex-direction: column-reverse;
+
+        }
+
+
+        .submit-actions .btn {
+
+            width: 100%;
+
+        }
+
+
+        .class-filter-info {
+
+            align-items: flex-start;
+
+            flex-direction: column;
+
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+{% set selected_ids = [] %}
+
+{% if form and form.getlist is defined %}
+
+    {% set selected_ids = form.getlist('classes') %}
+
+{% endif %}
+
+
+<div class="registration-page">
+
+
+    <!-- =================================================
+         STUDENT NAVIGATION
+    ================================================== -->
+
+    <nav class="student-tabs">
+
+        <a
+            href="{{ url_for('students') }}"
+            class="student-tab"
+        >
+            All Students
+        </a>
+
+
+        <a
+            href="{{ url_for('register_student') }}"
+            class="student-tab active"
+        >
+            New Registration
+        </a>
+
+
+        <a
+            href="{{ url_for('pending_approvals') }}"
+            class="student-tab"
+        >
+            Pending Approvals
+        </a>
+
+    </nav>
+
+
+    <form
+        method="POST"
+        action="{{ url_for('register_student') }}"
+        id="registrationForm"
+        enctype="multipart/form-data"
+    >
+
+
+        <!-- =================================================
+             STEP 1
+        ================================================== -->
+
+        <section class="registration-section">
+
+            <div class="registration-section-header">
+
+                <div class="registration-step">
+                    01
+                </div>
+
+
+                <div>
+
+                    <h2>
+                        Student Details
+                    </h2>
+
+                    <p>
+                        Enter the student's basic and guardian information
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="registration-body">
+
+                <div class="registration-grid">
+
+
+                    <!-- FULL NAME -->
+
+                    <div class="registration-field">
+
+                        <label for="full_name">
+
+                            Full Name
+
+                            <span class="required-mark">
+                                *
+                            </span>
+
+                        </label>
+
+
+                        <input
+                            type="text"
+                            id="full_name"
+                            name="full_name"
+                            class="registration-input"
+                            value="{{ form.get('full_name', '') }}"
+                            placeholder="Student full name"
+                            autocomplete="name"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- STUDENT PHONE -->
+
+                    <div class="registration-field">
+
+                        <label for="phone">
+
+                            Student Phone
+
+                            <span class="required-mark">
+                                *
+                            </span>
+
+                        </label>
+
+
+                        <input
+                            type="tel"
+                            id="phone"
+                            name="phone"
+                            class="registration-input"
+                            value="{{ form.get('phone', '') }}"
+                            placeholder="07XXXXXXXX"
+                            autocomplete="tel"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- PARENT NAME -->
+
+                    <div class="registration-field">
+
+                        <label for="parent_name">
+
+                            Parent / Guardian Name
+
+                            <span class="required-mark">
+                                *
+                            </span>
+
+                        </label>
+
+
+                        <input
+                            type="text"
+                            id="parent_name"
+                            name="parent_name"
+                            class="registration-input"
+                            value="{{ form.get('parent_name', '') }}"
+                            placeholder="Parent or guardian name"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- PARENT PHONE -->
+
+                    <div class="registration-field">
+
+                        <label for="parent_phone">
+
+                            Parent / Guardian Phone
+
+                            <span class="required-mark">
+                                *
+                            </span>
+
+                        </label>
+
+
+                        <input
+                            type="tel"
+                            id="parent_phone"
+                            name="parent_phone"
+                            class="registration-input"
+                            value="{{ form.get('parent_phone', '') }}"
+                            placeholder="07XXXXXXXX"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- SCHOOL -->
+
+                    <div class="registration-field">
+
+                        <label for="school">
+                            School
+                        </label>
+
+
+                        <input
+                            type="text"
+                            id="school"
+                            name="school"
+                            class="registration-input"
+                            value="{{ form.get('school', '') }}"
+                            placeholder="Student's school"
+                        >
+
+
+                        <span class="field-help">
+                            Optional
+                        </span>
+
+                    </div>
+
+
+                    <!-- GRADE -->
+
+                    <div class="registration-field">
+
+                        <label for="grade">
+
+                            Grade
+
+                            <span class="required-mark">
+                                *
+                            </span>
+
+                        </label>
+
+
+                        <select
+                            id="grade"
+                            name="grade"
+                            class="registration-select"
+                            onchange="filterClasses()"
+                            required
+                        >
+
+                            <option value="">
+                                Select grade
+                            </option>
+
+
+                            {% set grade_ns = namespace(values=[]) %}
+
+
+                            {% for item in classes %}
+
+                                {% if item.grade not in grade_ns.values %}
+
+                                    <option
+                                        value="{{ item.grade }}"
+                                        {% if form.get('grade', '') == item.grade %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        {{ item.grade }}
+                                    </option>
+
+                                    {% set grade_ns.values =
+                                        grade_ns.values
+                                        +
+                                        [item.grade]
+                                    %}
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                        </select>
+
+
+                        <span class="field-help">
+                            Selecting a grade will show available classes.
+                        </span>
+
+                    </div>
+
+
+                    <!-- ADDRESS -->
+
+                    <div class="registration-field full">
+
+                        <label for="address">
+                            Address
+                        </label>
+
+
+                        <textarea
+                            id="address"
+                            name="address"
+                            class="registration-textarea"
+                            placeholder="Student address"
+                        >{{ form.get('address', '') }}</textarea>
+
+
+                        <span class="field-help">
+                            Optional
+                        </span>
+
+                    </div>
+
+
+                    <!-- STUDENT PHOTO -->
+
+                    <div class="registration-field full">
+
+                        <label for="student_photo">
+                            Student Photo
+                        </label>
+
+                        <input
+                            type="file"
+                            id="student_photo"
+                            name="student_photo"
+                            class="registration-input"
+                            accept="image/jpeg,image/png,image/webp"
+                            capture="user"
+                        >
+
+                        <span class="field-help">
+                            Take a clear photo with the phone camera or choose one from the gallery. JPG, PNG or WEBP.
+                        </span>
+
+                        <img
+                            id="studentPhotoPreview"
+                            alt="Student photo preview"
+                            style="display:none;margin-top:10px;width:120px;height:120px;object-fit:cover;border-radius:14px;border:1px solid var(--border);"
+                        >
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             STEP 2
+        ================================================== -->
+
+        <section
+            class="registration-section"
+            style="margin-top:12px;"
+        >
+
+            <div class="registration-section-header">
+
+                <div class="registration-step">
+                    02
+                </div>
+
+
+                <div>
+
+                    <h2>
+                        Select Classes
+                    </h2>
+
+                    <p>
+                        One student can register for more than one class
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="registration-body">
+
+
+                <div class="class-filter-info">
+
+                    <div>
+
+                        <strong id="classFilterTitle">
+                            Select a grade first
+                        </strong>
+
+                        <span id="classFilterDescription">
+                            Available classes matching the selected grade will appear below.
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="selected-count"
+                        id="selectedClassCount"
+                    >
+                        0 selected
+                    </div>
+
+                </div>
+
+
+                <!-- SELECT GRADE FIRST -->
+
+                <div
+                    class="class-empty"
+                    id="selectGradeMessage"
+                >
+
+                    <div class="class-empty-icon">
+                        ▤
+                    </div>
+
+
+                    <strong>
+                        Select a grade first
+                    </strong>
+
+
+                    <span>
+                        Choose the student's grade above to filter
+                        the available active classes.
+                    </span>
+
+                </div>
+
+
+                <!-- NO CLASSES -->
+
+                <div
+                    class="class-empty"
+                    id="noClassesMessage"
+                    style="display:none;"
+                >
+
+                    <div class="class-empty-icon">
+                        !
+                    </div>
+
+
+                    <strong>
+                        No active classes for this grade
+                    </strong>
+
+
+                    <span>
+                        There are currently no active registration
+                        classes matching the selected grade.
+                    </span>
+
+                </div>
+
+
+                <!-- CLASS GRID -->
+
+                <div
+                    class="class-grid"
+                    id="classGrid"
+                    style="display:none;"
+                >
+
+
+                    {% for item in classes %}
+
+
+                    <label
+                        class="class-option"
+                        data-grade="{{ item.grade }}"
+                    >
+
+                        <input
+                            type="checkbox"
+                            name="classes"
+                            value="{{ item.id }}"
+                            onchange="updateSelectedClasses()"
+                            {% if item.id in selected_ids %}
+                                checked
+                            {% endif %}
+                        >
+
+
+                        <div class="class-card">
+
+                            <div class="class-card-top">
+
+                                <span class="class-code">
+                                    {{ item.id }}
+                                </span>
+
+
+                                <span class="class-check">
+                                    ✓
+                                </span>
+
+                            </div>
+
+
+                            <div class="class-subject">
+                                {{ item.subject }}
+                            </div>
+
+
+                            <div class="class-teacher">
+                                {{ item.teacher }}
+                            </div>
+
+
+                            <div class="class-meta">
+
+                                <span class="class-schedule">
+                                    {{ item.schedule }}
+                                </span>
+
+
+                                <span class="class-fee">
+                                    Rs.
+                                    {{ "{:,.0f}".format(item.fee) }}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </label>
+
+
+                    {% endfor %}
+
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             SUBMIT
+        ================================================== -->
+
+        <section
+            class="registration-submit-panel"
+            style="margin-top:12px;"
+        >
+
+            <div class="registration-status">
+
+                <div class="registration-status-icon">
+                    P
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Registration Status
+                    </strong>
+
+
+                    <p>
+                        {% if current_user %}
+                            After submission, this registration will remain
+                            <strong>PENDING</strong> until it is reviewed and
+                            approved by an authorized user.
+                        {% else %}
+                            A 6-digit SMS code will be sent to the Parent / Guardian phone.
+                            The registration becomes <strong>PENDING</strong> only after OTP verification.
+                        {% endif %}
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="submit-actions">
+
+                <a
+                    href="{{ url_for('students') }}"
+                    class="btn btn-secondary"
+                >
+                    Cancel
+                </a>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    id="submitRegistrationButton"
+                >
+                    {% if current_user %}
+                        Submit Registration
+                    {% else %}
+                        Continue to SMS Verification
+                    {% endif %}
+                </button>
+
+            </div>
+
+        </section>
+
+
+    </form>
+
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+    /* =====================================================
+       CLASS FILTER
+    ====================================================== */
+
+    function filterClasses() {
+
+        const gradeSelect =
+            document.getElementById(
+                "grade"
+            );
+
+
+        const selectedGrade =
+            gradeSelect.value;
+
+
+        const options =
+            document.querySelectorAll(
+                ".class-option"
+            );
+
+
+        const classGrid =
+            document.getElementById(
+                "classGrid"
+            );
+
+
+        const gradeMessage =
+            document.getElementById(
+                "selectGradeMessage"
+            );
+
+
+        const noClasses =
+            document.getElementById(
+                "noClassesMessage"
+            );
+
+
+        const title =
+            document.getElementById(
+                "classFilterTitle"
+            );
+
+
+        const description =
+            document.getElementById(
+                "classFilterDescription"
+            );
+
+
+        let visibleCount = 0;
+
+
+        if (!selectedGrade) {
+
+            options.forEach(
+                function(option) {
+
+                    option.classList.add(
+                        "hidden"
+                    );
+
+                }
+            );
+
+
+            classGrid.style.display =
+                "none";
+
+
+            gradeMessage.style.display =
+                "flex";
+
+
+            noClasses.style.display =
+                "none";
+
+
+            title.textContent =
+                "Select a grade first";
+
+
+            description.textContent =
+                "Available classes matching the selected grade will appear below.";
+
+
+            updateSelectedClasses();
+
+            return;
+
+        }
+
+
+        gradeMessage.style.display =
+            "none";
+
+
+        options.forEach(
+            function(option) {
+
+                const matches =
+                    option.dataset.grade
+                    ===
+                    selectedGrade;
+
+
+                option.classList.toggle(
+                    "hidden",
+                    !matches
+                );
+
+
+                if (matches) {
+
+                    visibleCount++;
+
+                }
+
+                else {
+
+                    const checkbox =
+                        option.querySelector(
+                            'input[type="checkbox"]'
+                        );
+
+
+                    /*
+                     * Prevent stale class selections from
+                     * another grade when the grade changes.
+                     */
+
+                    if (checkbox) {
+
+                        checkbox.checked =
+                            false;
+
+                    }
+
+                }
+
+            }
+        );
+
+
+        if (visibleCount > 0) {
+
+            classGrid.style.display =
+                "grid";
+
+
+            noClasses.style.display =
+                "none";
+
+
+            title.textContent =
+                selectedGrade
+                +
+                " Classes";
+
+
+            description.textContent =
+                visibleCount
+                +
+                (
+                    visibleCount === 1
+                    ?
+                    " active class available."
+                    :
+                    " active classes available."
+                );
+
+        }
+
+        else {
+
+            classGrid.style.display =
+                "none";
+
+
+            noClasses.style.display =
+                "flex";
+
+
+            title.textContent =
+                selectedGrade
+                +
+                " Classes";
+
+
+            description.textContent =
+                "No active classes are currently available for this grade.";
+
+        }
+
+
+        updateSelectedClasses();
+
+    }
+
+
+    /* =====================================================
+       SELECTED CLASS COUNT
+    ====================================================== */
+
+    function updateSelectedClasses() {
+
+        const checked =
+            document.querySelectorAll(
+                'input[name="classes"]:checked'
+            );
+
+
+        const countElement =
+            document.getElementById(
+                "selectedClassCount"
+            );
+
+
+        const count =
+            checked.length;
+
+
+        countElement.textContent =
+            count
+            +
+            (
+                count === 1
+                ?
+                " selected"
+                :
+                " selected"
+            );
+
+    }
+
+
+    /* =====================================================
+       FORM VALIDATION
+    ====================================================== */
+
+    function validateRegistrationForm(
+        event
+    ) {
+
+        const grade =
+            document.getElementById(
+                "grade"
+            ).value;
+
+
+        const selectedClasses =
+            document.querySelectorAll(
+                'input[name="classes"]:checked'
+            );
+
+
+        if (!grade) {
+
+            event.preventDefault();
+
+            alert(
+                "Please select the student's grade."
+            );
+
+            document
+                .getElementById(
+                    "grade"
+                )
+                .focus();
+
+            return false;
+
+        }
+
+
+        if (
+            selectedClasses.length
+            ===
+            0
+        ) {
+
+            event.preventDefault();
+
+            alert(
+                "Please select at least one class."
+            );
+
+            return false;
+
+        }
+
+
+        return true;
+
+    }
+
+
+    /* =====================================================
+       PAGE LOAD
+    ====================================================== */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function() {
+
+            const form =
+                document.getElementById(
+                    "registrationForm"
+                );
+
+
+            if (form) {
+
+                form.addEventListener(
+                    "submit",
+                    validateRegistrationForm
+                );
+
+            }
+
+
+            filterClasses();
+            updateSelectedClasses();
+
+        }
+    );
+
+</script>
+
+
+<script>
+    (function () {
+        const input = document.getElementById('student_photo');
+        const preview = document.getElementById('studentPhotoPreview');
+
+        if (!input || !preview) {
+            return;
+        }
+
+        input.addEventListener('change', function () {
+            const file = input.files && input.files[0];
+
+            if (!file) {
+                preview.removeAttribute('src');
+                preview.style.display = 'none';
+                return;
+            }
+
+            const url = URL.createObjectURL(file);
+            preview.src = url;
+            preview.style.display = 'block';
+
+            preview.onload = function () {
+                URL.revokeObjectURL(url);
+            };
+        });
+    })();
+</script>
+
+{% endblock %}

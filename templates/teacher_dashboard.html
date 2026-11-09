@@ -1,0 +1,95 @@
+{% extends "teacher_base.html" %}
+{% block title %}Teacher Dashboard - Sri Sumana{% endblock %}
+{% block page_title %}Teacher Dashboard{% endblock %}
+{% block content %}
+<div class="page-stack">
+    <div class="page-intro">
+        <div>
+            <h2>Teacher Overview</h2>
+            <p>Your classes, students, attendance and monthly finance.</p>
+        </div>
+        <div class="month-controls">
+            <a class="btn btn-secondary" href="{{ url_for('teacher_dashboard', month=previous_month) }}">← Previous</a>
+            <span class="month-pill">{{ month_label }}</span>
+            <a class="btn btn-secondary" href="{{ url_for('teacher_dashboard', month=next_month) }}">Next →</a>
+        </div>
+    </div>
+
+    <section class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-top"><span class="kpi-label">My Active Classes</span><span class="kpi-icon">C</span></div>
+            <div class="kpi-value">{{ summary.classes|length }}</div>
+            <div class="kpi-note">{{ today_classes|length }} class(es) scheduled today</div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-top"><span class="kpi-label">My Students</span><span class="kpi-icon">S</span></div>
+            <div class="kpi-value">{{ total_students }}</div>
+            <div class="kpi-note">Active students across your assigned classes</div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-top"><span class="kpi-label">Collected</span><span class="kpi-icon">Rs</span></div>
+            <div class="kpi-value">Rs. {{ "{:,.0f}".format(summary.total_collected) }}</div>
+            <div class="kpi-note">Confirmed payments for {{ month_label }}</div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-top"><span class="kpi-label">Outstanding</span><span class="kpi-icon">!</span></div>
+            <div class="kpi-value">Rs. {{ "{:,.0f}".format(summary.total_outstanding) }}</div>
+            <div class="kpi-note">Remaining payable after approved Free Cards</div>
+        </div>
+        <div class="kpi-card blue">
+            <div class="kpi-top"><span class="kpi-label">My Income</span><span class="kpi-icon">%</span></div>
+            <div class="kpi-value">Rs. {{ "{:,.0f}".format(summary.total_teacher_income) }}</div>
+            <div class="kpi-note">Calculated using class Teacher Share percentage</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-top"><span class="kpi-label">Today's Attendance</span><span class="kpi-icon">✓</span></div>
+            <div class="kpi-value">{{ today_attendance_count }}</div>
+            <div class="kpi-note">Check-ins recorded for {{ today_label }}</div>
+        </div>
+    </section>
+
+    <div class="section-heading">
+        <div><h2>Today's Operations</h2><p>Classes scheduled for today and current monthly finance.</p></div>
+    </div>
+
+    <section class="operations-grid">
+        <div class="ui-panel">
+            <div class="ui-panel-header">
+                <div><h2>Today's Classes</h2><p>{{ today_label }}</p></div>
+                <a class="ui-panel-link" href="{{ url_for('teacher_classes') }}">Open →</a>
+            </div>
+            <div class="panel-body">
+                {% if today_classes %}
+                    <div class="class-list">
+                    {% for class_item in today_classes %}
+                        <div class="class-row">
+                            <div class="class-main"><strong><a href="{{ url_for('teacher_class_profile', class_code=class_item.class_code, month=selected_month) }}" style="text-decoration:none;">{{ class_item.class_code }} · {{ class_item.class_name }}</a></strong><span>{{ class_item.start_display }} - {{ class_item.end_display }}{% if class_item.room %} · {{ class_item.room }}{% endif %}</span></div>
+                            <div class="class-meta"><span>Students</span><strong>{{ class_item.enrolled_count }}</strong></div>
+                            <div class="class-meta"><span>Checked In</span><strong>{{ class_item.attendance_count }}</strong></div>
+                            <div class="class-meta"><span>Missing</span><strong>{{ [class_item.enrolled_count - class_item.attendance_count, 0] | max }}</strong></div>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">No active classes scheduled for today.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="ui-panel">
+            <div class="ui-panel-header">
+                <div><h2>Monthly Finance</h2><p>{{ month_label }} · your classes only</p></div>
+                <a class="ui-panel-link" href="{{ url_for('teacher_finance', month=selected_month) }}">Open →</a>
+            </div>
+            <div class="panel-body">
+                <div class="today-summary">
+                    <div class="mini-card"><span>Expected</span><strong>Rs. {{ "{:,.0f}".format(summary.total_expected) }}</strong></div>
+                    <div class="mini-card"><span>Collected</span><strong class="text-green">Rs. {{ "{:,.0f}".format(summary.total_collected) }}</strong></div>
+                    <div class="mini-card"><span>Free Cards</span><strong>{{ summary.total_free_cards }}</strong></div>
+                </div>
+                <div class="finance-note">Teacher income is calculated from confirmed payments only, using each class's configured Teacher Share percentage.</div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

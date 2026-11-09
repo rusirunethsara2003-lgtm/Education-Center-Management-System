@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sri Sumana</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body { min-height:100vh; background:#09090b; color:#fff; margin:0; font-family:Arial,sans-serif; }
+        .auth-shell { min-height:100vh; display:grid; place-items:center; padding:24px; }
+        .auth-card { width:min(430px,100%); background:#18181b; border:1px solid #2f2f34; border-radius:20px; padding:28px; box-sizing:border-box; }
+        .auth-brand { color:#34d399; font-size:12px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+        .auth-card h1 { margin:8px 0 5px; font-size:30px; }
+        .auth-card p { color:#a1a1aa; font-size:12px; margin:0 0 22px; }
+        .auth-field { display:block; margin-top:14px; font-size:11px; font-weight:800; }
+        .auth-field input { width:100%; box-sizing:border-box; margin-top:7px; padding:13px 14px; border-radius:10px; border:1px solid #34343a; background:#101012; color:#fff; }
+        .auth-button { width:100%; margin-top:18px; padding:13px; border:0; border-radius:10px; background:#34d399; color:#04120d; font-weight:900; cursor:pointer; }
+        .auth-foot { margin-top:18px; text-align:center; color:#71717a; font-size:10px; }
+        .alert { margin-bottom:12px; padding:11px 13px; border-radius:10px; font-size:11px; }
+        .alert.error { background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.25); color:#fca5a5; }
+        .alert.success { background:rgba(52,211,153,.1); border:1px solid rgba(52,211,153,.25); color:#6ee7b7; }
+    </style>
+</head>
+<body>
+<div class="auth-shell">
+    <form method="POST" class="auth-card">
+        <div class="auth-brand">Sri Sumana Education Center</div>
+        <h1>Sign in</h1>
+        <p>Owner and Staff access</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <input type="hidden" name="next" value="{{ next_url or '' }}">
+
+        <label class="auth-field">
+            Username
+            <input type="text" name="username" autocomplete="username" required autofocus>
+        </label>
+
+        <label class="auth-field">
+            Password
+            <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+
+        <button type="submit" class="auth-button">Sign In</button>
+
+        <div class="auth-foot">Authorized users only</div>
+    </form>
+</div>
+</body>
+</html>

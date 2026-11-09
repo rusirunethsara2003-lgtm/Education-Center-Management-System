@@ -1,0 +1,853 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Outstanding Fees - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Finance
+{% endblock %}
+
+
+{% block page_subtitle %}
+Outstanding student balances and partial payments
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('new_payment') }}"
+    class="btn btn-primary"
+>
+    + Record Payment
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    .outstanding-toolbar {
+        margin-bottom: 12px;
+        padding: 12px 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .outstanding-period span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .outstanding-period strong {
+        display: block;
+
+        margin-top: 4px;
+
+        font-size: 13px;
+    }
+
+
+    .outstanding-filter {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+    }
+
+
+    .outstanding-control {
+        min-height: 35px;
+
+        padding: 0 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+        color: var(--text);
+
+        outline: none;
+
+        font-size: 9px;
+    }
+
+
+    .outstanding-search {
+        width: 220px;
+    }
+
+
+    .outstanding-control:focus {
+        border-color: var(--primary);
+    }
+
+
+    .outstanding-arrow {
+        width: 35px;
+        height: 35px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        text-decoration: none;
+
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+
+    .outstanding-summary {
+        margin-bottom: 12px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+
+    .outstanding-stat {
+        min-height: 92px;
+
+        padding: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .outstanding-stat span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .outstanding-stat strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 18px;
+        font-weight: 750;
+    }
+
+
+    .outstanding-red {
+        color: var(--red);
+    }
+
+
+    .outstanding-orange {
+        color: var(--orange);
+    }
+
+
+    .outstanding-table-wrap {
+        overflow-x: auto;
+    }
+
+
+    .outstanding-table {
+        width: 100%;
+
+        min-width: 1050px;
+
+        border-collapse: collapse;
+    }
+
+
+    .outstanding-table th {
+        padding: 10px 12px;
+
+        background: #fafafa;
+
+        border-bottom: 1px solid var(--border);
+
+        color: var(--muted);
+
+        text-align: left;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+    }
+
+
+    .outstanding-table td {
+        padding: 12px;
+
+        border-bottom: 1px solid var(--border);
+
+        font-size: 9px;
+
+        vertical-align: middle;
+    }
+
+
+    .outstanding-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+
+    .outstanding-primary {
+        display: block;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+
+    .outstanding-secondary {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .outstanding-profile-link {
+        color: inherit;
+
+        text-decoration: none;
+    }
+
+
+    .outstanding-profile-link:hover
+    .outstanding-primary {
+        color: var(--primary);
+    }
+
+
+    .outstanding-status {
+        display: inline-flex;
+
+        padding: 4px 7px;
+
+        border-radius: 999px;
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .outstanding-status.partial {
+        background: var(--orange-soft);
+
+        color: var(--orange);
+    }
+
+
+    .outstanding-status.unpaid {
+        background: var(--red-soft);
+
+        color: var(--red);
+    }
+
+
+    .waiver-value {
+        color: var(--blue);
+
+        font-weight: 700;
+    }
+
+
+    .paid-value {
+        color: var(--green);
+
+        font-weight: 700;
+    }
+
+
+    .balance-value {
+        color: var(--red);
+
+        font-size: 10px;
+        font-weight: 750;
+    }
+
+
+    .payment-action {
+        min-height: 30px;
+
+        padding: 0 9px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--primary);
+        border-radius: 7px;
+
+        background: var(--primary);
+
+        color: #ffffff;
+
+        text-decoration: none;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        white-space: nowrap;
+    }
+
+
+    .outstanding-empty {
+        min-height: 220px;
+
+        padding: 30px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        text-align: center;
+    }
+
+
+    .outstanding-empty strong {
+        font-size: 11px;
+    }
+
+
+    .outstanding-empty p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    @media (max-width: 950px) {
+
+        .outstanding-summary {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+
+        .outstanding-toolbar {
+            align-items: stretch;
+
+            flex-direction: column;
+        }
+
+
+        .outstanding-filter {
+            flex-wrap: wrap;
+        }
+
+    }
+
+
+    @media (max-width: 600px) {
+
+        .outstanding-summary {
+            grid-template-columns: 1fr;
+        }
+
+
+        .outstanding-filter {
+            display: grid;
+
+            grid-template-columns:
+                1fr
+                1fr;
+        }
+
+
+        .outstanding-search {
+            width: 100%;
+
+            grid-column:
+                1 / -1;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+{% include "finance_nav.html" %}
+
+
+<section class="outstanding-toolbar">
+
+
+    <div class="outstanding-period">
+
+        <span>
+            Outstanding Period
+        </span>
+
+        <strong>
+            {{ month_label }}
+        </strong>
+
+    </div>
+
+
+    <form
+        method="GET"
+        action="{{ url_for('finance_outstanding') }}"
+        class="outstanding-filter"
+    >
+
+
+        <a
+            href="{{ url_for(
+                'finance_outstanding',
+                month=previous_month
+            ) }}"
+            class="outstanding-arrow"
+        >
+            ←
+        </a>
+
+
+        <input
+            type="month"
+            name="month"
+            value="{{ selected_month }}"
+            class="outstanding-control"
+            required
+        >
+
+
+        <input
+            type="text"
+            name="search"
+            value="{{ search }}"
+            class="
+                outstanding-control
+                outstanding-search
+            "
+            placeholder="Student, class or teacher"
+        >
+
+
+        <button
+            type="submit"
+            class="btn btn-secondary"
+        >
+            Apply
+        </button>
+
+
+        <a
+            href="{{ url_for(
+                'finance_outstanding',
+                month=next_month
+            ) }}"
+            class="outstanding-arrow"
+        >
+            →
+        </a>
+
+
+    </form>
+
+
+</section>
+
+
+<div class="outstanding-summary">
+
+
+    <div class="outstanding-stat">
+
+        <span>
+            Outstanding Accounts
+        </span>
+
+        <strong>
+            {{ summary.accounts or 0 }}
+        </strong>
+
+    </div>
+
+
+    <div class="outstanding-stat">
+
+        <span>
+            Partial Accounts
+        </span>
+
+        <strong class="outstanding-orange">
+            {{ summary.partial_count or 0 }}
+        </strong>
+
+    </div>
+
+
+    <div class="outstanding-stat">
+
+        <span>
+            Unpaid Accounts
+        </span>
+
+        <strong class="outstanding-red">
+            {{ summary.unpaid_count or 0 }}
+        </strong>
+
+    </div>
+
+
+    <div class="outstanding-stat">
+
+        <span>
+            Total Outstanding
+        </span>
+
+        <strong class="outstanding-red">
+
+            Rs. {{ "{:,.2f}".format(
+                summary.outstanding or 0
+            ) }}
+
+        </strong>
+
+    </div>
+
+
+</div>
+
+
+<section class="ui-panel">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Outstanding Fees
+            </h2>
+
+            <p>
+                Student/class balances for {{ month_label }}
+            </p>
+
+        </div>
+
+
+        {% if search %}
+
+        <a
+            href="{{ url_for(
+                'finance_outstanding',
+                month=selected_month
+            ) }}"
+            class="ui-panel-link"
+        >
+            Clear Search
+        </a>
+
+        {% endif %}
+
+    </div>
+
+
+    {% if outstanding_rows %}
+
+
+    <div class="outstanding-table-wrap">
+
+
+        <table class="outstanding-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Class
+                    </th>
+
+                    <th>
+                        Monthly Fee
+                    </th>
+
+                    <th>
+                        Waived
+                    </th>
+
+                    <th>
+                        Payable
+                    </th>
+
+                    <th>
+                        Paid
+                    </th>
+
+                    <th>
+                        Balance
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for item in outstanding_rows %}
+
+
+                <tr>
+
+
+                    <td>
+
+                        <a
+                            href="{{ url_for(
+                                'student_profile',
+                                student_id=item.student_id,
+                                tab='payments'
+                            ) }}"
+                            class="outstanding-profile-link"
+                        >
+
+                            <span class="outstanding-primary">
+
+                                {{ item.student_code }}
+
+                                ·
+
+                                {{ item.full_name }}
+
+                            </span>
+
+                            <span class="outstanding-secondary">
+
+                                Grade {{ item.grade }}
+
+                                {% if item.phone %}
+
+                                · {{ item.phone }}
+
+                                {% endif %}
+
+                            </span>
+
+                        </a>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="outstanding-primary">
+
+                            {{
+                                item.class_name
+                                or
+                                item.class_code
+                            }}
+
+                        </span>
+
+                        <span class="outstanding-secondary">
+
+                            {{ item.class_code }}
+
+                            ·
+
+                            {{ item.teacher_name }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        Rs. {{ "{:,.2f}".format(
+                            item.monthly_fee or 0
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="waiver-value">
+
+                            Rs. {{ "{:,.2f}".format(
+                                item.waived_amount or 0
+                            ) }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        Rs. {{ "{:,.2f}".format(
+                            item.payable or 0
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="paid-value">
+
+                            Rs. {{ "{:,.2f}".format(
+                                item.paid or 0
+                            ) }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="balance-value">
+
+                            Rs. {{ "{:,.2f}".format(
+                                item.balance or 0
+                            ) }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="
+                                outstanding-status
+                                {{ item.fee_status|lower }}
+                            "
+                        >
+                            {{ item.fee_status }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <a
+                            href="{{ url_for('new_payment') }}"
+                            class="payment-action"
+                        >
+                            Record Payment
+                        </a>
+
+                    </td>
+
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <div class="outstanding-empty">
+
+        <strong>
+            No outstanding balances found.
+        </strong>
+
+        <p>
+
+            {% if search %}
+
+                No results match "{{ search }}" for {{ month_label }}.
+
+            {% else %}
+
+                All payable student/class accounts are settled for
+                {{ month_label }}.
+
+            {% endif %}
+
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+{% endblock %}

@@ -1,0 +1,1128 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Free Cards - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Finance
+{% endblock %}
+
+
+{% block page_subtitle %}
+Free Card requests, approvals and monthly fee waivers
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('new_free_card_request') }}"
+    class="btn btn-primary"
+>
+    + Request Free Card
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       FILTER TOOLBAR
+    ====================================================== */
+
+    .free-card-toolbar-light {
+        margin-bottom: 12px;
+
+        padding: 12px 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .free-card-period span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .free-card-period strong {
+        display: block;
+
+        margin-top: 4px;
+
+        font-size: 13px;
+    }
+
+
+    .free-card-filter-form {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+    }
+
+
+    .free-card-control {
+        min-height: 35px;
+
+        padding: 0 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+        color: var(--text);
+
+        outline: none;
+
+        font-size: 9px;
+    }
+
+
+    .free-card-control:focus {
+        border-color: var(--primary);
+    }
+
+
+    /* =====================================================
+       SUMMARY
+    ====================================================== */
+
+    .free-card-summary-grid {
+        margin-bottom: 12px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                5,
+                minmax(0, 1fr)
+            );
+
+        gap: 10px;
+    }
+
+
+    .free-card-summary-card {
+        min-height: 92px;
+
+        padding: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .free-card-summary-card span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .free-card-summary-card strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 18px;
+        font-weight: 750;
+    }
+
+
+    .free-card-green {
+        color: var(--green);
+    }
+
+
+    .free-card-red {
+        color: var(--red);
+    }
+
+
+    .free-card-orange {
+        color: var(--orange);
+    }
+
+
+    .free-card-blue {
+        color: var(--blue);
+    }
+
+
+    /* =====================================================
+       STATUS QUICK FILTERS
+    ====================================================== */
+
+    .free-card-status-tabs {
+        margin-bottom: 12px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 6px;
+
+        flex-wrap: wrap;
+    }
+
+
+    .free-card-status-tab {
+        min-height: 31px;
+
+        padding: 0 10px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 7px;
+
+        background: #ffffff;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+
+    .free-card-status-tab:hover {
+        background: #f7f7f7;
+
+        color: var(--text);
+    }
+
+
+    .free-card-status-tab.active {
+        border-color: #c7d2fe;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+    }
+
+
+    /* =====================================================
+       TABLE
+    ====================================================== */
+
+    .free-card-table-wrap {
+        overflow-x: auto;
+    }
+
+
+    .free-card-table {
+        width: 100%;
+
+        min-width: 1080px;
+
+        border-collapse: collapse;
+    }
+
+
+    .free-card-table th {
+        padding: 10px 12px;
+
+        background: #fafafa;
+
+        border-bottom: 1px solid var(--border);
+
+        color: var(--muted);
+
+        text-align: left;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+    }
+
+
+    .free-card-table td {
+        padding: 12px;
+
+        border-bottom: 1px solid var(--border);
+
+        font-size: 9px;
+
+        vertical-align: middle;
+    }
+
+
+    .free-card-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+
+    .free-card-primary {
+        display: block;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+
+    .free-card-secondary {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .free-card-detail-link {
+        color: inherit;
+
+        text-decoration: none;
+    }
+
+
+    .free-card-detail-link:hover
+    .free-card-primary {
+        color: var(--primary);
+    }
+
+
+    .free-card-status {
+        display: inline-flex;
+
+        padding: 4px 7px;
+
+        border-radius: 999px;
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .free-card-status.pending {
+        background: var(--orange-soft);
+
+        color: var(--orange);
+    }
+
+
+    .free-card-status.approved {
+        background: var(--green-soft);
+
+        color: var(--green);
+    }
+
+
+    .free-card-status.rejected {
+        background: var(--red-soft);
+
+        color: var(--red);
+    }
+
+
+    .free-card-status.revoked {
+        background: #f4f4f5;
+
+        color: #52525b;
+    }
+
+
+    .free-card-waiver {
+        color: var(--blue);
+
+        font-size: 9px;
+        font-weight: 750;
+    }
+
+
+    .free-card-open-button {
+        min-height: 30px;
+
+        padding: 0 9px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 7px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        text-decoration: none;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        white-space: nowrap;
+    }
+
+
+    .free-card-open-button:hover {
+        border-color: #c7d2fe;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+    }
+
+
+    /* =====================================================
+       EMPTY
+    ====================================================== */
+
+    .free-card-empty {
+        min-height: 210px;
+
+        padding: 35px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        text-align: center;
+    }
+
+
+    .free-card-empty-icon {
+        width: 42px;
+        height: 42px;
+
+        margin-bottom: 10px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 10px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+
+    .free-card-empty strong {
+        font-size: 11px;
+    }
+
+
+    .free-card-empty p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .free-card-empty a {
+        margin-top: 13px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 1050px) {
+
+        .free-card-summary-grid {
+            grid-template-columns:
+                repeat(
+                    3,
+                    minmax(0, 1fr)
+                );
+        }
+
+    }
+
+
+    @media (max-width: 800px) {
+
+        .free-card-toolbar-light {
+            align-items: stretch;
+
+            flex-direction: column;
+        }
+
+
+        .free-card-filter-form {
+            display: grid;
+
+            grid-template-columns:
+                1fr
+                1fr
+                auto;
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .free-card-summary-grid {
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+        }
+
+
+        .free-card-filter-form {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 450px) {
+
+        .free-card-summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<!-- =====================================================
+     FINANCE NAVIGATION
+====================================================== -->
+
+{% include "finance_nav.html" %}
+
+
+<!-- =====================================================
+     FILTER
+====================================================== -->
+
+<section class="free-card-toolbar-light">
+
+
+    <div class="free-card-period">
+
+        <span>
+            Viewing
+        </span>
+
+        <strong>
+            {{ month_label }}
+        </strong>
+
+    </div>
+
+
+    <form
+        method="GET"
+        action="{{ url_for('free_cards') }}"
+        class="free-card-filter-form"
+    >
+
+
+        <input
+            type="month"
+            name="month"
+            value="{{ selected_month }}"
+            class="free-card-control"
+            required
+        >
+
+
+        <select
+            name="status"
+            class="free-card-control"
+        >
+
+            <option
+                value="ALL"
+
+                {% if status_filter == 'ALL' %}
+                    selected
+                {% endif %}
+            >
+                All Statuses
+            </option>
+
+
+            <option
+                value="PENDING"
+
+                {% if status_filter == 'PENDING' %}
+                    selected
+                {% endif %}
+            >
+                Pending
+            </option>
+
+
+            <option
+                value="APPROVED"
+
+                {% if status_filter == 'APPROVED' %}
+                    selected
+                {% endif %}
+            >
+                Approved
+            </option>
+
+
+            <option
+                value="REJECTED"
+
+                {% if status_filter == 'REJECTED' %}
+                    selected
+                {% endif %}
+            >
+                Rejected
+            </option>
+
+
+            <option
+                value="REVOKED"
+
+                {% if status_filter == 'REVOKED' %}
+                    selected
+                {% endif %}
+            >
+                Revoked
+            </option>
+
+        </select>
+
+
+        <button
+            type="submit"
+            class="btn btn-secondary"
+        >
+            Apply
+        </button>
+
+
+    </form>
+
+
+</section>
+
+
+<!-- =====================================================
+     SUMMARY
+====================================================== -->
+
+<div class="free-card-summary-grid">
+
+
+    <div class="free-card-summary-card">
+
+        <span>
+            Pending
+        </span>
+
+        <strong class="free-card-orange">
+
+            {{ stats.pending_count or 0 }}
+
+        </strong>
+
+    </div>
+
+
+    <div class="free-card-summary-card">
+
+        <span>
+            Approved
+        </span>
+
+        <strong class="free-card-green">
+
+            {{ stats.approved_count or 0 }}
+
+        </strong>
+
+    </div>
+
+
+    <div class="free-card-summary-card">
+
+        <span>
+            Rejected
+        </span>
+
+        <strong class="free-card-red">
+
+            {{ stats.rejected_count or 0 }}
+
+        </strong>
+
+    </div>
+
+
+    <div class="free-card-summary-card">
+
+        <span>
+            Revoked
+        </span>
+
+        <strong>
+
+            {{ stats.revoked_count or 0 }}
+
+        </strong>
+
+    </div>
+
+
+    <div class="free-card-summary-card">
+
+        <span>
+            Approved Waiver
+        </span>
+
+        <strong class="free-card-blue">
+
+            Rs.
+            {{ "{:,.2f}".format(
+                stats.waived_amount or 0
+            ) }}
+
+        </strong>
+
+    </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     QUICK STATUS FILTERS
+====================================================== -->
+
+<div class="free-card-status-tabs">
+
+
+    <a
+        href="{{ url_for(
+            'free_cards',
+            month=selected_month,
+            status='ALL'
+        ) }}"
+        class="
+            free-card-status-tab
+            {% if status_filter == 'ALL' %}
+                active
+            {% endif %}
+        "
+    >
+        All
+    </a>
+
+
+    <a
+        href="{{ url_for(
+            'free_cards',
+            month=selected_month,
+            status='PENDING'
+        ) }}"
+        class="
+            free-card-status-tab
+            {% if status_filter == 'PENDING' %}
+                active
+            {% endif %}
+        "
+    >
+        Pending
+    </a>
+
+
+    <a
+        href="{{ url_for(
+            'free_cards',
+            month=selected_month,
+            status='APPROVED'
+        ) }}"
+        class="
+            free-card-status-tab
+            {% if status_filter == 'APPROVED' %}
+                active
+            {% endif %}
+        "
+    >
+        Approved
+    </a>
+
+
+    <a
+        href="{{ url_for(
+            'free_cards',
+            month=selected_month,
+            status='REJECTED'
+        ) }}"
+        class="
+            free-card-status-tab
+            {% if status_filter == 'REJECTED' %}
+                active
+            {% endif %}
+        "
+    >
+        Rejected
+    </a>
+
+
+    <a
+        href="{{ url_for(
+            'free_cards',
+            month=selected_month,
+            status='REVOKED'
+        ) }}"
+        class="
+            free-card-status-tab
+            {% if status_filter == 'REVOKED' %}
+                active
+            {% endif %}
+        "
+    >
+        Revoked
+    </a>
+
+
+</div>
+
+
+<!-- =====================================================
+     REQUESTS
+====================================================== -->
+
+<section class="ui-panel">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Free Card Requests
+            </h2>
+
+            <p>
+
+                {{ month_label }}
+
+                ·
+
+                {{ status_filter|title }}
+
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for(
+                'new_free_card_request'
+            ) }}"
+            class="ui-panel-link"
+        >
+            + New Request
+        </a>
+
+    </div>
+
+
+    {% if free_cards %}
+
+
+    <div class="free-card-table-wrap">
+
+
+        <table class="free-card-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Class
+                    </th>
+
+                    <th>
+                        Fee Month
+                    </th>
+
+                    <th>
+                        Monthly Fee
+                    </th>
+
+                    <th>
+                        Waived
+                    </th>
+
+                    <th>
+                        Requested By
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for card in free_cards %}
+
+
+                <tr>
+
+
+                    <td>
+
+                        <a
+                            href="{{ url_for(
+                                'student_profile',
+                                student_id=card.student_id,
+                                tab='free_cards'
+                            ) }}"
+                            class="free-card-detail-link"
+                        >
+
+                            <span class="free-card-primary">
+
+                                {{ card.student_code }}
+
+                                ·
+
+                                {{ card.student_name }}
+
+                            </span>
+
+                        </a>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="free-card-primary">
+
+                            {{
+                                card.class_name
+                                or
+                                card.class_code
+                            }}
+
+                        </span>
+
+                        <span class="free-card-secondary">
+
+                            {{ card.class_code }}
+
+                            ·
+
+                            {{ card.teacher_name }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        {{ card.fee_month }}
+                    </td>
+
+
+                    <td>
+
+                        Rs.
+                        {{ "{:,.2f}".format(
+                            card.monthly_fee or 0
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        {% if card.status == 'APPROVED' %}
+
+                            <span class="free-card-waiver">
+
+                                Rs.
+                                {{ "{:,.2f}".format(
+                                    card.waived_amount or 0
+                                ) }}
+
+                            </span>
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="free-card-primary">
+
+                            {{ card.requested_by_name }}
+
+                        </span>
+
+                        <span class="free-card-secondary">
+
+                            {{ card.requested_at }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="
+                                free-card-status
+                                {{ card.status|lower }}
+                            "
+                        >
+                            {{ card.status }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <a
+                            href="{{ url_for(
+                                'free_card_detail',
+                                free_card_id=card.id
+                            ) }}"
+                            class="free-card-open-button"
+                        >
+                            Open
+                        </a>
+
+                    </td>
+
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <div class="free-card-empty">
+
+
+        <div class="free-card-empty-icon">
+            ◇
+        </div>
+
+
+        <strong>
+            No Free Card requests found.
+        </strong>
+
+
+        <p>
+
+            No requests match {{ month_label }}
+
+            {% if status_filter != 'ALL' %}
+
+                with {{ status_filter|title }} status.
+
+            {% else %}
+
+                for the selected month.
+
+            {% endif %}
+
+        </p>
+
+
+        <a
+            href="{{ url_for(
+                'new_free_card_request'
+            ) }}"
+            class="btn btn-primary"
+        >
+            + Request Free Card
+        </a>
+
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+{% endblock %}

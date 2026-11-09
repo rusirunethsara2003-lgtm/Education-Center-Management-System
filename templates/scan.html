@@ -1,0 +1,4170 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Scan QR - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Attendance
+{% endblock %}
+
+
+{% block page_subtitle %}
+Scan student QR and confirm attendance
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('attendance_today') }}"
+    class="btn btn-secondary"
+>
+    Today's Attendance
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       PAGE
+    ====================================================== */
+
+    .scan-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       ATTENDANCE TABS
+    ====================================================== */
+
+    .attendance-tabs {
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .attendance-tab {
+        min-height: 35px;
+
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+
+    .attendance-tab:hover {
+        background: #f5f5f5;
+        color: var(--text);
+    }
+
+
+    .attendance-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       MAIN SCANNER
+    ====================================================== */
+
+    .scan-grid {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr);
+
+        gap: 12px;
+    }
+
+
+    .scanner-body {
+        padding: 14px;
+    }
+
+
+    .scanner-camera {
+        position: relative;
+
+        min-height: 420px;
+
+        overflow: hidden;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #111827;
+    }
+
+
+    .scanner-camera video {
+        width: 100%;
+        height: 100%;
+
+        max-height: 520px;
+
+        display: none;
+
+        object-fit: cover;
+    }
+
+
+    .camera-placeholder {
+        padding: 30px;
+
+        color: #ffffff;
+
+        text-align: center;
+    }
+
+
+    .camera-placeholder-icon {
+        width: 54px;
+        height: 54px;
+
+        margin: 0 auto 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid rgba(255,255,255,.20);
+        border-radius: 12px;
+
+        background: rgba(255,255,255,.08);
+
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+
+    .camera-placeholder strong {
+        display: block;
+
+        font-size: 13px;
+    }
+
+
+    .camera-placeholder p {
+        max-width: 460px;
+
+        margin: 7px auto 0;
+
+        color: #cbd5e1;
+
+        font-size: 8px;
+        line-height: 1.7;
+    }
+
+
+    .scan-frame {
+        position: absolute;
+
+        z-index: 3;
+
+        width: 250px;
+        height: 250px;
+
+        border: 0;
+
+        pointer-events: none;
+    }
+
+
+    .scan-frame::before,
+    .scan-frame::after,
+    .scan-frame span::before,
+    .scan-frame span::after {
+        content: "";
+
+        position: absolute;
+
+        width: 64px;
+        height: 64px;
+
+        border-color: #ffffff;
+        border-style: solid;
+    }
+
+
+    .scan-frame::before {
+        left: 0;
+        top: 0;
+
+        border-width: 5px 0 0 5px;
+    }
+
+
+    .scan-frame::after {
+        right: 0;
+        top: 0;
+
+        border-width: 5px 5px 0 0;
+    }
+
+
+    .scan-frame span::before {
+        left: 0;
+        bottom: 0;
+
+        border-width: 0 0 5px 5px;
+    }
+
+
+    .scan-frame span::after {
+        right: 0;
+        bottom: 0;
+
+        border-width: 0 5px 5px 0;
+    }
+
+
+    .camera-actions {
+        margin-top: 10px;
+
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        flex-wrap: wrap;
+    }
+
+
+    .camera-state {
+        margin-top: 10px;
+
+        display: none;
+
+        padding: 10px 12px;
+
+        border-radius: 8px;
+
+        font-size: 8px;
+        font-weight: 650;
+
+        line-height: 1.5;
+    }
+
+
+    .camera-state.success {
+        display: block;
+
+        border: 1px solid #bbf7d0;
+
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .camera-state.error {
+        display: block;
+
+        border: 1px solid #fecaca;
+
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+
+    .camera-state.warning {
+        display: block;
+
+        border: 1px solid #fed7aa;
+
+        background: var(--orange-soft);
+        color: var(--orange);
+    }
+
+
+    /* =====================================================
+       MANUAL INPUT
+    ====================================================== */
+
+    .manual-input-panel {
+        margin-top: 12px;
+
+        padding: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #fafafa;
+    }
+
+
+    .manual-input-panel label {
+        display: block;
+
+        margin-bottom: 7px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+
+    .manual-input-row {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            auto;
+
+        gap: 8px;
+    }
+
+
+    .scan-input {
+        min-height: 42px;
+
+        padding: 0 11px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        outline: none;
+
+        font-size: 9px;
+    }
+
+
+    .scan-input:focus {
+        border-color: var(--primary);
+
+        box-shadow:
+            0 0 0 3px
+            rgba(79, 70, 229, 0.08);
+    }
+
+
+    .security-note {
+        margin-top: 12px;
+
+        padding: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #fafafa;
+    }
+
+
+    .security-note strong {
+        display: block;
+
+        font-size: 8px;
+    }
+
+
+    .security-note p {
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+        line-height: 1.6;
+    }
+
+
+    /* =====================================================
+       FULL SCREEN CONFIRMATION
+    ====================================================== */
+
+    .confirm-overlay {
+        position: fixed;
+
+        z-index: 1000;
+
+        inset: 0;
+
+        display: none;
+
+        overflow-y: auto;
+
+        padding: 18px;
+
+        background:
+            rgba(
+                15,
+                23,
+                42,
+                0.72
+            );
+
+        backdrop-filter: blur(8px);
+    }
+
+
+    .confirm-overlay.open {
+        display: block;
+    }
+
+
+    .confirm-shell {
+        width: min(720px, 100%);
+
+        min-height: calc(100vh - 36px);
+
+        margin: 0 auto;
+
+        display: flex;
+        flex-direction: column;
+
+        overflow: hidden;
+
+        border: 1px solid rgba(255,255,255,.15);
+        border-radius: 18px;
+
+        background: #ffffff;
+
+        box-shadow:
+            0 28px 80px
+            rgba(15, 23, 42, .30);
+    }
+
+
+    .confirm-topbar {
+        min-height: 68px;
+
+        padding: 14px 16px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border-bottom: 1px solid var(--border);
+
+        background: #ffffff;
+    }
+
+
+    .confirm-topbar-copy span {
+        display: block;
+
+        color: var(--green);
+
+        font-size: 8px;
+        font-weight: 800;
+
+        letter-spacing: .06em;
+
+        text-transform: uppercase;
+    }
+
+
+    .confirm-topbar-copy h2 {
+        margin: 4px 0 0;
+
+        font-size: 17px;
+        font-weight: 780;
+    }
+
+
+    .confirm-close {
+        width: 38px;
+        height: 38px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 38px;
+
+        border: 1px solid var(--border);
+        border-radius: 9px;
+
+        background: #ffffff;
+
+        color: var(--muted);
+
+        cursor: pointer;
+
+        font-size: 18px;
+    }
+
+
+    .confirm-body {
+        padding: 16px;
+
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        flex: 1;
+    }
+
+
+    /* =====================================================
+       STUDENT
+    ====================================================== */
+
+    .verified-student {
+        padding: 16px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #ffffff,
+                #f8f9ff
+            );
+    }
+
+
+    .verified-avatar {
+        width: 58px;
+        height: 58px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 58px;
+
+        border-radius: 14px;
+
+        background: var(--primary);
+
+        color: #ffffff;
+
+        font-size: 18px;
+        font-weight: 850;
+    }
+
+
+    .verified-copy {
+        min-width: 0;
+
+        flex: 1;
+    }
+
+
+    .verified-code {
+        color: var(--primary);
+
+        font-size: 8px;
+        font-weight: 800;
+    }
+
+
+    .verified-copy h3 {
+        margin: 4px 0 0;
+
+        font-size: 18px;
+        font-weight: 780;
+    }
+
+
+    .verified-copy p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+
+        line-height: 1.5;
+    }
+
+
+    .verified-badge {
+        min-height: 28px;
+
+        padding: 0 9px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        background: var(--green-soft);
+        color: var(--green);
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    /* =====================================================
+       CLASS SELECT
+    ====================================================== */
+
+    .confirm-card {
+        padding: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+    }
+
+
+    .confirm-card-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 10px;
+
+        margin-bottom: 10px;
+    }
+
+
+    .confirm-card-title h3 {
+        margin: 0;
+
+        font-size: 11px;
+        font-weight: 760;
+    }
+
+
+    .confirm-card-title span {
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .confirm-select {
+        width: 100%;
+
+        min-height: 50px;
+
+        padding: 0 12px;
+
+        border: 1px solid var(--border-strong);
+        border-radius: 10px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        outline: none;
+
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+
+    .confirm-select:focus {
+        border-color: var(--primary);
+
+        box-shadow:
+            0 0 0 3px
+            rgba(79, 70, 229, .08);
+    }
+
+
+    /* =====================================================
+       PAYMENT STATUS
+    ====================================================== */
+
+    .payment-panel {
+        overflow: hidden;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+    }
+
+
+    .payment-panel-head {
+        padding: 13px 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 10px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .payment-panel-head h3 {
+        margin: 0;
+
+        font-size: 11px;
+    }
+
+
+    .payment-month {
+        color: var(--muted);
+
+        font-size: 7px;
+        font-weight: 650;
+    }
+
+
+    .payment-status-large {
+        min-height: 38px;
+
+        padding: 0 13px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        font-size: 10px;
+        font-weight: 850;
+    }
+
+
+    .payment-status-large.paid {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .payment-status-large.partial {
+        background: var(--orange-soft);
+        color: var(--orange);
+    }
+
+
+    .payment-status-large.unpaid {
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+
+    .payment-status-large.free-card {
+        background: var(--blue-soft);
+        color: var(--blue);
+    }
+
+
+    .payment-status-large.unknown {
+        background: #f4f4f5;
+        color: var(--muted);
+    }
+
+
+    .payment-summary-grid {
+        padding: 14px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+
+        gap: 9px;
+    }
+
+
+    .payment-summary-item {
+        min-height: 78px;
+
+        padding: 12px;
+
+        border: 1px solid var(--border) !important;
+        border-radius: 9px;
+
+        background: #fafafa !important;
+        color: var(--text) !important;
+    }
+
+
+    .payment-summary-item span {
+        display: block;
+
+        color: var(--muted) !important;
+
+        font-size: 7px;
+    }
+
+
+    .payment-summary-item strong {
+        display: block;
+
+        margin-top: 7px;
+
+        color: var(--text) !important;
+
+        font-size: 14px;
+        font-weight: 780;
+    }
+
+
+    .payment-summary-item.paid strong {
+        color: var(--green) !important;
+    }
+
+
+    .payment-summary-item.balance strong {
+        color: var(--orange) !important;
+    }
+
+
+    .payment-message {
+        margin: 0 14px 14px;
+
+        padding: 10px 11px;
+
+        border-radius: 8px;
+
+        font-size: 8px;
+        font-weight: 650;
+
+        line-height: 1.5;
+    }
+
+
+    .payment-message.paid {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .payment-message.partial {
+        background: var(--orange-soft);
+        color: var(--orange);
+    }
+
+
+    .payment-message.unpaid {
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+
+    .payment-message.free-card {
+        background: var(--blue-soft);
+        color: var(--blue);
+    }
+
+
+    /* =====================================================
+       OUTSTANDING / ARREARS
+    ====================================================== */
+
+    .outstanding-panel {
+        display: none;
+        margin: 0 14px 14px;
+        overflow: hidden;
+        border: 1px solid #fecaca;
+        border-radius: 10px;
+        background: #fff7f7;
+    }
+
+    .outstanding-panel.show {
+        display: block;
+    }
+
+    .outstanding-head {
+        padding: 11px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        border-bottom: 1px solid #fecaca;
+        background: #fff1f1;
+    }
+
+    .outstanding-head strong {
+        color: var(--red);
+        font-size: 9px;
+        font-weight: 850;
+    }
+
+    .outstanding-count {
+        min-height: 24px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: #ffffff;
+        color: var(--red);
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+    .outstanding-list {
+        padding: 6px 12px;
+    }
+
+    .outstanding-row {
+        padding: 9px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid #fee2e2;
+    }
+
+    .outstanding-row:last-child {
+        border-bottom: 0;
+    }
+
+    .outstanding-row-copy {
+        min-width: 0;
+    }
+
+    .outstanding-row-copy strong {
+        display: block;
+        color: var(--text);
+        font-size: 8px;
+    }
+
+    .outstanding-row-copy span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .outstanding-row-amount {
+        flex: 0 0 auto;
+        color: var(--red);
+        font-size: 9px;
+        font-weight: 850;
+    }
+
+    .outstanding-total {
+        padding: 11px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-top: 1px solid #fecaca;
+        background: #ffffff;
+    }
+
+    .outstanding-total span {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+    .outstanding-total strong {
+        color: var(--red);
+        font-size: 13px;
+        font-weight: 900;
+    }
+
+
+    /* =====================================================
+       CONFIRM BUTTON
+    ====================================================== */
+
+    .confirm-action-area {
+        margin-top: auto;
+
+        padding-top: 4px;
+    }
+
+
+    .confirm-main-button {
+        width: 100%;
+
+        min-height: 54px;
+
+        border: 1px solid var(--primary);
+        border-radius: 11px;
+
+        background: var(--primary);
+
+        color: #ffffff;
+
+        cursor: pointer;
+
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+
+    .confirm-main-button:hover {
+        background: var(--primary-hover);
+    }
+
+
+    .confirm-main-button:disabled {
+        border-color: #c7d2fe;
+
+        background: #c7d2fe;
+
+        cursor: not-allowed;
+    }
+
+
+    .add-payment-button {
+        width: 100%;
+        min-height: 54px;
+        margin-bottom: 10px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px solid var(--orange) !important;
+        border-radius: 11px;
+        background: var(--orange) !important;
+        color: #ffffff !important;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 850;
+        text-decoration: none;
+        box-shadow: 0 8px 20px rgba(234, 88, 12, .16);
+    }
+
+    .add-payment-button.show {
+        display: flex;
+    }
+
+    .add-payment-button:hover {
+        background: #c2410c !important;
+    }
+
+
+    .secondary-big-button {
+        width: 100%;
+
+        min-height: 46px;
+
+        margin-top: 8px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        cursor: pointer;
+
+        font-size: 9px;
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       RESULT SCREEN
+    ====================================================== */
+
+    .result-screen {
+        display: none;
+    }
+
+
+    .result-screen.show {
+        display: flex;
+
+        min-height: 500px;
+
+        flex: 1;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+
+    .result-card {
+        padding: 24px 18px;
+
+        border: 1px solid var(--border);
+        border-radius: 14px;
+
+        text-align: center;
+    }
+
+
+    .result-icon {
+        width: 72px;
+        height: 72px;
+
+        margin: 0 auto 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 50%;
+
+        font-size: 28px;
+        font-weight: 850;
+    }
+
+
+    .result-card.success .result-icon {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .result-card.warning .result-icon {
+        background: var(--orange-soft);
+        color: var(--orange);
+    }
+
+
+    .result-card.error .result-icon {
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+
+    .result-card h2 {
+        margin: 0;
+
+        font-size: 19px;
+    }
+
+
+    .result-card > p {
+        max-width: 520px;
+
+        margin: 8px auto 0;
+
+        color: var(--muted);
+
+        font-size: 9px;
+
+        line-height: 1.65;
+    }
+
+
+    .result-student {
+        margin-top: 15px;
+
+        font-size: 12px;
+        font-weight: 780;
+    }
+
+
+    .result-meta {
+        margin-top: 4px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .result-payment {
+        margin-top: 16px;
+
+        padding: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 11px;
+
+        background: #fafafa;
+
+        text-align: left;
+    }
+
+
+    .result-payment-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 10px;
+    }
+
+
+    .result-payment-grid {
+        margin-top: 10px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+
+        gap: 8px;
+    }
+
+
+    .result-payment-grid div {
+        padding: 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+    }
+
+
+    .result-payment-grid span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .result-payment-grid strong {
+        display: block;
+
+        margin-top: 5px;
+
+        font-size: 10px;
+    }
+
+
+    /* =====================================================
+       MOBILE
+    ====================================================== */
+
+    @media (max-width: 700px) {
+
+        .scanner-camera {
+            min-height: 470px;
+        }
+
+
+        .confirm-overlay {
+            padding: 0;
+
+            background: #ffffff;
+        }
+
+
+        .confirm-shell {
+            width: 100%;
+
+            min-height: 100vh;
+
+            border: 0;
+            border-radius: 0;
+
+            box-shadow: none;
+        }
+
+
+        .confirm-topbar {
+            position: sticky;
+
+            z-index: 3;
+
+            top: 0;
+        }
+
+
+        .confirm-body {
+            padding: 14px;
+        }
+
+
+        .verified-student {
+            align-items: flex-start;
+        }
+
+
+        .verified-badge {
+            display: none;
+        }
+
+
+        .payment-summary-grid,
+        .result-payment-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .manual-input-row {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 480px) {
+
+        .scanner-camera {
+            min-height: 430px;
+        }
+
+
+        .scan-frame {
+            width: 220px;
+            height: 220px;
+        }
+
+
+        .verified-copy h3 {
+            font-size: 16px;
+        }
+
+
+        .confirm-select {
+            min-height: 54px;
+
+            font-size: 9px;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="scan-page">
+
+
+    <!-- =================================================
+         ATTENDANCE NAVIGATION
+    ================================================== -->
+
+    <nav class="attendance-tabs">
+
+        <a
+            href="{{ url_for('attendance_today') }}"
+            class="attendance-tab"
+        >
+            Today
+        </a>
+
+
+        <a
+            href="{{ url_for('scan_qr') }}"
+            class="attendance-tab active"
+        >
+            Scan QR
+        </a>
+
+
+        <a
+            href="{{ url_for('class_attendance') }}"
+            class="attendance-tab"
+        >
+            Class Attendance
+        </a>
+
+
+        <a
+            href="{{ url_for('attendance_list') }}"
+            class="attendance-tab"
+        >
+            History
+        </a>
+
+    </nav>
+
+
+    <!-- =================================================
+         SCANNER
+    ================================================== -->
+
+    <div class="scan-grid">
+
+        <section class="ui-panel">
+
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        QR Scanner
+                    </h2>
+
+                    <p>
+                        Scan the student's secure Sri Sumana QR pass
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="scanner-body">
+
+
+                <div class="scanner-camera">
+
+
+                    <video
+                        id="cameraVideo"
+                        playsinline
+                        muted
+                    ></video>
+
+
+                    <div
+                        id="cameraPlaceholder"
+                        class="camera-placeholder"
+                    >
+
+                        <div class="camera-placeholder-icon">
+                            QR
+                        </div>
+
+                        <strong>
+                            Camera is off
+                        </strong>
+
+                        <p>
+                            Start the camera and hold the student's QR
+                            inside the scan area.
+                        </p>
+
+                    </div>
+
+
+                    <div class="scan-frame">
+                        <span></span>
+                    </div>
+
+
+                </div>
+
+
+                <div class="camera-actions">
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="startCameraButton"
+                    >
+                        Start Camera
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="stopCameraButton"
+                    >
+                        Stop Camera
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="cameraState"
+                    class="camera-state"
+                ></div>
+
+
+                <div class="manual-input-panel">
+
+                    <label for="qrInput">
+                        QR Value / USB Scanner Input
+                    </label>
+
+
+                    <div class="manual-input-row">
+
+                        <input
+                            type="text"
+                            id="qrInput"
+                            class="scan-input"
+                            placeholder="SSCQR:..."
+                            autocomplete="off"
+                        >
+
+
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            id="verifyButton"
+                        >
+                            Verify
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="security-note">
+
+                    <strong>
+                        Secure attendance scanning
+                    </strong>
+
+                    <p>
+                        The QR pass contains only a secure token.
+                        Student information is verified by the server
+                        before attendance can be recorded.
+                    </p>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     FULL SCREEN CONFIRMATION
+====================================================== -->
+
+<div
+    id="confirmOverlay"
+    class="confirm-overlay"
+    aria-hidden="true"
+>
+
+    <div class="confirm-shell">
+
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <div class="confirm-topbar">
+
+            <div class="confirm-topbar-copy">
+
+                <span>
+                    QR Verified
+                </span>
+
+                <h2>
+                    Attendance Confirmation
+                </h2>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="confirm-close"
+                id="closeConfirmButton"
+                aria-label="Close confirmation"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             CONFIRMATION CONTENT
+        ================================================== -->
+
+        <div
+            id="confirmationContent"
+            class="confirm-body"
+        >
+
+
+            <!-- =============================================
+                 STUDENT
+            ============================================== -->
+
+            <section class="verified-student">
+
+
+                <div
+                    id="verifiedAvatar"
+                    class="verified-avatar"
+                >
+                    S
+                </div>
+
+
+                <div class="verified-copy">
+
+                    <span
+                        id="verifiedCode"
+                        class="verified-code"
+                    >
+                        —
+                    </span>
+
+                    <h3 id="verifiedName">
+                        Student
+                    </h3>
+
+                    <p id="verifiedMeta">
+                        —
+                    </p>
+
+                </div>
+
+
+                <div class="verified-badge">
+                    VERIFIED
+                </div>
+
+
+            </section>
+
+
+            <!-- =============================================
+                 CLASS SELECT
+            ============================================== -->
+
+            <section class="confirm-card">
+
+
+                <div class="confirm-card-title">
+
+                    <h3>
+                        Select Attendance Class
+                    </h3>
+
+                    <span>
+                        Required
+                    </span>
+
+                </div>
+
+
+                <select
+                    id="attendanceClass"
+                    class="confirm-select"
+                >
+
+                    <option value="">
+                        Select class
+                    </option>
+
+                </select>
+
+
+            </section>
+
+
+            <!-- =============================================
+                 PAYMENT
+            ============================================== -->
+
+            <section class="payment-panel">
+
+
+                <div class="payment-panel-head">
+
+                    <div>
+
+                        <h3>
+                            Payment Status
+                        </h3>
+
+                        <div
+                            id="paymentMonth"
+                            class="payment-month"
+                        >
+                            Current fee month
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="paymentStatus"
+                        class="payment-status-large unknown"
+                    >
+                        —
+                    </div>
+
+                </div>
+
+
+                <div class="payment-summary-grid">
+
+
+                    <div class="payment-summary-item">
+
+                        <span>
+                            Monthly Fee
+                        </span>
+
+                        <strong id="paymentFee">
+                            Rs. 0
+                        </strong>
+
+                    </div>
+
+
+                    <div class="payment-summary-item paid">
+
+                        <span>
+                            Paid
+                        </span>
+
+                        <strong id="paymentPaid">
+                            Rs. 0
+                        </strong>
+
+                    </div>
+
+
+                    <div class="payment-summary-item balance">
+
+                        <span>
+                            Balance
+                        </span>
+
+                        <strong id="paymentBalance">
+                            Rs. 0
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+                <div
+                    id="paymentMessage"
+                    class="payment-message unpaid"
+                >
+                    Select a class to view payment status.
+                </div>
+
+
+                <div
+                    id="outstandingPanel"
+                    class="outstanding-panel"
+                >
+
+                    <div class="outstanding-head">
+                        <strong>
+                            ⚠ Outstanding Class Fees
+                        </strong>
+
+                        <span
+                            id="outstandingCount"
+                            class="outstanding-count"
+                        >
+                            0 months
+                        </span>
+                    </div>
+
+                    <div
+                        id="outstandingList"
+                        class="outstanding-list"
+                    ></div>
+
+                    <div class="outstanding-total">
+                        <span>
+                            Total Outstanding
+                        </span>
+
+                        <strong id="outstandingTotal">
+                            Rs. 0
+                        </strong>
+                    </div>
+
+                </div>
+
+
+            </section>
+
+
+            <!-- =============================================
+                 ACTION
+            ============================================== -->
+
+            <div class="confirm-action-area">
+
+                <button
+                    type="button"
+                    id="addPaymentButton"
+                    class="add-payment-button"
+                >
+                    + Add Payment
+                </button>
+
+
+                <button
+                    type="button"
+                    id="confirmAttendanceButton"
+                    class="confirm-main-button"
+                    disabled
+                >
+                    Confirm Attendance
+                </button>
+
+
+                <button
+                    type="button"
+                    id="scanAnotherButton"
+                    class="secondary-big-button"
+                >
+                    Scan Another Student
+                </button>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- =================================================
+             RESULT
+        ================================================== -->
+
+        <div
+            id="resultScreen"
+            class="confirm-body result-screen"
+        >
+
+            <div
+                id="resultCard"
+                class="result-card"
+            >
+
+                <div
+                    id="resultIcon"
+                    class="result-icon"
+                >
+                    ✓
+                </div>
+
+
+                <h2 id="resultTitle">
+                    Attendance Marked
+                </h2>
+
+
+                <p id="resultMessage">
+                    Attendance result
+                </p>
+
+
+                <div
+                    id="resultStudent"
+                    class="result-student"
+                ></div>
+
+
+                <div
+                    id="resultMeta"
+                    class="result-meta"
+                ></div>
+
+
+                <div
+                    id="resultPayment"
+                    class="result-payment"
+                    style="display:none;"
+                >
+
+
+                    <div class="result-payment-top">
+
+                        <strong>
+                            Payment Status
+                        </strong>
+
+
+                        <div
+                            id="resultPaymentStatus"
+                            class="payment-status-large unknown"
+                        >
+                            —
+                        </div>
+
+                    </div>
+
+
+                    <div class="result-payment-grid">
+
+
+                        <div>
+
+                            <span>
+                                Monthly Fee
+                            </span>
+
+                            <strong id="resultFee">
+                                Rs. 0
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Paid
+                            </span>
+
+                            <strong id="resultPaid">
+                                Rs. 0
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Balance
+                            </span>
+
+                            <strong id="resultBalance">
+                                Rs. 0
+                            </strong>
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="resultAddPaymentButton"
+                    class="add-payment-button"
+                    style="margin-top:16px;"
+                >
+                    + Add Payment
+                </button>
+
+
+                <button
+                    type="button"
+                    id="resultScanAnotherButton"
+                    class="confirm-main-button"
+                    style="margin-top:8px;"
+                >
+                    Scan Next Student
+                </button>
+
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+    /* =====================================================
+       STATE
+    ====================================================== */
+
+    let verifiedData =
+        null;
+
+    let cameraStream =
+        null;
+
+    let qrDetector =
+        null;
+
+    let cameraRunning =
+        false;
+
+    let scanLocked =
+        false;
+
+
+    /* =====================================================
+       HELPERS
+    ====================================================== */
+
+    function money(value) {
+
+        const number =
+            Number(
+                value || 0
+            );
+
+
+        return (
+            "Rs. "
+            +
+            number.toLocaleString(
+                undefined,
+                {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2
+                }
+            )
+        );
+
+    }
+
+
+    function statusCss(status) {
+
+        const normalized =
+            String(
+                status || ""
+            )
+            .toUpperCase();
+
+
+        if (
+            normalized === "PAID"
+        ) {
+
+            return "paid";
+
+        }
+
+
+        if (
+            normalized === "PARTIAL"
+        ) {
+
+            return "partial";
+
+        }
+
+
+        if (
+            normalized === "UNPAID"
+        ) {
+
+            return "unpaid";
+
+        }
+
+
+        if (
+            normalized === "FREE CARD"
+        ) {
+
+            return "free-card";
+
+        }
+
+
+        return "unknown";
+
+    }
+
+
+    function showCameraState(
+        message,
+        type
+    ) {
+
+        const box =
+            document.getElementById(
+                "cameraState"
+            );
+
+
+        box.textContent =
+            message;
+
+
+        box.className =
+            "camera-state "
+            +
+            type;
+
+    }
+
+
+    function clearCameraState() {
+
+        const box =
+            document.getElementById(
+                "cameraState"
+            );
+
+
+        box.className =
+            "camera-state";
+
+
+        box.textContent =
+            "";
+
+    }
+
+
+    function getInitials(name) {
+
+        const parts =
+            String(
+                name || "Student"
+            )
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean);
+
+
+        if (
+            parts.length === 0
+        ) {
+
+            return "S";
+
+        }
+
+
+        return parts
+            .slice(0, 2)
+            .map(
+                function(part) {
+
+                    return part[0];
+
+                }
+            )
+            .join("")
+            .toUpperCase();
+
+    }
+
+
+    /* =====================================================
+       FULL SCREEN MODAL
+    ====================================================== */
+
+    function openConfirmation() {
+
+        const overlay =
+            document.getElementById(
+                "confirmOverlay"
+            );
+
+
+        overlay.classList.add(
+            "open"
+        );
+
+
+        overlay.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+
+        document.body.style.overflow =
+            "hidden";
+
+    }
+
+
+    function closeConfirmation() {
+
+        const overlay =
+            document.getElementById(
+                "confirmOverlay"
+            );
+
+
+        overlay.classList.remove(
+            "open"
+        );
+
+
+        overlay.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+
+        document.body.style.overflow =
+            "";
+
+    }
+
+
+    function resetConfirmationView() {
+
+        document.getElementById(
+            "confirmationContent"
+        ).style.display =
+            "flex";
+
+
+        const resultScreen =
+            document.getElementById(
+                "resultScreen"
+            );
+
+
+        resultScreen.classList.remove(
+            "show"
+        );
+
+
+        document.getElementById(
+            "resultPayment"
+        ).style.display =
+            "none";
+
+    }
+
+
+    /* =====================================================
+       PAYMENT
+    ====================================================== */
+
+    function selectedClass() {
+
+        if (
+            !verifiedData
+            ||
+            !verifiedData.classes
+        ) {
+
+            return null;
+
+        }
+
+
+        const classCode =
+            document.getElementById(
+                "attendanceClass"
+            ).value;
+
+
+        return verifiedData.classes.find(
+            function(item) {
+
+                return (
+                    String(
+                        item.class_code
+                    )
+                    ===
+                    String(
+                        classCode
+                    )
+                );
+
+            }
+        ) || null;
+
+    }
+
+
+    function renderPayment(
+        classItem
+    ) {
+
+        const payment =
+            classItem
+            &&
+            classItem.payment
+            ?
+            classItem.payment
+            :
+            {};
+
+
+        const status =
+            String(
+                payment.status
+                ||
+                classItem?.payment_status
+                ||
+                "UNKNOWN"
+            ).toUpperCase();
+
+
+        const css =
+            statusCss(
+                status
+            );
+
+
+        const statusBox =
+            document.getElementById(
+                "paymentStatus"
+            );
+
+
+        statusBox.className =
+            "payment-status-large "
+            +
+            css;
+
+
+        statusBox.textContent =
+            status;
+
+
+        document.getElementById(
+            "paymentFee"
+        ).textContent =
+            money(
+                payment.fee
+                ??
+                classItem?.monthly_fee
+                ??
+                0
+            );
+
+
+        document.getElementById(
+            "paymentPaid"
+        ).textContent =
+            money(
+                payment.paid
+                ??
+                classItem?.paid
+                ??
+                0
+            );
+
+
+        const balanceElement =
+            document.getElementById(
+                "paymentBalance"
+            );
+
+
+        if (
+            status === "FREE CARD"
+        ) {
+
+            balanceElement.textContent =
+                "WAIVED";
+
+        }
+
+        else {
+
+            balanceElement.textContent =
+                money(
+                    payment.balance
+                    ??
+                    classItem?.balance
+                    ??
+                    0
+                );
+
+        }
+
+
+        const message =
+            document.getElementById(
+                "paymentMessage"
+            );
+
+
+        message.className =
+            "payment-message "
+            +
+            css;
+
+
+        if (
+            status === "PAID"
+        ) {
+
+            message.textContent =
+                "Monthly class fee is fully paid.";
+
+        }
+
+        else if (
+            status === "PARTIAL"
+        ) {
+
+            message.textContent =
+                (
+                    "Partial payment received. Remaining balance: "
+                    +
+                    money(
+                        payment.balance
+                        ??
+                        classItem?.balance
+                        ??
+                        0
+                    )
+                );
+
+        }
+
+        else if (
+            status === "UNPAID"
+        ) {
+
+            message.textContent =
+                (
+                    "Monthly class fee is unpaid. Outstanding balance: "
+                    +
+                    money(
+                        payment.balance
+                        ??
+                        classItem?.balance
+                        ??
+                        0
+                    )
+                );
+
+        }
+
+        else if (
+            status === "FREE CARD"
+        ) {
+
+            message.textContent =
+                "Approved Free Card — this month's class fee is waived.";
+
+        }
+
+        else {
+
+            message.textContent =
+                "Payment status is not available.";
+
+        }
+
+
+        const outstanding =
+            classItem?.outstanding
+            ||
+            {};
+
+
+        renderOutstanding(
+            outstanding
+        );
+
+
+        const hasOutstanding =
+            Number(
+                outstanding.total_outstanding
+                || 0
+            ) > 0;
+
+
+        const addPaymentButton =
+            document.getElementById(
+                "addPaymentButton"
+            );
+
+
+        if (
+            status === "UNPAID"
+            ||
+            status === "PARTIAL"
+            ||
+            hasOutstanding
+        ) {
+
+            addPaymentButton.classList.add(
+                "show"
+            );
+
+        }
+
+        else {
+
+            addPaymentButton.classList.remove(
+                "show"
+            );
+
+        }
+
+    }
+
+
+
+    function renderOutstanding(
+        summary
+    ) {
+
+        const panel =
+            document.getElementById(
+                "outstandingPanel"
+            );
+
+        const list =
+            document.getElementById(
+                "outstandingList"
+            );
+
+        const count =
+            document.getElementById(
+                "outstandingCount"
+            );
+
+        const total =
+            document.getElementById(
+                "outstandingTotal"
+            );
+
+        const months =
+            Array.isArray(
+                summary?.months
+            )
+            ? summary.months
+            : [];
+
+        const totalOutstanding =
+            Number(
+                summary?.total_outstanding
+                || 0
+            );
+
+        list.innerHTML = "";
+
+        if (
+            months.length === 0
+            ||
+            totalOutstanding <= 0
+        ) {
+            panel.classList.remove(
+                "show"
+            );
+
+            count.textContent =
+                "0 months";
+
+            total.textContent =
+                money(0);
+
+            return;
+        }
+
+        months.forEach(
+            function(item) {
+
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+                row.className =
+                    "outstanding-row";
+
+                const copy =
+                    document.createElement(
+                        "div"
+                    );
+
+                copy.className =
+                    "outstanding-row-copy";
+
+                const month =
+                    document.createElement(
+                        "strong"
+                    );
+
+                month.textContent =
+                    item.month_label
+                    ||
+                    item.fee_month
+                    ||
+                    "Fee month";
+
+                const meta =
+                    document.createElement(
+                        "span"
+                    );
+
+                meta.textContent =
+                    (
+                        String(
+                            item.status
+                            ||
+                            "UNPAID"
+                        ).toUpperCase()
+                        +
+                        " · Paid "
+                        +
+                        money(
+                            item.paid
+                            || 0
+                        )
+                    );
+
+                const amount =
+                    document.createElement(
+                        "div"
+                    );
+
+                amount.className =
+                    "outstanding-row-amount";
+
+                amount.textContent =
+                    money(
+                        item.balance
+                        || 0
+                    );
+
+                copy.appendChild(month);
+                copy.appendChild(meta);
+                row.appendChild(copy);
+                row.appendChild(amount);
+                list.appendChild(row);
+
+            }
+        );
+
+        count.textContent =
+            (
+                months.length
+                +
+                (
+                    months.length === 1
+                    ? " month"
+                    : " months"
+                )
+            );
+
+        total.textContent =
+            money(
+                totalOutstanding
+            );
+
+        panel.classList.add(
+            "show"
+        );
+
+    }
+
+
+    function clearOutstanding() {
+
+        renderOutstanding(
+            {
+                months: [],
+                total_outstanding: 0
+            }
+        );
+
+    }
+
+
+    function clearPayment() {
+
+        const status =
+            document.getElementById(
+                "paymentStatus"
+            );
+
+
+        status.className =
+            "payment-status-large unknown";
+
+
+        status.textContent =
+            "—";
+
+
+        document.getElementById(
+            "paymentFee"
+        ).textContent =
+            "Rs. 0";
+
+
+        document.getElementById(
+            "paymentPaid"
+        ).textContent =
+            "Rs. 0";
+
+
+        document.getElementById(
+            "paymentBalance"
+        ).textContent =
+            "Rs. 0";
+
+
+        const message =
+            document.getElementById(
+                "paymentMessage"
+            );
+
+
+        message.className =
+            "payment-message unpaid";
+
+
+        message.textContent =
+            "Select a class to view payment status.";
+
+
+        document.getElementById(
+            "addPaymentButton"
+        ).classList.remove(
+            "show"
+        );
+
+
+        clearOutstanding();
+
+    }
+
+
+    /* =====================================================
+       QR VERIFY
+    ====================================================== */
+
+    async function verifyQr(
+        qrValue
+    ) {
+
+        const value =
+            String(
+                qrValue
+                ||
+                document.getElementById(
+                    "qrInput"
+                ).value
+                ||
+                ""
+            ).trim();
+
+
+        if (
+            !value
+        ) {
+
+            showCameraState(
+                "Scan or enter a QR value first.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        clearCameraState();
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "{{ url_for('verify_qr') }}",
+                    {
+                        method:
+                            "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                {
+                                    qr_value:
+                                        value
+                                }
+                            )
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !response.ok
+                ||
+                !data.success
+            ) {
+
+                verifiedData =
+                    null;
+
+
+                showCameraState(
+                    data.message
+                    ||
+                    "QR verification failed.",
+                    "error"
+                );
+
+
+                return;
+
+            }
+
+
+            verifiedData =
+                data;
+
+
+            stopCamera();
+
+
+            renderVerifiedStudent(
+                data
+            );
+
+
+            resetConfirmationView();
+
+
+            openConfirmation();
+
+        }
+
+        catch (error) {
+
+            showCameraState(
+                "Could not verify QR. Please try again.",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       VERIFIED STUDENT
+    ====================================================== */
+
+    function renderVerifiedStudent(
+        data
+    ) {
+
+        const student =
+            data.student;
+
+
+        document.getElementById(
+            "verifiedAvatar"
+        ).textContent =
+            getInitials(
+                student.full_name
+            );
+
+
+        document.getElementById(
+            "verifiedCode"
+        ).textContent =
+            student.student_code;
+
+
+        document.getElementById(
+            "verifiedName"
+        ).textContent =
+            student.full_name;
+
+
+        const metaParts =
+            [];
+
+
+        if (
+            student.grade
+        ) {
+
+            metaParts.push(
+                student.grade
+            );
+
+        }
+
+
+        if (
+            student.school
+        ) {
+
+            metaParts.push(
+                student.school
+            );
+
+        }
+
+
+        document.getElementById(
+            "verifiedMeta"
+        ).textContent =
+            metaParts.join(
+                " · "
+            )
+            ||
+            "Active student";
+
+
+        document.getElementById(
+            "paymentMonth"
+        ).textContent =
+            data.month_label
+            ||
+            data.fee_month
+            ||
+            "Current fee month";
+
+
+        const select =
+            document.getElementById(
+                "attendanceClass"
+            );
+
+
+        select.innerHTML =
+            "";
+
+
+        if (
+            !data.classes
+            ||
+            data.classes.length === 0
+        ) {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                "";
+
+
+            option.textContent =
+                "No active class available";
+
+
+            select.appendChild(
+                option
+            );
+
+
+            select.disabled =
+                true;
+
+
+            document.getElementById(
+                "confirmAttendanceButton"
+            ).disabled =
+                true;
+
+
+            clearPayment();
+
+
+            return;
+
+        }
+
+
+        select.disabled =
+            false;
+
+
+        data.classes.forEach(
+            function(item) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    item.class_code;
+
+
+                const teacherName =
+                    item.teacher_name
+                    ||
+                    item.teacher
+                    ||
+                    "";
+
+
+                option.textContent =
+                    [
+                        item.class_code,
+                        item.class_name
+                        ||
+                        item.subject,
+                        teacherName
+                    ]
+                    .filter(Boolean)
+                    .join(
+                        " · "
+                    );
+
+
+                select.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        select.value =
+            data.classes[0]
+                .class_code;
+
+
+        renderPayment(
+            data.classes[0]
+        );
+
+
+        document.getElementById(
+            "confirmAttendanceButton"
+        ).disabled =
+            false;
+
+    }
+
+
+    /* =====================================================
+       CLASS CHANGE
+    ====================================================== */
+
+    function handleClassChange() {
+
+        const classItem =
+            selectedClass();
+
+
+        if (
+            !classItem
+        ) {
+
+            clearPayment();
+
+
+            document.getElementById(
+                "confirmAttendanceButton"
+            ).disabled =
+                true;
+
+
+            return;
+
+        }
+
+
+        renderPayment(
+            classItem
+        );
+
+
+        document.getElementById(
+            "confirmAttendanceButton"
+        ).disabled =
+            false;
+
+    }
+
+
+    /* =====================================================
+       MARK ATTENDANCE
+    ====================================================== */
+
+    async function markAttendance() {
+
+        if (
+            !verifiedData
+        ) {
+
+            return;
+
+        }
+
+
+        const classItem =
+            selectedClass();
+
+
+        if (
+            !classItem
+        ) {
+
+            return;
+
+        }
+
+
+        const button =
+            document.getElementById(
+                "confirmAttendanceButton"
+            );
+
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "Saving Attendance...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "{{ url_for('mark_attendance') }}",
+                    {
+                        method:
+                            "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                {
+                                    token:
+                                        verifiedData.token,
+
+                                    class_code:
+                                        classItem.class_code
+                                }
+                            )
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            renderResult(
+                data,
+                response.ok,
+                classItem
+            );
+
+        }
+
+        catch (error) {
+
+            renderResult(
+                {
+                    message:
+                        "Could not mark attendance."
+                },
+                false,
+                classItem
+            );
+
+        }
+
+        finally {
+
+            button.disabled =
+                false;
+
+
+            button.textContent =
+                "Confirm Attendance";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       RESULT
+    ====================================================== */
+
+    function renderResult(
+        data,
+        success,
+        classItem
+    ) {
+
+        document.getElementById(
+            "confirmationContent"
+        ).style.display =
+            "none";
+
+
+        const resultScreen =
+            document.getElementById(
+                "resultScreen"
+            );
+
+
+        resultScreen.classList.add(
+            "show"
+        );
+
+
+        const card =
+            document.getElementById(
+                "resultCard"
+            );
+
+
+        const icon =
+            document.getElementById(
+                "resultIcon"
+            );
+
+
+        const title =
+            document.getElementById(
+                "resultTitle"
+            );
+
+
+        if (
+            success
+        ) {
+
+            card.className =
+                "result-card success";
+
+
+            icon.textContent =
+                "✓";
+
+
+            title.textContent =
+                "Attendance Marked";
+
+        }
+
+        else if (
+            data.duplicate
+        ) {
+
+            card.className =
+                "result-card warning";
+
+
+            icon.textContent =
+                "!";
+
+
+            title.textContent =
+                "Already Marked";
+
+        }
+
+        else {
+
+            card.className =
+                "result-card error";
+
+
+            icon.textContent =
+                "×";
+
+
+            title.textContent =
+                "Attendance Failed";
+
+        }
+
+
+        document.getElementById(
+            "resultMessage"
+        ).textContent =
+            data.message
+            ||
+            "Attendance result";
+
+
+        const student =
+            data.student
+            ||
+            verifiedData?.student
+            ||
+            {};
+
+
+        document.getElementById(
+            "resultStudent"
+        ).textContent =
+            [
+                student.student_code,
+                student.full_name
+            ]
+            .filter(Boolean)
+            .join(
+                " · "
+            );
+
+
+        const resultMetaParts =
+            [];
+
+
+        if (
+            classItem
+        ) {
+
+            resultMetaParts.push(
+                [
+                    classItem.class_code,
+                    classItem.class_name
+                    ||
+                    classItem.subject
+                ]
+                .filter(Boolean)
+                .join(
+                    " · "
+                )
+            );
+
+        }
+
+
+        if (
+            data.check_in_time
+        ) {
+
+            resultMetaParts.push(
+                "Check-in "
+                +
+                data.check_in_time
+            );
+
+        }
+
+
+        document.getElementById(
+            "resultMeta"
+        ).textContent =
+            resultMetaParts.join(
+                " · "
+            );
+
+
+        const payment =
+            data.payment
+            ||
+            classItem?.payment
+            ||
+            null;
+
+
+        if (
+            payment
+        ) {
+
+            if (
+                classItem
+                &&
+                data.outstanding
+            ) {
+                classItem.outstanding =
+                    data.outstanding;
+            }
+
+
+            renderResultPayment(
+                payment,
+                classItem
+            );
+
+        }
+
+        else {
+
+            document.getElementById(
+                "resultPayment"
+            ).style.display =
+                "none";
+
+
+            document.getElementById(
+                "resultAddPaymentButton"
+            ).classList.remove(
+                "show"
+            );
+
+        }
+
+    }
+
+
+    function renderResultPayment(
+        payment,
+        classItem
+    ) {
+
+        const status =
+            String(
+                payment.status
+                ||
+                "UNKNOWN"
+            ).toUpperCase();
+
+
+        const css =
+            statusCss(
+                status
+            );
+
+
+        const box =
+            document.getElementById(
+                "resultPaymentStatus"
+            );
+
+
+        box.className =
+            "payment-status-large "
+            +
+            css;
+
+
+        box.textContent =
+            status;
+
+
+        document.getElementById(
+            "resultFee"
+        ).textContent =
+            money(
+                payment.fee
+                ||
+                0
+            );
+
+
+        document.getElementById(
+            "resultPaid"
+        ).textContent =
+            money(
+                payment.paid
+                ||
+                0
+            );
+
+
+        document.getElementById(
+            "resultBalance"
+        ).textContent =
+            (
+                status === "FREE CARD"
+                ?
+                "WAIVED"
+                :
+                money(
+                    payment.balance
+                    ||
+                    0
+                )
+            );
+
+
+        document.getElementById(
+            "resultPayment"
+        ).style.display =
+            "block";
+
+
+        const resultAddPaymentButton =
+            document.getElementById(
+                "resultAddPaymentButton"
+            );
+
+
+        const hasOutstanding =
+            Number(
+                classItem?.outstanding?.total_outstanding
+                || 0
+            ) > 0;
+
+
+        if (
+            status === "UNPAID"
+            ||
+            status === "PARTIAL"
+            ||
+            hasOutstanding
+        ) {
+
+            resultAddPaymentButton.classList.add(
+                "show"
+            );
+
+        }
+
+        else {
+
+            resultAddPaymentButton.classList.remove(
+                "show"
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       ADD PAYMENT
+    ====================================================== */
+
+    function openPaymentForm() {
+
+        if (
+            !verifiedData
+        ) {
+
+            return;
+
+        }
+
+
+        const classItem =
+            selectedClass();
+
+
+        if (
+            !classItem
+        ) {
+
+            return;
+
+        }
+
+
+        const payment =
+            classItem.payment
+            ||
+            {};
+
+
+        const status =
+            String(
+                payment.status
+                ||
+                classItem.payment_status
+                ||
+                ""
+            ).toUpperCase();
+
+
+        const outstanding =
+            classItem.outstanding
+            ||
+            {};
+
+
+        const dueMonths =
+            Array.isArray(
+                outstanding.months
+            )
+            ? outstanding.months
+            : [];
+
+
+        const oldestDue =
+            dueMonths.length > 0
+            ? dueMonths[0]
+            : null;
+
+
+        if (
+            !oldestDue
+            &&
+            status !== "UNPAID"
+            &&
+            status !== "PARTIAL"
+        ) {
+
+            return;
+
+        }
+
+
+        const targetMonth =
+            oldestDue?.fee_month
+            ||
+            verifiedData.fee_month
+            ||
+            "";
+
+
+        const balance =
+            Number(
+                oldestDue?.balance
+                ??
+                payment.balance
+                ??
+                classItem.balance
+                ??
+                0
+            );
+
+
+        const params =
+            new URLSearchParams();
+
+
+        params.set(
+            "student_id",
+            String(
+                verifiedData.student.id
+            )
+        );
+
+
+        params.set(
+            "class_code",
+            String(
+                classItem.class_code
+            )
+        );
+
+
+        params.set(
+            "fee_month",
+            String(
+                targetMonth
+            )
+        );
+
+
+        if (
+            balance > 0
+        ) {
+
+            params.set(
+                "amount",
+                String(
+                    balance
+                )
+            );
+
+        }
+
+
+        params.set(
+            "return_to",
+            "scan"
+        );
+
+
+        window.location.href =
+            "{{ url_for('new_payment') }}"
+            +
+            "?"
+            +
+            params.toString();
+
+    }
+
+
+    /* =====================================================
+       SCAN NEXT
+    ====================================================== */
+
+    async function scanNextStudent() {
+
+        verifiedData =
+            null;
+
+
+        document.getElementById(
+            "qrInput"
+        ).value =
+            "";
+
+
+        clearPayment();
+
+
+        resetConfirmationView();
+
+
+        closeConfirmation();
+
+
+        clearCameraState();
+
+
+        await startCamera();
+
+    }
+
+
+    /* =====================================================
+       CAMERA
+    ====================================================== */
+
+    async function startCamera() {
+
+        if (
+            cameraRunning
+        ) {
+
+            return;
+
+        }
+
+
+        clearCameraState();
+
+
+        if (
+            !navigator.mediaDevices
+            ||
+            !navigator.mediaDevices
+                .getUserMedia
+        ) {
+
+            showCameraState(
+                "Camera access is not supported in this browser or secure context.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !(
+                "BarcodeDetector"
+                in
+                window
+            )
+        ) {
+
+            showCameraState(
+                "This browser does not support built-in QR detection. Use the manual QR field.",
+                "warning"
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            qrDetector =
+                new BarcodeDetector(
+                    {
+                        formats: [
+                            "qr_code"
+                        ]
+                    }
+                );
+
+
+            cameraStream =
+                await navigator
+                    .mediaDevices
+                    .getUserMedia(
+                        {
+                            video: {
+                                facingMode: {
+                                    ideal:
+                                        "environment"
+                                }
+                            },
+
+                            audio:
+                                false
+                        }
+                    );
+
+
+            const video =
+                document.getElementById(
+                    "cameraVideo"
+                );
+
+
+            video.srcObject =
+                cameraStream;
+
+
+            video.style.display =
+                "block";
+
+
+            document.getElementById(
+                "cameraPlaceholder"
+            ).style.display =
+                "none";
+
+
+            await video.play();
+
+
+            cameraRunning =
+                true;
+
+
+            scanLocked =
+                false;
+
+
+            showCameraState(
+                "Camera is active. Hold the student QR inside the scan area.",
+                "success"
+            );
+
+
+            scanCameraFrame();
+
+        }
+
+        catch (error) {
+
+            showCameraState(
+                "Unable to start camera. Check browser camera permission and try again.",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    async function scanCameraFrame() {
+
+        if (
+            !cameraRunning
+            ||
+            !qrDetector
+            ||
+            scanLocked
+        ) {
+
+            return;
+
+        }
+
+
+        const video =
+            document.getElementById(
+                "cameraVideo"
+            );
+
+
+        try {
+
+            const results =
+                await qrDetector.detect(
+                    video
+                );
+
+
+            if (
+                results
+                &&
+                results.length > 0
+            ) {
+
+                const value =
+                    String(
+                        results[0]
+                            .rawValue
+                        ||
+                        ""
+                    ).trim();
+
+
+                if (
+                    value
+                    &&
+                    value.startsWith(
+                        "SSCQR:"
+                    )
+                ) {
+
+                    scanLocked =
+                        true;
+
+
+                    document.getElementById(
+                        "qrInput"
+                    ).value =
+                        value;
+
+
+                    await verifyQr(
+                        value
+                    );
+
+
+                    return;
+
+                }
+
+            }
+
+        }
+
+        catch (error) {
+            /* Continue scanning */
+        }
+
+
+        requestAnimationFrame(
+            scanCameraFrame
+        );
+
+    }
+
+
+    function stopCamera() {
+
+        cameraRunning =
+            false;
+
+
+        scanLocked =
+            false;
+
+
+        if (
+            cameraStream
+        ) {
+
+            cameraStream
+                .getTracks()
+                .forEach(
+                    function(track) {
+
+                        track.stop();
+
+                    }
+                );
+
+        }
+
+
+        cameraStream =
+            null;
+
+
+        const video =
+            document.getElementById(
+                "cameraVideo"
+            );
+
+
+        video.srcObject =
+            null;
+
+
+        video.style.display =
+            "none";
+
+
+        document.getElementById(
+            "cameraPlaceholder"
+        ).style.display =
+            "block";
+
+    }
+
+
+    /* =====================================================
+       EVENTS
+    ====================================================== */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function() {
+
+
+            document.getElementById(
+                "startCameraButton"
+            ).addEventListener(
+                "click",
+                startCamera
+            );
+
+
+            document.getElementById(
+                "stopCameraButton"
+            ).addEventListener(
+                "click",
+                stopCamera
+            );
+
+
+            document.getElementById(
+                "verifyButton"
+            ).addEventListener(
+                "click",
+                function() {
+
+                    verifyQr();
+
+                }
+            );
+
+
+            document.getElementById(
+                "qrInput"
+            ).addEventListener(
+                "keydown",
+                function(event) {
+
+                    if (
+                        event.key
+                        ===
+                        "Enter"
+                    ) {
+
+                        event.preventDefault();
+
+                        verifyQr();
+
+                    }
+
+                }
+            );
+
+
+            document.getElementById(
+                "attendanceClass"
+            ).addEventListener(
+                "change",
+                handleClassChange
+            );
+
+
+            document.getElementById(
+                "confirmAttendanceButton"
+            ).addEventListener(
+                "click",
+                markAttendance
+            );
+
+
+            document.getElementById(
+                "addPaymentButton"
+            ).addEventListener(
+                "click",
+                openPaymentForm
+            );
+
+
+            document.getElementById(
+                "resultAddPaymentButton"
+            ).addEventListener(
+                "click",
+                openPaymentForm
+            );
+
+
+            document.getElementById(
+                "closeConfirmButton"
+            ).addEventListener(
+                "click",
+                function() {
+
+                    closeConfirmation();
+
+                }
+            );
+
+
+            document.getElementById(
+                "scanAnotherButton"
+            ).addEventListener(
+                "click",
+                scanNextStudent
+            );
+
+
+            document.getElementById(
+                "resultScanAnotherButton"
+            ).addEventListener(
+                "click",
+                scanNextStudent
+            );
+
+
+            document.addEventListener(
+                "keydown",
+                function(event) {
+
+                    if (
+                        event.key
+                        ===
+                        "Escape"
+
+                        &&
+
+                        document.getElementById(
+                            "confirmOverlay"
+                        ).classList.contains(
+                            "open"
+                        )
+                    ) {
+
+                        closeConfirmation();
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    window.addEventListener(
+        "beforeunload",
+        stopCamera
+    );
+
+</script>
+
+{% endblock %}

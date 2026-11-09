@@ -1,0 +1,27 @@
+{% extends "teacher_base.html" %}
+{% block title %}Request Free Card - Teacher Portal{% endblock %}
+{% block page_title %}Request Free Card{% endblock %}
+{% block content %}
+<div class="page-stack">
+    <div class="page-intro">
+        <div><h2>Request a Free Card</h2><p>Submit a request to the Owner. Teacher approval is not allowed.</p></div>
+        <a class="btn btn-secondary" href="{{ url_for('teacher_free_card_history') }}">Request History →</a>
+    </div>
+
+    <section class="ui-panel">
+        <div class="ui-panel-header"><div><h2>New Free Card Request</h2><p>Owner approval is required.</p></div></div>
+        <div class="panel-body">
+            <form method="POST" action="{{ url_for('teacher_free_card_request') }}">
+                <div class="form-grid">
+                    <div class="form-group full"><label>Student ID / Phone Number</label><input class="field" name="student_lookup" type="text" required placeholder="e.g. SSC-2026-0012 or 07XXXXXXXX"></div>
+                    <div class="form-group"><label>Your Class</label><select class="select-field" name="class_code" required><option value="">Select class</option>{% for item in summary.classes %}<option value="{{ item.class_code }}">{{ item.class_code }} · {{ item.class_name }}</option>{% endfor %}</select></div>
+                    <div class="form-group"><label>Fee Month</label><input class="field" name="fee_month" type="month" required value="{{ selected_month }}"></div>
+                    <div class="form-group full"><label>Reason</label><textarea class="textarea-field" name="reason" required minlength="3" maxlength="500" placeholder="Reason for requesting the Free Card"></textarea><div class="form-help">The request stays pending until the Owner approves or rejects it.</div></div>
+                </div>
+                <div class="form-notice">Submitting this form creates a <strong>PENDING</strong> Free Card request. The Teacher cannot approve the request.</div>
+                <div class="submit-row"><button class="btn btn-primary" type="submit" onclick="return confirm('Submit this Free Card request for Owner approval?')">Submit Free Card Request</button></div>
+            </form>
+        </div>
+    </section>
+</div>
+{% endblock %}

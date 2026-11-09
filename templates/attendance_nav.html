@@ -1,0 +1,81 @@
+{# =========================================================
+   ATTENDANCE MODULE NAVIGATION
+   Sri Sumana Education Center
+========================================================= #}
+
+<nav class="attendance-tabs">
+
+
+    <!-- =================================================
+         TODAY
+    ================================================== -->
+
+    <a
+        href="/attendance/today"
+        class="
+            attendance-tab
+
+            {% if request.path == '/attendance/today' %}
+                active
+            {% endif %}
+        "
+    >
+        Today
+    </a>
+
+
+    <!-- =================================================
+         SCAN QR
+    ================================================== -->
+
+    <a
+        href="{{ url_for('scan_qr') }}"
+        class="
+            attendance-tab
+
+            {% if request.endpoint == 'scan_qr' %}
+                active
+            {% endif %}
+        "
+    >
+        Scan QR
+    </a>
+
+
+    <!-- =================================================
+         CLASS ATTENDANCE
+    ================================================== -->
+
+    <a
+        href="/attendance/classes"
+        class="
+            attendance-tab
+
+            {% if request.path == '/attendance/classes' %}
+                active
+            {% endif %}
+        "
+    >
+        Class Attendance
+    </a>
+
+
+    <!-- =================================================
+         HISTORY
+    ================================================== -->
+
+    <a
+        href="{{ url_for('attendance_list') }}"
+        class="
+            attendance-tab
+
+            {% if request.endpoint == 'attendance_list' %}
+                active
+            {% endif %}
+        "
+    >
+        History
+    </a>
+
+
+</nav>

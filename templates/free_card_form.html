@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Free Card</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .fc-form-shell{width:min(850px,calc(100% - 30px));margin:auto;padding:36px 0 70px}.fc-form-card{background:#18181b;border:1px solid #2f2f34;border-radius:18px;padding:24px;margin-top:18px}.fc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.fc-grid label{display:block;font-size:11px;font-weight:700}.fc-grid select,.fc-grid input,.fc-grid textarea{width:100%;box-sizing:border-box;margin-top:7px;background:#101012;color:#fff;border:1px solid #34343a;border-radius:10px;padding:12px}.full{grid-column:1/-1}.fee-preview{margin-top:16px;padding:14px;background:#101012;border-radius:11px;color:#a1a1aa;font-size:11px}.fee-preview strong{color:#34d399;font-size:18px}.fc-actions{display:flex;gap:10px;margin-top:20px}.fc-actions button,.fc-actions a{padding:12px 18px;border-radius:9px;font-size:11px;font-weight:800}.fc-actions button{border:0;background:#34d399;color:#04120d;cursor:pointer}.fc-actions a{text-decoration:none;color:#fff;background:#27272a;border:1px solid #3f3f46}@media(max-width:650px){.fc-grid{grid-template-columns:1fr}.full{grid-column:auto}}
+    </style>
+</head>
+<body class="public-page">
+<div class="fc-form-shell">
+    <div class="registration-header">
+        <div><div class="eyebrow">Sri Sumana Education Center</div><h1>Request Free Card</h1><p>Full monthly fee waiver · Owner approval required</p></div>
+        <a class="back-link" href="{{ url_for('free_cards') }}">← Free Cards</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
+
+    <form method="POST" class="fc-form-card">
+        <div class="fc-grid">
+            <label>Student *
+                <select id="student_id" name="student_id" required>
+                    <option value="">Select Student</option>
+                    {% for student in students %}<option value="{{ student.id }}">{{ student.student_code }} · {{ student.full_name }} · {{ student.grade }}</option>{% endfor %}
+                </select>
+            </label>
+
+            <label>Class *
+                <select id="class_code" name="class_code" required disabled><option value="">Select Student First</option></select>
+            </label>
+
+            <label>Fee Month *
+                <input type="month" name="fee_month" value="{{ default_month }}" required>
+            </label>
+
+            <div class="fee-preview"><span>Monthly Fee</span><br><strong id="fee_value">Rs. 0.00</strong><div style="margin-top:5px">Approved Free Card makes payable amount Rs. 0 for this class/month.</div></div>
+
+            <label class="full">Reason *
+                <textarea name="reason" rows="5" maxlength="500" placeholder="Example: Scholarship / financial support / management decision" required></textarea>
+            </label>
+        </div>
+
+        <div class="fc-actions"><button type="submit">Submit for Approval</button><a href="{{ url_for('free_cards') }}">Cancel</a></div>
+    </form>
+</div>
+
+<script>
+const students = {{ students | tojson }};
+const studentSelect = document.getElementById('student_id');
+const classSelect = document.getElementById('class_code');
+const feeValue = document.getElementById('fee_value');
+
+function money(value){return 'Rs. ' + Number(value || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+function loadClasses(){
+    const student = students.find(x => String(x.id) === studentSelect.value);
+    classSelect.innerHTML = '';
+    feeValue.textContent = money(0);
+    if(!student){classSelect.disabled=true;classSelect.innerHTML='<option value="">Select Student First</option>';return;}
+    classSelect.disabled=false;
+    classSelect.innerHTML='<option value="">Select Class</option>';
+    student.classes.forEach(cls => {
+        const option=document.createElement('option');
+        option.value=cls.class_code;
+        option.dataset.fee=cls.monthly_fee;
+        option.textContent=`${cls.class_name} · ${cls.teacher_name} · Rs. ${Number(cls.monthly_fee||0).toLocaleString()}`;
+        classSelect.appendChild(option);
+    });
+}
+studentSelect.addEventListener('change',loadClasses);
+classSelect.addEventListener('change',()=>{const option=classSelect.options[classSelect.selectedIndex];feeValue.textContent=money(option ? option.dataset.fee : 0);});
+</script>
+</body>
+</html>

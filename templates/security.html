@@ -1,0 +1,749 @@
+{% extends "base.html" %}
+
+{% block title %}
+Security - Sri Sumana
+{% endblock %}
+
+{% block page_title %}
+Security
+{% endblock %}
+
+{% block page_subtitle %}
+System protection, login security, sessions, HTTPS and database backups
+{% endblock %}
+
+{% block page_actions %}
+
+<a href="{{ url_for('audit_logs') }}" class="btn btn-secondary">
+    Audit Logs
+</a>
+
+<a href="{{ url_for('change_password') }}" class="btn btn-primary">
+    Change Password
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+<style>
+    .security-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .admin-tabs,
+    .security-section-tabs {
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .admin-tab,
+    .security-section-link {
+        min-height: 35px;
+        padding: 0 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border-radius: 7px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 9px;
+        font-weight: 650;
+        white-space: nowrap;
+    }
+
+    .admin-tab:hover,
+    .security-section-link:hover {
+        background: #f5f5f5;
+        color: var(--text);
+    }
+
+    .admin-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 750;
+    }
+
+    .security-summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+
+    .security-summary-card {
+        min-height: 100px;
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .security-summary-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+    .security-summary-card strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 18px;
+    }
+
+    .security-summary-card small {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .status-good {
+        color: var(--green);
+    }
+
+    .status-warning {
+        color: var(--orange);
+    }
+
+    .status-info {
+        color: var(--blue);
+    }
+
+    .security-grid-two {
+        display: grid;
+        grid-template-columns: repeat(2,1fr);
+        gap: 12px;
+    }
+
+    .security-status-list {
+        padding: 4px 14px;
+    }
+
+    .security-status-row {
+        min-height: 55px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .security-status-row:last-child {
+        border-bottom: 0;
+    }
+
+    .security-status-left strong {
+        display: block;
+        font-size: 9px;
+    }
+
+    .security-status-left span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .security-badge {
+        min-height: 25px;
+        padding: 0 9px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+    .security-badge.good {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+    .security-badge.warning {
+        background: var(--orange-soft);
+        color: var(--orange);
+    }
+
+    .security-badge.info {
+        background: var(--blue-soft);
+        color: var(--blue);
+    }
+
+    .login-stat-grid {
+        padding: 13px;
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 10px;
+    }
+
+    .login-stat {
+        padding: 13px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fafafa;
+    }
+
+    .login-stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .login-stat strong {
+        display: block;
+        margin-top: 7px;
+        font-size: 16px;
+    }
+
+    .login-rule-box {
+        margin: 0 13px 13px;
+        padding: 12px;
+        border: 1px solid #bfdbfe;
+        border-radius: 9px;
+        background: var(--blue-soft);
+    }
+
+    .login-rule-box strong {
+        color: var(--blue);
+        font-size: 8px;
+    }
+
+    .login-rule-box p {
+        margin: 4px 0 0;
+        font-size: 7px;
+    }
+
+    .backup-toolbar {
+        padding: 13px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .backup-toolbar strong {
+        display: block;
+        font-size: 9px;
+    }
+
+    .backup-toolbar span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .backup-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .backup-table th {
+        padding: 10px 13px;
+        background: #fafafa;
+        border-bottom: 1px solid var(--border);
+        color: var(--muted);
+        text-align: left;
+        font-size: 7px;
+        text-transform: uppercase;
+    }
+
+    .backup-table td {
+        padding: 11px 13px;
+        border-bottom: 1px solid var(--border);
+        font-size: 8px;
+    }
+
+    .security-table-wrap {
+        overflow-x: auto;
+    }
+
+    .security-table {
+        width: 100%;
+        min-width: 850px;
+        border-collapse: collapse;
+    }
+
+    .security-table th {
+        padding: 10px 12px;
+        background: #fafafa;
+        border-bottom: 1px solid var(--border);
+        color: var(--muted);
+        text-align: left;
+        font-size: 7px;
+        text-transform: uppercase;
+    }
+
+    .security-table td {
+        padding: 11px 12px;
+        border-bottom: 1px solid var(--border);
+        font-size: 8px;
+    }
+
+    @media(max-width:900px) {
+        .security-summary,
+        .security-grid-two {
+            grid-template-columns: repeat(2,1fr);
+        }
+    }
+
+    @media(max-width:650px) {
+        .security-summary,
+        .security-grid-two,
+        .login-stat-grid {
+            grid-template-columns:1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="security-page">
+
+    <nav class="admin-tabs">
+
+        <a href="{{ url_for('administration_overview') }}" class="admin-tab">
+            Overview
+        </a>
+
+        <a href="{{ url_for('staff_access') }}" class="admin-tab">
+            Staff & Access
+        </a>
+
+        <a href="{{ url_for('audit_logs') }}" class="admin-tab">
+            Audit Logs
+        </a>
+
+        <a href="{{ url_for('security_center') }}" class="admin-tab active">
+            Security
+        </a>
+
+        <a href="{{ url_for('change_password') }}" class="admin-tab">
+            Change Password
+        </a>
+
+    </nav>
+
+
+    <nav class="security-section-tabs">
+
+        <a href="#status" class="security-section-link">
+            Security Status
+        </a>
+
+        <a href="#login" class="security-section-link">
+            Login Protection
+        </a>
+
+        <a href="#session" class="security-section-link">
+            Session Security
+        </a>
+
+        <a href="#https" class="security-section-link">
+            HTTPS / Proxy
+        </a>
+
+        <a href="#backups" class="security-section-link">
+            Backups
+        </a>
+
+    </nav>
+
+
+    <div class="security-summary" id="status">
+
+        <div class="security-summary-card">
+            <span>Security Headers</span>
+            <strong class="status-good">Active</strong>
+            <small>Browser protection headers enabled.</small>
+        </div>
+
+        <div class="security-summary-card">
+            <span>Login Protection</span>
+            <strong class="status-good">Active</strong>
+            <small>Brute-force rate limits enabled.</small>
+        </div>
+
+        <div class="security-summary-card">
+            <span>HTTPS Mode</span>
+
+            {% if security_status.https_enabled %}
+                <strong class="status-good">Enabled</strong>
+            {% else %}
+                <strong class="status-warning">Development</strong>
+            {% endif %}
+
+            <small>Secure cookies depend on HTTPS mode.</small>
+        </div>
+
+        <div class="security-summary-card">
+            <span>Latest Backup</span>
+
+            {% if latest_backup %}
+                <strong class="status-info">Available</strong>
+                <small>{{ latest_backup.modified_at }}</small>
+            {% else %}
+                <strong class="status-warning">None</strong>
+                <small>No backup file found.</small>
+            {% endif %}
+        </div>
+
+    </div>
+
+
+    <div class="security-grid-two">
+
+        <section class="ui-panel" id="login">
+
+            <div class="ui-panel-header">
+                <div>
+                    <h2>Login Protection</h2>
+                    <p>Failed login monitoring and brute-force limits</p>
+                </div>
+            </div>
+
+            <div class="login-stat-grid">
+
+                <div class="login-stat">
+                    <span>Protection Events · 15 min</span>
+                    <strong>{{ login_stats.events_15m }}</strong>
+                </div>
+
+                <div class="login-stat">
+                    <span>IP Failure Events</span>
+                    <strong>{{ login_stats.ip_events_15m }}</strong>
+                </div>
+
+                <div class="login-stat">
+                    <span>Username Failure Events</span>
+                    <strong>{{ login_stats.user_events_15m }}</strong>
+                </div>
+
+            </div>
+
+            <div class="login-rule-box">
+                <strong>Current login limits</strong>
+
+                <p>
+                    IP limit: {{ login_stats.ip_limit }} ·
+                    Username limit: {{ login_stats.user_limit }} ·
+                    Window: {{ login_stats.window_minutes }} minutes.
+                </p>
+            </div>
+
+        </section>
+
+
+        <section class="ui-panel" id="session">
+
+            <div class="ui-panel-header">
+                <div>
+                    <h2>Session Security</h2>
+                    <p>Browser session and cookie protection</p>
+                </div>
+            </div>
+
+            <div class="security-status-list">
+
+                <div class="security-status-row">
+                    <div class="security-status-left">
+                        <strong>HttpOnly Session Cookie</strong>
+                        <span>Prevents JavaScript reading the session cookie.</span>
+                    </div>
+
+                    <span class="security-badge good">
+                        ENABLED
+                    </span>
+                </div>
+
+                <div class="security-status-row">
+                    <div class="security-status-left">
+                        <strong>SameSite Cookie</strong>
+                        <span>Cross-site cookie behavior.</span>
+                    </div>
+
+                    <span class="security-badge good">
+                        {{ security_status.cookie_samesite }}
+                    </span>
+                </div>
+
+                <div class="security-status-row">
+                    <div class="security-status-left">
+                        <strong>Session Lifetime</strong>
+                        <span>Maximum configured persistent session period.</span>
+                    </div>
+
+                    <span class="security-badge info">
+                        {{ security_status.session_hours }} HOURS
+                    </span>
+                </div>
+
+                <div class="security-status-row">
+                    <div class="security-status-left">
+                        <strong>Same-Origin Request Guard</strong>
+                        <span>Unsafe requests require matching Origin or Referer.</span>
+                    </div>
+
+                    <span class="security-badge good">
+                        ACTIVE
+                    </span>
+                </div>
+
+                <div class="security-status-row">
+                    <div class="security-status-left">
+                        <strong>Active Session Registry</strong>
+                        <span>Individual-device session revocation is not implemented in V1.</span>
+                    </div>
+
+                    <span class="security-badge warning">
+                        NOT AVAILABLE
+                    </span>
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <section class="ui-panel" id="https">
+
+        <div class="ui-panel-header">
+            <div>
+                <h2>HTTPS / Proxy</h2>
+                <p>Transport security and reverse-proxy configuration</p>
+            </div>
+        </div>
+
+        <div class="security-status-list">
+
+            <div class="security-status-row">
+
+                <div class="security-status-left">
+                    <strong>HTTPS Environment Mode</strong>
+                    <span>Controlled by SSC_HTTPS.</span>
+                </div>
+
+                {% if security_status.https_enabled %}
+                    <span class="security-badge good">ENABLED</span>
+                {% else %}
+                    <span class="security-badge warning">OFF</span>
+                {% endif %}
+
+            </div>
+
+
+            <div class="security-status-row">
+
+                <div class="security-status-left">
+                    <strong>Current Request</strong>
+                    <span>Whether Flask recognizes this request as HTTPS.</span>
+                </div>
+
+                {% if security_status.request_secure %}
+                    <span class="security-badge good">HTTPS</span>
+                {% else %}
+                    <span class="security-badge info">HTTP</span>
+                {% endif %}
+
+            </div>
+
+
+            <div class="security-status-row">
+
+                <div class="security-status-left">
+                    <strong>Secure Session Cookie</strong>
+                    <span>Restricts session cookies to HTTPS.</span>
+                </div>
+
+                {% if security_status.cookie_secure %}
+                    <span class="security-badge good">ENABLED</span>
+                {% else %}
+                    <span class="security-badge warning">DEVELOPMENT OFF</span>
+                {% endif %}
+
+            </div>
+
+
+            <div class="security-status-row">
+
+                <div class="security-status-left">
+                    <strong>Trusted Reverse Proxy</strong>
+                    <span>Controlled by SSC_TRUST_PROXY.</span>
+                </div>
+
+                {% if security_status.trust_proxy %}
+                    <span class="security-badge good">ENABLED</span>
+                {% else %}
+                    <span class="security-badge info">OFF</span>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="ui-panel" id="backups">
+
+        <div class="backup-toolbar">
+
+            <div>
+                <strong>Database Backups</strong>
+
+                <span>
+                    Database:
+                    {{ security_status.database_size_mb }} MB ·
+                    Retention:
+                    {{ security_status.backup_retention }}
+                </span>
+            </div>
+
+            <form
+                method="POST"
+                action="{{ url_for('security_create_backup') }}"
+                onsubmit="return confirm('Create a database backup now?');"
+            >
+                <button type="submit" class="btn btn-primary">
+                    Create Backup Now
+                </button>
+            </form>
+
+        </div>
+
+
+        {% if backup_items %}
+
+        <table class="backup-table">
+
+            <thead>
+                <tr>
+                    <th>Backup File</th>
+                    <th>Created</th>
+                    <th>Size</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+            {% for backup in backup_items %}
+
+                <tr>
+                    <td>{{ backup.name }}</td>
+                    <td>{{ backup.modified_at }}</td>
+                    <td>{{ backup.size_mb }} MB</td>
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        {% else %}
+
+        <div style="padding:35px;text-align:center;color:var(--muted);">
+            No database backups found.
+        </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <section class="ui-panel">
+
+        <div class="ui-panel-header">
+
+            <div>
+                <h2>Recent Security Activity</h2>
+                <p>Authentication, account and staff-access events</p>
+            </div>
+
+            <a href="{{ url_for('audit_logs') }}" class="btn btn-secondary">
+                View All Logs
+            </a>
+
+        </div>
+
+
+        {% if recent_security_activity %}
+
+        <div class="security-table-wrap">
+
+            <table class="security-table">
+
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Module</th>
+                        <th>IP</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% for item in recent_security_activity %}
+
+                    <tr>
+                        <td>
+                            {{ item.created_at[:10] }}
+                            {{ item.created_at[11:19] }}
+                        </td>
+
+                        <td>
+                            {{ item.actor_full_name or "Unknown" }}
+                        </td>
+
+                        <td>
+                            {{ item.action or "—" }}
+                        </td>
+
+                        <td>
+                            {{ item.entity_type or "SYSTEM" }}
+                        </td>
+
+                        <td>
+                            {{ item.ip_address or "—" }}
+                        </td>
+
+                        <td>
+                            {{ item.status_code or "—" }}
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div style="padding:35px;text-align:center;color:var(--muted);">
+            No security activity recorded.
+        </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+{% endblock %}

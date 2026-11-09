@@ -1,0 +1,1387 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Student QR Pass - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Student QR Pass
+{% endblock %}
+
+
+{% block page_subtitle %}
+Secure student identification and attendance pass
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('student_profile', student_id=student.id) }}"
+    class="btn btn-secondary"
+>
+    ← Student Profile
+</a>
+
+<a
+    href="{{ url_for('students') }}"
+    class="btn btn-secondary"
+>
+    All Students
+</a>
+
+<button
+    type="button"
+    class="btn btn-primary"
+    onclick="printQrPass()"
+>
+    Print Pass
+</button>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       PAGE
+    ====================================================== */
+
+    .qr-pass-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    .student-tabs {
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .student-tab {
+        min-height: 35px;
+
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+
+    .student-tab:hover {
+        background: #f5f5f5;
+        color: var(--text);
+    }
+
+
+    .student-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       LAYOUT
+    ====================================================== */
+
+    .qr-pass-layout {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(300px, 0.62fr);
+
+        gap: 12px;
+
+        align-items: start;
+    }
+
+
+    /* =====================================================
+       PASS CARD
+    ====================================================== */
+
+    .pass-wrap {
+        display: flex;
+        justify-content: center;
+
+        padding: 18px;
+    }
+
+
+    .student-pass {
+        width: min(560px, 100%);
+
+        overflow: hidden;
+
+        border: 1px solid var(--border);
+        border-radius: 16px;
+
+        background: #ffffff;
+
+        box-shadow:
+            0 12px 36px
+            rgba(15, 23, 42, 0.06);
+    }
+
+
+    .pass-header {
+        padding: 18px;
+
+        text-align: center;
+
+        border-bottom: 1px solid var(--border);
+
+        background:
+            linear-gradient(
+                135deg,
+                #f8f9ff,
+                #ffffff
+            );
+    }
+
+
+    .pass-brand {
+        color: var(--primary);
+
+        font-size: 8px;
+        font-weight: 850;
+
+        letter-spacing: .08em;
+
+        text-transform: uppercase;
+    }
+
+
+    .pass-header h2 {
+        margin: 6px 0 0;
+
+        color: var(--text);
+
+        font-size: 18px;
+        font-weight: 780;
+    }
+
+
+    .pass-header p {
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .pass-body {
+        padding: 20px;
+    }
+
+
+    .pass-student {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex-direction: column;
+
+        text-align: center;
+    }
+
+
+    .pass-avatar {
+        width: 66px;
+        height: 66px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 18px;
+
+        background: var(--primary);
+
+        color: #ffffff;
+
+        font-size: 22px;
+        font-weight: 850;
+    }
+
+
+    .pass-student h3 {
+        margin: 12px 0 0;
+
+        color: var(--text);
+
+        font-size: 20px;
+        font-weight: 790;
+    }
+
+
+    .student-code {
+        margin-top: 5px;
+
+        color: var(--primary);
+
+        font-size: 10px;
+        font-weight: 850;
+    }
+
+
+    .student-meta {
+        margin-top: 5px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    /* =====================================================
+       QR
+    ====================================================== */
+
+    .qr-status-row {
+        margin-top: 16px;
+
+        display: flex;
+        justify-content: center;
+    }
+
+
+    .qr-status {
+        min-height: 30px;
+
+        padding: 0 10px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 999px;
+
+        font-size: 8px;
+        font-weight: 850;
+    }
+
+
+    .qr-status.active {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .qr-status.revoked {
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+
+    .qr-box {
+        width: min(290px, 100%);
+
+        margin: 18px auto 0;
+
+        padding: 16px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 16px;
+
+        background: #ffffff;
+    }
+
+
+    .qr-box img {
+        width: 100%;
+        max-width: 255px;
+
+        height: auto;
+
+        display: block;
+    }
+
+
+    .qr-unavailable {
+        width: min(290px, 100%);
+
+        min-height: 250px;
+
+        margin: 18px auto 0;
+
+        padding: 22px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px dashed #fecaca;
+        border-radius: 16px;
+
+        background: var(--red-soft);
+
+        color: var(--red);
+
+        text-align: center;
+    }
+
+
+    .qr-unavailable strong {
+        display: block;
+
+        font-size: 11px;
+    }
+
+
+    .qr-unavailable p {
+        margin: 6px 0 0;
+
+        font-size: 8px;
+        line-height: 1.5;
+    }
+
+
+    .pass-note {
+        margin: 12px auto 0;
+
+        max-width: 380px;
+
+        color: var(--muted);
+
+        text-align: center;
+
+        font-size: 7px;
+        line-height: 1.6;
+    }
+
+
+    /* =====================================================
+       CLASSES
+    ====================================================== */
+
+    .pass-section {
+        margin-top: 18px;
+
+        padding-top: 16px;
+
+        border-top: 1px solid var(--border);
+    }
+
+
+    .pass-section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 10px;
+    }
+
+
+    .pass-section-title h4 {
+        margin: 0;
+
+        font-size: 11px;
+        font-weight: 760;
+    }
+
+
+    .pass-section-title span {
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .pass-class-list {
+        margin-top: 10px;
+
+        display: flex;
+        flex-direction: column;
+
+        gap: 8px;
+    }
+
+
+    .pass-class {
+        padding: 11px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #fafafa;
+    }
+
+
+    .pass-class-main {
+        min-width: 0;
+    }
+
+
+    .pass-class-main strong {
+        display: block;
+
+        font-size: 9px;
+    }
+
+
+    .pass-class-main span {
+        display: block;
+
+        margin-top: 4px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .pass-class-code {
+        min-height: 28px;
+
+        padding: 0 9px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        background: var(--primary-soft);
+        color: var(--primary);
+
+        font-size: 7px;
+        font-weight: 850;
+
+        white-space: nowrap;
+    }
+
+
+    .empty-classes {
+        margin-top: 10px;
+
+        padding: 16px;
+
+        border: 1px dashed var(--border);
+        border-radius: 10px;
+
+        color: var(--muted);
+
+        text-align: center;
+
+        font-size: 8px;
+    }
+
+
+    /* =====================================================
+       SIDEBAR DETAILS
+    ====================================================== */
+
+    .side-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    .side-body {
+        padding: 14px;
+    }
+
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+
+    .detail-item {
+        padding: 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 9px;
+
+        background: #ffffff;
+    }
+
+
+    .detail-item span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .detail-item strong {
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--text);
+
+        font-size: 9px;
+
+        overflow-wrap: anywhere;
+    }
+
+
+    .security-note {
+        padding: 12px;
+
+        border: 1px solid #c7d2fe;
+        border-radius: 10px;
+
+        background: var(--primary-soft);
+    }
+
+
+    .security-note strong {
+        display: block;
+
+        color: var(--primary);
+
+        font-size: 8px;
+    }
+
+
+    .security-note p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+        line-height: 1.6;
+    }
+
+
+    /* =====================================================
+       QR MANAGEMENT
+    ====================================================== */
+
+    .management-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+
+    .management-actions form {
+        margin: 0;
+    }
+
+
+    .manage-button {
+        width: 100%;
+
+        min-height: 42px;
+
+        border-radius: 9px;
+
+        cursor: pointer;
+
+        font-size: 8px;
+        font-weight: 800;
+    }
+
+
+    .regenerate-button {
+        border: 1px solid var(--primary);
+
+        background: var(--primary);
+
+        color: #ffffff;
+    }
+
+
+    .regenerate-button:hover {
+        background: var(--primary-hover);
+    }
+
+
+    .revoke-button {
+        border: 1px solid #fecaca;
+
+        background: var(--red-soft);
+
+        color: var(--red);
+    }
+
+
+    .revoke-button:hover {
+        border-color: var(--red);
+    }
+
+
+    .manage-help {
+        margin: 9px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+        line-height: 1.55;
+    }
+
+
+    /* =====================================================
+       LIGHT THEME SAFETY
+    ====================================================== */
+
+    .qr-pass-page .ui-panel,
+    .qr-pass-page .ui-panel-header,
+    .qr-pass-page .side-body,
+    .qr-pass-page .detail-item,
+    .qr-pass-page .student-pass,
+    .qr-pass-page .pass-body,
+    .qr-pass-page .pass-class {
+        color: var(--text) !important;
+    }
+
+
+    .qr-pass-page .detail-item,
+    .qr-pass-page .student-pass,
+    .qr-pass-page .pass-body {
+        background: #ffffff !important;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 950px) {
+
+        .qr-pass-layout {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .pass-wrap {
+            padding: 10px;
+        }
+
+
+        .pass-body {
+            padding: 16px;
+        }
+
+
+        .student-pass {
+            border-radius: 13px;
+        }
+
+
+        .qr-box {
+            width: min(260px, 100%);
+        }
+
+    }
+
+
+    /* =====================================================
+       PRINT
+    ====================================================== */
+
+    @media print {
+
+        body {
+            background: #ffffff !important;
+        }
+
+
+        .system-sidebar,
+        .system-topbar,
+        .student-tabs,
+        .side-stack,
+        .system-alert {
+            display: none !important;
+        }
+
+
+        .system-shell {
+            width: 100% !important;
+            max-width: none !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+
+            display: block !important;
+
+            border: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+        }
+
+
+        .system-main {
+            background: #ffffff !important;
+        }
+
+
+        .system-content {
+            padding: 0 !important;
+        }
+
+
+        .qr-pass-layout {
+            display: block !important;
+        }
+
+
+        .pass-wrap {
+            padding: 0 !important;
+        }
+
+
+        .student-pass {
+            width: 100% !important;
+            max-width: 560px !important;
+            margin: 0 auto !important;
+
+            border: 1px solid #d4d4d8 !important;
+            box-shadow: none !important;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="qr-pass-page">
+
+
+    <!-- =================================================
+         STUDENT NAVIGATION
+    ================================================== -->
+
+    <nav class="student-tabs">
+
+        <a
+            href="{{ url_for('student_profile', student_id=student.id) }}"
+            class="student-tab"
+        >
+            Overview
+        </a>
+
+        <a
+            href="{{ url_for('student_profile', student_id=student.id) }}#classes"
+            class="student-tab"
+        >
+            Classes
+        </a>
+
+        <a
+            href="{{ url_for('student_profile', student_id=student.id) }}#attendance"
+            class="student-tab"
+        >
+            Attendance
+        </a>
+
+        <a
+            href="{{ url_for('student_profile', student_id=student.id) }}#payments"
+            class="student-tab"
+        >
+            Payments
+        </a>
+
+        <a
+            href="{{ url_for('student_profile', student_id=student.id) }}#free-cards"
+            class="student-tab"
+        >
+            Free Cards
+        </a>
+
+        <a
+            href="{{ url_for('student_qr_pass', student_id=student.id) }}"
+            class="student-tab active"
+        >
+            QR Pass
+        </a>
+
+        <a
+            href="{{ url_for('student_profile', student_id=student.id) }}#activity"
+            class="student-tab"
+        >
+            Activity
+        </a>
+
+    </nav>
+
+
+    <div class="qr-pass-layout">
+
+
+        <!-- =================================================
+             QR PASS
+        ================================================== -->
+
+        <section class="ui-panel">
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        Student Pass
+                    </h2>
+
+                    <p>
+                        Secure QR identification for attendance
+                    </p>
+
+                </div>
+
+
+                <span
+                    class="
+                        qr-status
+                        {{ 'active' if student.qr_status == 'ACTIVE' else 'revoked' }}
+                    "
+                >
+                    {{ student.qr_status or 'UNKNOWN' }}
+                </span>
+
+            </div>
+
+
+            <div class="pass-wrap">
+
+
+                <article
+                    class="student-pass"
+                    id="printableQrPass"
+                >
+
+
+                    <div class="pass-header">
+
+                        <div class="pass-brand">
+                            Sri Sumana Education Center
+                        </div>
+
+                        <h2>
+                            Student QR Pass
+                        </h2>
+
+                        <p>
+                            Avissawella
+                        </p>
+
+                    </div>
+
+
+                    <div class="pass-body">
+
+
+                        <div class="pass-student">
+
+                            <div class="pass-avatar">
+
+                                {{
+                                    (
+                                        student.full_name
+                                        or
+                                        'Student'
+                                    )[:2]
+                                    | upper
+                                }}
+
+                            </div>
+
+
+                            <h3>
+                                {{ student.full_name }}
+                            </h3>
+
+
+                            <div class="student-code">
+                                {{ student.student_code }}
+                            </div>
+
+
+                            <div class="student-meta">
+
+                                {{ student.grade }}
+
+                                {% if student.school %}
+                                    · {{ student.school }}
+                                {% endif %}
+
+                            </div>
+
+
+                            <div class="qr-status-row">
+
+                                <span
+                                    class="
+                                        qr-status
+                                        {{ 'active' if student.qr_status == 'ACTIVE' else 'revoked' }}
+                                    "
+                                >
+                                    QR {{ student.qr_status or 'UNKNOWN' }}
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+
+                        {% if student.qr_status == 'ACTIVE' and student.qr_token %}
+
+                        <div class="qr-box">
+
+                            <img
+                                src="{{ url_for('qr_image', student_id=student.id) }}"
+                                alt="QR Pass for {{ student.full_name }}"
+                            >
+
+                        </div>
+
+
+                        <p class="pass-note">
+                            Show this QR pass to Sri Sumana staff when entering class.
+                            The QR contains a secure token only; student details are verified
+                            by the system during attendance scanning.
+                        </p>
+
+                        {% else %}
+
+                        <div class="qr-unavailable">
+
+                            <div>
+
+                                <strong>
+                                    QR Pass Unavailable
+                                </strong>
+
+                                <p>
+                                    This QR pass is currently revoked or inactive.
+                                    Regenerate the QR before using it for attendance.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        {% endif %}
+
+
+                        <section class="pass-section">
+
+
+                            <div class="pass-section-title">
+
+                                <h4>
+                                    Enrolled Classes
+                                </h4>
+
+                                <span>
+                                    {{ classes | length }}
+                                    active
+                                </span>
+
+                            </div>
+
+
+                            {% if classes %}
+
+                            <div class="pass-class-list">
+
+                                {% for class_item in classes %}
+
+                                <div class="pass-class">
+
+                                    <div class="pass-class-main">
+
+                                        <strong>
+                                            {{
+                                                class_item.class_name
+                                                if class_item.class_name is defined
+                                                and class_item.class_name
+                                                else
+                                                class_item.subject
+                                            }}
+                                        </strong>
+
+                                        <span>
+                                            {{ class_item.teacher }}
+                                        </span>
+
+                                    </div>
+
+
+                                    <span class="pass-class-code">
+                                        {{ class_item.class_code }}
+                                    </span>
+
+                                </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                            {% else %}
+
+                            <div class="empty-classes">
+                                No active class enrollments.
+                            </div>
+
+                            {% endif %}
+
+
+                        </section>
+
+
+                    </div>
+
+
+                </article>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             SIDE INFORMATION
+        ================================================== -->
+
+        <aside class="side-stack">
+
+
+            <section class="ui-panel">
+
+                <div class="ui-panel-header">
+
+                    <div>
+
+                        <h2>
+                            Pass Details
+                        </h2>
+
+                        <p>
+                            Current QR and student status
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="side-body">
+
+
+                    <div class="details-grid">
+
+
+                        <div class="detail-item">
+
+                            <span>
+                                Student ID
+                            </span>
+
+                            <strong>
+                                {{ student.student_code }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="detail-item">
+
+                            <span>
+                                Student Status
+                            </span>
+
+                            <strong>
+                                {{ student.status }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="detail-item">
+
+                            <span>
+                                QR Status
+                            </span>
+
+                            <strong>
+                                {{ student.qr_status or 'UNKNOWN' }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="detail-item">
+
+                            <span>
+                                QR Created
+                            </span>
+
+                            <strong>
+                                {{ student.qr_created_at or '—' }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="detail-item">
+
+                            <span>
+                                Active Classes
+                            </span>
+
+                            <strong>
+                                {{ classes | length }}
+                            </strong>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div
+                        class="security-note"
+                        style="margin-top:10px;"
+                    >
+
+                        <strong>
+                            Secure QR pass
+                        </strong>
+
+                        <p>
+                            Do not share screenshots of this QR publicly.
+                            If a QR is exposed, regenerate it so the previous
+                            token becomes invalid.
+                        </p>
+
+                    </div>
+
+
+                </div>
+
+            </section>
+
+
+            <section class="ui-panel">
+
+                <div class="ui-panel-header">
+
+                    <div>
+
+                        <h2>
+                            QR Management
+                        </h2>
+
+                        <p>
+                            Regenerate or revoke this student's QR pass
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="side-body">
+
+
+                    <div class="management-actions">
+
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('regenerate_student_qr', student_id=student.id) }}"
+                            onsubmit="return confirmRegenerateQr();"
+                        >
+
+                            <button
+                                type="submit"
+                                class="manage-button regenerate-button"
+                            >
+                                Regenerate QR
+                            </button>
+
+                        </form>
+
+
+                        {% if student.qr_status == 'ACTIVE' %}
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('revoke_student_qr', student_id=student.id) }}"
+                            onsubmit="return confirmRevokeQr();"
+                        >
+
+                            <button
+                                type="submit"
+                                class="manage-button revoke-button"
+                            >
+                                Revoke QR
+                            </button>
+
+                        </form>
+
+                        {% endif %}
+
+
+                    </div>
+
+
+                    <p class="manage-help">
+                        Regenerating creates a new secure token and invalidates
+                        the previous QR. Revoking disables attendance scanning
+                        until a new QR is generated.
+                    </p>
+
+
+                </div>
+
+            </section>
+
+
+            <section class="ui-panel">
+
+                <div class="ui-panel-header">
+
+                    <div>
+
+                        <h2>
+                            Quick Actions
+                        </h2>
+
+                        <p>
+                            Student and attendance shortcuts
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="side-body">
+
+                    <div class="management-actions">
+
+
+                        <a
+                            href="{{ url_for('student_profile', student_id=student.id) }}"
+                            class="btn btn-secondary"
+                            style="width:100%;"
+                        >
+                            Student Profile
+                        </a>
+
+
+                        <a
+                            href="{{ url_for('scan_qr') }}"
+                            class="btn btn-primary"
+                            style="width:100%;"
+                        >
+                            Scan QR
+                        </a>
+
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+        </aside>
+
+
+    </div>
+
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+    function printQrPass() {
+
+        window.print();
+
+    }
+
+
+    function confirmRegenerateQr() {
+
+        return window.confirm(
+            "Generate a new QR for this student?\n\n"
+            +
+            "The current QR will immediately become invalid."
+        );
+
+    }
+
+
+    function confirmRevokeQr() {
+
+        return window.confirm(
+            "Revoke this student's QR?\n\n"
+            +
+            "The student will not be able to use this QR for attendance until a new QR is generated."
+        );
+
+    }
+
+</script>
+
+{% endblock %}

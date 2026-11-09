@@ -1,0 +1,716 @@
+{% extends "base.html" %}
+
+{% block title %}
+Audit Logs - Sri Sumana
+{% endblock %}
+
+{% block page_title %}
+Audit Logs
+{% endblock %}
+
+{% block page_subtitle %}
+Review owner and staff activity across the education center system
+{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('staff_access') }}" class="btn btn-secondary">
+    Staff & Access
+</a>
+{% endblock %}
+
+
+{% block extra_css %}
+<style>
+    .audit-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .admin-tabs {
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .admin-tab {
+        min-height: 35px;
+        padding: 0 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border-radius: 7px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 9px;
+        font-weight: 650;
+        white-space: nowrap;
+    }
+
+    .admin-tab:hover {
+        background: #f5f5f5;
+        color: var(--text);
+    }
+
+    .admin-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 750;
+    }
+
+    .audit-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+
+    .audit-summary-card {
+        min-height: 98px;
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .audit-summary-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+    .audit-summary-card strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 20px;
+    }
+
+    .audit-summary-card small {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .audit-summary-card.green strong {
+        color: var(--green);
+    }
+
+    .audit-summary-card.blue strong {
+        color: var(--blue);
+    }
+
+    .audit-summary-card.orange strong {
+        color: var(--orange);
+    }
+
+    .audit-filter-panel {
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .audit-filter-header {
+        margin-bottom: 12px;
+    }
+
+    .audit-filter-header strong {
+        display: block;
+        font-size: 10px;
+    }
+
+    .audit-filter-header span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .audit-filter-grid {
+        display: grid;
+        grid-template-columns:
+            minmax(200px, 1.5fr)
+            repeat(4, minmax(130px, .8fr))
+            auto;
+        gap: 8px;
+        align-items: end;
+    }
+
+    .audit-field label {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--muted);
+        font-size: 7px;
+        font-weight: 700;
+    }
+
+    .audit-control {
+        width: 100%;
+        min-height: 38px;
+        padding: 0 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        font-size: 8px;
+    }
+
+    .audit-filter-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .audit-table-wrap {
+        overflow-x: auto;
+    }
+
+    .audit-table {
+        width: 100%;
+        min-width: 1180px;
+        border-collapse: collapse;
+    }
+
+    .audit-table th {
+        padding: 10px 12px;
+        background: #fafafa;
+        border-bottom: 1px solid var(--border);
+        color: var(--muted);
+        text-align: left;
+        font-size: 7px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .audit-table td {
+        padding: 11px 12px;
+        border-bottom: 1px solid var(--border);
+        font-size: 8px;
+        vertical-align: top;
+    }
+
+    .audit-actor {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .audit-avatar {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 9px;
+        font-weight: 800;
+    }
+
+    .audit-actor-name,
+    .audit-entity {
+        display: block;
+        font-weight: 700;
+    }
+
+    .audit-actor-user,
+    .audit-secondary,
+    .audit-entity-id {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .audit-action {
+        min-height: 24px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 7px;
+        font-weight: 750;
+    }
+
+    .audit-role {
+        min-height: 23px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+    .audit-role.owner {
+        background: var(--primary-soft);
+        color: var(--primary);
+    }
+
+    .audit-role.staff {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+    .audit-method {
+        min-height: 22px;
+        padding: 0 7px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 6px;
+        background: #f4f4f5;
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+    .audit-method.post {
+        background: var(--orange-soft);
+        color: var(--orange);
+    }
+
+    .audit-method.get {
+        background: var(--blue-soft);
+        color: var(--blue);
+    }
+
+    .audit-path {
+        max-width: 230px;
+        display: block;
+        overflow: hidden;
+        color: var(--muted);
+        font-size: 7px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .audit-status {
+        min-height: 23px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+    .audit-status.success {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+    .audit-status.warning {
+        background: var(--orange-soft);
+        color: var(--orange);
+    }
+
+    .audit-status.error {
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+    .audit-status.neutral {
+        background: #f4f4f5;
+        color: #71717a;
+    }
+
+    .audit-details summary {
+        color: var(--primary);
+        font-size: 7px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .audit-details-box {
+        margin-top: 7px;
+        padding: 8px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: #fafafa;
+        font-family: monospace;
+        font-size: 7px;
+        white-space: pre-wrap;
+    }
+
+    .audit-empty {
+        min-height: 220px;
+        padding: 35px;
+        text-align: center;
+    }
+
+    @media(max-width:900px) {
+        .audit-summary-grid {
+            grid-template-columns: repeat(2,1fr);
+        }
+
+        .audit-filter-grid {
+            grid-template-columns: repeat(2,1fr);
+        }
+    }
+
+    @media(max-width:650px) {
+        .audit-summary-grid,
+        .audit-filter-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="audit-page">
+
+    <nav class="admin-tabs">
+
+        <a href="{{ url_for('administration_overview') }}" class="admin-tab">
+            Overview
+        </a>
+
+        <a href="{{ url_for('staff_access') }}" class="admin-tab">
+            Staff & Access
+        </a>
+
+        <a href="{{ url_for('audit_logs') }}" class="admin-tab active">
+            Audit Logs
+        </a>
+
+        <a href="{{ url_for('security_center') }}" class="admin-tab">
+            Security
+        </a>
+
+        <a href="{{ url_for('change_password') }}" class="admin-tab">
+            Change Password
+        </a>
+
+    </nav>
+
+
+    <div class="audit-summary-grid">
+
+        <div class="audit-summary-card">
+            <span>Total Records</span>
+            <strong>{{ stats.total or 0 }}</strong>
+            <small>All recorded audit activity</small>
+        </div>
+
+        <div class="audit-summary-card green">
+            <span>Today</span>
+            <strong>{{ stats.today or 0 }}</strong>
+            <small>Activity recorded today</small>
+        </div>
+
+        <div class="audit-summary-card blue">
+            <span>Owner Actions</span>
+            <strong>{{ stats.owner or 0 }}</strong>
+            <small>Actions performed by Owner</small>
+        </div>
+
+        <div class="audit-summary-card orange">
+            <span>Staff Actions</span>
+            <strong>{{ stats.staff or 0 }}</strong>
+            <small>Actions performed by Staff</small>
+        </div>
+
+    </div>
+
+
+    <section class="audit-filter-panel">
+
+        <div class="audit-filter-header">
+            <strong>Audit Search & Filters</strong>
+            <span>Showing up to the latest 500 matching records</span>
+        </div>
+
+        <form
+            method="GET"
+            action="{{ url_for('audit_logs') }}"
+            class="audit-filter-grid"
+        >
+
+            <div class="audit-field">
+                <label>Search</label>
+
+                <input
+                    type="search"
+                    name="search"
+                    value="{{ search }}"
+                    class="audit-control"
+                    placeholder="User, action, entity, ID..."
+                >
+            </div>
+
+
+            <div class="audit-field">
+                <label>Action</label>
+
+                <select name="action" class="audit-control">
+
+                    <option value="ALL">All Actions</option>
+
+                    {% for item in action_options %}
+                    <option
+                        value="{{ item }}"
+                        {% if action_filter == item %}selected{% endif %}
+                    >
+                        {{ item }}
+                    </option>
+                    {% endfor %}
+
+                </select>
+            </div>
+
+
+            <div class="audit-field">
+                <label>Entity</label>
+
+                <select name="entity" class="audit-control">
+
+                    <option value="ALL">All Entities</option>
+
+                    {% for item in entity_options %}
+                    <option
+                        value="{{ item }}"
+                        {% if entity_filter == item %}selected{% endif %}
+                    >
+                        {{ item }}
+                    </option>
+                    {% endfor %}
+
+                </select>
+            </div>
+
+
+            <div class="audit-field">
+                <label>Actor Role</label>
+
+                <select name="role" class="audit-control">
+
+                    <option value="ALL">All Roles</option>
+
+                    <option
+                        value="OWNER"
+                        {% if role_filter == "OWNER" %}selected{% endif %}
+                    >
+                        Owner
+                    </option>
+
+                    <option
+                        value="STAFF"
+                        {% if role_filter == "STAFF" %}selected{% endif %}
+                    >
+                        Staff
+                    </option>
+
+                </select>
+            </div>
+
+
+            <div class="audit-field">
+                <label>Date</label>
+
+                <input
+                    type="date"
+                    name="date"
+                    value="{{ date_filter }}"
+                    class="audit-control"
+                >
+            </div>
+
+
+            <div class="audit-filter-actions">
+
+                <button type="submit" class="btn btn-primary">
+                    Apply
+                </button>
+
+                <a href="{{ url_for('audit_logs') }}" class="btn btn-secondary">
+                    Clear
+                </a>
+
+            </div>
+
+        </form>
+
+    </section>
+
+
+    <section class="ui-panel">
+
+        <div class="ui-panel-header">
+
+            <div>
+                <h2>Activity Log</h2>
+                <p>{{ logs|length }} matching records</p>
+            </div>
+
+        </div>
+
+
+        {% if logs %}
+
+        <div class="audit-table-wrap">
+
+            <table class="audit-table">
+
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Actor</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                        <th>Entity</th>
+                        <th>Request</th>
+                        <th>IP Address</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% for log in logs %}
+
+                    <tr>
+
+                        <td>
+                            <strong>{{ log.created_at[:10] }}</strong>
+                            <span class="audit-secondary">
+                                {{ log.created_at[11:19] }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="audit-actor">
+
+                                <div class="audit-avatar">
+                                    {{ (log.actor_full_name or log.actor_username or "U")[0] }}
+                                </div>
+
+                                <div>
+                                    <span class="audit-actor-name">
+                                        {{ log.actor_full_name or "Unknown User" }}
+                                    </span>
+
+                                    <span class="audit-actor-user">
+                                        @{{ log.actor_username or "unknown" }}
+                                    </span>
+                                </div>
+
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="audit-role {{ (log.actor_role or '')|lower }}">
+                                {{ log.actor_role or "—" }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="audit-action">
+                                {{ log.action or "UNKNOWN" }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="audit-entity">
+                                {{ log.entity_type or "SYSTEM" }}
+                            </span>
+
+                            <span class="audit-entity-id">
+                                {% if log.entity_id %}
+                                    ID: {{ log.entity_id }}
+                                {% else %}
+                                    No entity ID
+                                {% endif %}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="audit-method {{ (log.request_method or '')|lower }}">
+                                {{ log.request_method or "—" }}
+                            </span>
+
+                            <span class="audit-path">
+                                {{ log.request_path or "—" }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {{ log.ip_address or "Unknown" }}
+                        </td>
+
+                        <td>
+                            {% if log.status_code and log.status_code >= 400 %}
+                                <span class="audit-status error">
+                                    {{ log.status_code }}
+                                </span>
+                            {% elif log.status_code and log.status_code >= 300 %}
+                                <span class="audit-status warning">
+                                    {{ log.status_code }}
+                                </span>
+                            {% elif log.status_code %}
+                                <span class="audit-status success">
+                                    {{ log.status_code }}
+                                </span>
+                            {% else %}
+                                <span class="audit-status neutral">
+                                    —
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <details class="audit-details">
+
+                                <summary>View Details</summary>
+
+                                <div class="audit-details-box">
+ID: {{ log.id }}
+User ID: {{ log.actor_user_id or "—" }}
+Path: {{ log.request_path or "—" }}
+IP: {{ log.ip_address or "—" }}
+
+{% if log.metadata %}
+Metadata:
+{{ log.metadata }}
+{% else %}
+No additional metadata.
+{% endif %}
+                                </div>
+
+                            </details>
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="audit-empty">
+            <strong>No audit records found</strong>
+
+            <p>
+                No activity matches the current filters.
+            </p>
+        </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+{% endblock %}

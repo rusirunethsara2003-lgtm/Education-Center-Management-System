@@ -1,0 +1,1066 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Teachers - Sri Sumana Education Center
+{% endblock %}
+
+
+{% block page_title %}
+Teacher Management
+{% endblock %}
+
+
+{% block page_subtitle %}
+Manage teachers, classes and monthly performance
+{% endblock %}
+
+
+{% block page_actions %}
+
+{% if current_user and current_user.role == 'OWNER' %}
+
+<a
+    href="{{ url_for('new_teacher') }}"
+    class="btn btn-primary"
+>
+    + Add Teacher
+</a>
+
+{% endif %}
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       PAGE HEADER
+    ====================================================== */
+
+    .teacher-page-header {
+        margin-bottom: 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 15px;
+    }
+
+
+    .teacher-page-header h2 {
+        margin: 0;
+
+        font-size: 14px;
+        font-weight: 750;
+    }
+
+
+    .teacher-page-header p {
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 100px;
+    }
+
+
+    /* =====================================================
+       MONTH FILTER
+    ====================================================== */
+
+    .teacher-month-panel {
+        margin-bottom: 12px;
+
+        padding: 13px 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 15px;
+
+        border: 1px solid var(--border);
+        border-radius: 11px;
+
+        background: #ffffff;
+    }
+
+
+    .teacher-month-copy span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .teacher-month-copy strong {
+        display: block;
+
+        margin-top: 4px;
+
+        font-size: 12px;
+    }
+
+
+    .teacher-month-form {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+    }
+
+
+    .teacher-month-form input {
+        min-height: 36px;
+
+        padding: 0 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: #262626;
+
+        outline: none;
+
+        font-size: 9px;
+        font-weight: 650;
+    }
+
+
+    .teacher-month-form input:focus {
+        border-color: var(--primary);
+    }
+
+
+    /* =====================================================
+       SUMMARY
+    ====================================================== */
+
+    .teacher-summary-grid {
+        margin-bottom: 12px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(0, 1fr)
+            );
+
+        gap: 10px;
+    }
+
+
+    .teacher-summary-card {
+        min-height: 88px;
+
+        padding: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .teacher-summary-card span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .teacher-summary-card strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 18px;
+        font-weight: 750;
+    }
+
+
+    .green {
+        color: var(--green);
+    }
+
+
+    .blue {
+        color: var(--blue);
+    }
+
+
+    /* =====================================================
+       TEACHER GRID
+    ====================================================== */
+
+    .teacher-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap: 12px;
+    }
+
+
+    .teacher-card {
+        overflow: hidden;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+    }
+
+
+    .teacher-card-header {
+        padding: 14px;
+
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .teacher-identity {
+        min-width: 0;
+
+        display: flex;
+        align-items: center;
+
+        gap: 11px;
+    }
+
+
+    .teacher-avatar {
+        width: 44px;
+        height: 44px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 44px;
+
+        border-radius: 10px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+
+    .teacher-code {
+        color: var(--primary);
+
+        font-size: 8px;
+        font-weight: 750;
+    }
+
+
+    .teacher-name {
+        margin: 3px 0 0;
+
+        font-size: 14px;
+        font-weight: 750;
+
+        letter-spacing: -0.01em;
+    }
+
+
+    .teacher-subject {
+        margin: 3px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .teacher-status {
+        padding: 5px 8px;
+
+        display: inline-flex;
+
+        border-radius: 999px;
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .teacher-status.active {
+        color: var(--green);
+
+        background: var(--green-soft);
+    }
+
+
+    .teacher-status.inactive {
+        color: var(--red);
+
+        background: var(--red-soft);
+    }
+
+
+    /* =====================================================
+       TEACHER DETAILS
+    ====================================================== */
+
+    .teacher-card-body {
+        padding: 13px;
+    }
+
+
+    .teacher-phone {
+        margin-bottom: 10px;
+
+        padding: 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #fafafa;
+    }
+
+
+    .teacher-phone span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .teacher-phone strong {
+        display: block;
+
+        margin-top: 4px;
+
+        font-size: 9px;
+    }
+
+
+    .teacher-metrics {
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap: 8px;
+    }
+
+
+    .teacher-metric {
+        min-height: 62px;
+
+        padding: 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #fafafa;
+    }
+
+
+    .teacher-metric span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .teacher-metric strong {
+        display: block;
+
+        margin-top: 5px;
+
+        color: #262626;
+
+        font-size: 11px;
+    }
+
+
+    .teacher-metric strong.money {
+        color: var(--green);
+    }
+
+
+    /* =====================================================
+       ACTIONS
+    ====================================================== */
+
+    .teacher-card-actions {
+        padding: 11px 13px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+
+        gap: 7px;
+
+        border-top: 1px solid var(--border);
+
+        background: #fafafa;
+    }
+
+
+    .teacher-action {
+        min-height: 34px;
+
+        padding: 0 10px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 7px;
+
+        background: #ffffff;
+
+        color: #262626;
+
+        text-decoration: none;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        cursor: pointer;
+    }
+
+
+    .teacher-action:hover {
+        background: #f4f4f5;
+    }
+
+
+    .teacher-action.primary {
+        border-color: var(--primary);
+
+        background: var(--primary);
+
+        color: #ffffff;
+    }
+
+
+    .teacher-action.primary:hover {
+        background: var(--primary-hover);
+    }
+
+
+    .teacher-action.danger {
+        border-color: #fecaca;
+
+        background: var(--red-soft);
+
+        color: var(--red);
+    }
+
+
+    .teacher-action.success {
+        border-color: #bbf7d0;
+
+        background: var(--green-soft);
+
+        color: var(--green);
+    }
+
+
+    .teacher-card-actions form {
+        margin: 0;
+    }
+
+
+    .teacher-card-actions form button {
+        width: 100%;
+    }
+
+
+    /* =====================================================
+       EMPTY
+    ====================================================== */
+
+    .teacher-empty {
+        grid-column: 1 / -1;
+
+        min-height: 220px;
+
+        padding: 30px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+
+        text-align: center;
+    }
+
+
+    .teacher-empty strong {
+        font-size: 11px;
+    }
+
+
+    .teacher-empty p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 1050px) {
+
+        .teacher-summary-grid {
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+        }
+
+
+        .teacher-grid {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 620px) {
+
+        .teacher-month-panel {
+            align-items: flex-start;
+
+            flex-direction: column;
+        }
+
+
+        .teacher-month-form {
+            width: 100%;
+        }
+
+
+        .teacher-month-form input {
+            flex: 1;
+        }
+
+
+        .teacher-summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .teacher-card-actions {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+{# =========================================================
+   CALCULATE PAGE TOTALS
+========================================================= #}
+
+{% set totals = namespace(
+    total_teachers=0,
+    active_teachers=0,
+    total_students=0,
+    collection=0,
+    teacher_income=0
+) %}
+
+
+{% for teacher in teachers %}
+
+    {% set totals.total_teachers =
+        totals.total_teachers + 1
+    %}
+
+    {% if teacher.status == 'ACTIVE' %}
+
+        {% set totals.active_teachers =
+            totals.active_teachers + 1
+        %}
+
+    {% endif %}
+
+    {% set totals.total_students =
+        totals.total_students
+        +
+        (teacher.total_students or 0)
+    %}
+
+    {% set totals.collection =
+        totals.collection
+        +
+        (teacher.collected or 0)
+    %}
+
+    {% set totals.teacher_income =
+        totals.teacher_income
+        +
+        (teacher.teacher_income or 0)
+    %}
+
+{% endfor %}
+
+
+<!-- =====================================================
+     MONTH FILTER
+====================================================== -->
+
+<section class="teacher-month-panel">
+
+
+    <div class="teacher-month-copy">
+
+        <span>
+            Performance Month
+        </span>
+
+        <strong>
+            {{ month_label }}
+        </strong>
+
+    </div>
+
+
+    <form
+        method="GET"
+        action="{{ url_for('teachers') }}"
+        class="teacher-month-form"
+    >
+
+        <input
+            type="month"
+            name="month"
+            value="{{ selected_month }}"
+            required
+        >
+
+        <button
+            type="submit"
+            class="btn btn-secondary"
+        >
+            Apply
+        </button>
+
+    </form>
+
+
+</section>
+
+
+<!-- =====================================================
+     SUMMARY
+====================================================== -->
+
+<div class="teacher-summary-grid">
+
+
+    <div class="teacher-summary-card">
+
+        <span>
+            Total Teachers
+        </span>
+
+        <strong>
+            {{ totals.total_teachers }}
+        </strong>
+
+    </div>
+
+
+    <div class="teacher-summary-card">
+
+        <span>
+            Active Teachers
+        </span>
+
+        <strong class="blue">
+            {{ totals.active_teachers }}
+        </strong>
+
+    </div>
+
+
+    <div class="teacher-summary-card">
+
+        <span>
+            {{ month_label }} Collection
+        </span>
+
+        <strong class="green">
+
+            Rs.
+            {{ "{:,.0f}".format(
+                totals.collection or 0
+            ) }}
+
+        </strong>
+
+    </div>
+
+
+    <div class="teacher-summary-card">
+
+        <span>
+            Teacher Income
+        </span>
+
+        <strong class="green">
+
+            Rs.
+            {{ "{:,.0f}".format(
+                totals.teacher_income or 0
+            ) }}
+
+        </strong>
+
+    </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     TEACHERS
+====================================================== -->
+
+<div class="teacher-grid">
+
+
+    {% for teacher in teachers %}
+
+
+    <article class="teacher-card">
+
+
+        <!-- =============================================
+             HEADER
+        ============================================== -->
+
+        <div class="teacher-card-header">
+
+
+            <div class="teacher-identity">
+
+
+                <div class="teacher-avatar">
+
+                    {{
+                        (
+                            teacher.full_name
+                            or
+                            'T'
+                        )[:1]
+                        | upper
+                    }}
+
+                </div>
+
+
+                <div>
+
+                    <div class="teacher-code">
+                        {{ teacher.teacher_code }}
+                    </div>
+
+                    <div class="teacher-name">
+                        {{ teacher.full_name }}
+                    </div>
+
+                    <div class="teacher-subject">
+                        {{ teacher.subject or '—' }}
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <span
+                class="
+                    teacher-status
+
+                    {% if teacher.status == 'ACTIVE' %}
+                        active
+                    {% else %}
+                        inactive
+                    {% endif %}
+                "
+            >
+                {{ teacher.status }}
+            </span>
+
+
+        </div>
+
+
+        <!-- =============================================
+             BODY
+        ============================================== -->
+
+        <div class="teacher-card-body">
+
+
+            <div class="teacher-phone">
+
+                <span>
+                    Phone
+                </span>
+
+                <strong>
+                    {{ teacher.phone or '—' }}
+                </strong>
+
+            </div>
+
+
+            <div class="teacher-metrics">
+
+
+                <div class="teacher-metric">
+
+                    <span>
+                        Active Classes
+                    </span>
+
+                    <strong>
+                        {{ teacher.active_classes or 0 }}
+                    </strong>
+
+                </div>
+
+
+                <div class="teacher-metric">
+
+                    <span>
+                        Active Students
+                    </span>
+
+                    <strong>
+                        {{ teacher.total_students or 0 }}
+                    </strong>
+
+                </div>
+
+
+                <div class="teacher-metric">
+
+                    <span>
+                        {{ month_label }} Collection
+                    </span>
+
+                    <strong class="money">
+
+                        Rs.
+
+                        {{
+                            "{:,.2f}".format(
+                                teacher.collected
+                                or 0
+                            )
+                        }}
+
+                    </strong>
+
+                </div>
+
+
+                <div class="teacher-metric">
+
+                    <span>
+                        Teacher Income
+                    </span>
+
+                    <strong class="money">
+
+                        Rs.
+
+                        {{
+                            "{:,.2f}".format(
+                                teacher.teacher_income
+                                or 0
+                            )
+                        }}
+
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+        <!-- =============================================
+             ACTIONS
+        ============================================== -->
+
+        <div class="teacher-card-actions">
+
+
+            <!-- OPEN PROFILE -->
+
+            <a
+                href="{{ url_for(
+                    'teacher_profile',
+                    teacher_id=teacher.id,
+                    month=selected_month
+                ) }}"
+                class="teacher-action primary"
+            >
+                Open Profile
+            </a>
+
+
+            {% if current_user and current_user.role == 'OWNER' %}
+
+
+            <!-- EDIT -->
+
+            <a
+                href="{{ url_for(
+                    'edit_teacher',
+                    teacher_id=teacher.id
+                ) }}"
+                class="teacher-action"
+            >
+                Edit
+            </a>
+
+
+            <!-- ACTIVATE / DEACTIVATE -->
+
+            <form
+                method="POST"
+
+                action="{{ url_for(
+                    'toggle_teacher',
+                    teacher_id=teacher.id
+                ) }}"
+            >
+
+
+                {% if teacher.status == 'ACTIVE' %}
+
+                    <button
+                        type="submit"
+                        class="teacher-action danger"
+
+                        onclick="
+                            return confirm(
+                                'Deactivate this teacher?'
+                            );
+                        "
+                    >
+                        Deactivate
+                    </button>
+
+                {% else %}
+
+                    <button
+                        type="submit"
+                        class="teacher-action success"
+
+                        onclick="
+                            return confirm(
+                                'Activate this teacher?'
+                            );
+                        "
+                    >
+                        Activate
+                    </button>
+
+                {% endif %}
+
+
+            </form>
+
+
+            {% endif %}
+
+
+        </div>
+
+
+    </article>
+
+
+    {% else %}
+
+
+    <div class="teacher-empty">
+
+        <strong>
+            No teachers found.
+        </strong>
+
+        <p>
+            Add your first teacher to begin.
+        </p>
+
+    </div>
+
+
+    {% endfor %}
+
+
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,345 @@
+{% extends "teacher_base.html" %}
+{% block title %}{{ class_item.class_name }} - Teacher Portal{% endblock %}
+{% block page_title %}Class Profile{% endblock %}
+{% block content %}
+<div class="page-stack">
+
+    <div class="class-profile-hero">
+        <div class="class-profile-title">
+            <h2>{{ class_item.class_code }} · {{ class_item.class_name }}</h2>
+            <p>
+                {{ class_item.subject }} · Grade {{ class_item.grade }} ·
+                {{ class_item.day }} · {{ class_item.start_display }} - {{ class_item.end_display }}
+                {% if class_item.room %} · {{ class_item.room }}{% endif %}
+            </p>
+        </div>
+        <div class="class-profile-meta">
+            <span class="month-pill">{{ class_item.teacher_name }}</span>
+            <span class="month-pill">Fee Rs. {{ "{:,.0f}".format(class_item.monthly_fee or 0) }}</span>
+            <a class="btn btn-secondary" href="{{ url_for('teacher_classes', month=selected_month) }}">← My Classes</a>
+        </div>
+    </div>
+
+    <nav class="profile-tabs" aria-label="Class profile sections">
+        <a class="profile-tab {% if active_tab == 'overview' %}active{% endif %}"
+           href="{{ url_for('teacher_class_profile', class_code=class_item.class_code, tab='overview', date=selected_date, month=selected_month) }}">
+            Overview
+        </a>
+        <a class="profile-tab {% if active_tab == 'students' %}active{% endif %}"
+           href="{{ url_for('teacher_class_profile', class_code=class_item.class_code, tab='students', date=selected_date, month=selected_month) }}">
+            Students
+        </a>
+        <a class="profile-tab {% if active_tab == 'attendance' %}active{% endif %}"
+           href="{{ url_for('teacher_class_profile', class_code=class_item.class_code, tab='attendance', date=selected_date, month=selected_month) }}">
+            Attendance
+        </a>
+        <a class="profile-tab {% if active_tab == 'payments' %}active{% endif %}"
+           href="{{ url_for('teacher_class_profile', class_code=class_item.class_code, tab='payments', date=selected_date, month=selected_month) }}">
+            Payments
+        </a>
+    </nav>
+
+    {% if active_tab == 'overview' %}
+        <section class="profile-kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-top"><span class="kpi-label">Total Students</span><span class="kpi-icon">S</span></div>
+                <div class="kpi-value">{{ students|length }}</div>
+                <div class="kpi-note">Active students enrolled in this class</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-top"><span class="kpi-label">Present</span><span class="kpi-icon">✓</span></div>
+                <div class="kpi-value">{{ present_count }}</div>
+                <div class="kpi-note">{{ selected_date_label }}</div>
+            </div>
+            <div class="kpi-card orange">
+                <div class="kpi-top"><span class="kpi-label">Absent</span><span class="kpi-icon">!</span></div>
+                <div class="kpi-value">{{ absent_count }}</div>
+                <div class="kpi-note">Enrolled students without a Present record</div>
+            </div>
+            <div class="kpi-card blue">
+                <div class="kpi-top"><span class="kpi-label">Attendance Rate</span><span class="kpi-icon">%</span></div>
+                <div class="kpi-value">{{ attendance_rate }}%</div>
+                <div class="kpi-note">For {{ selected_date_label }}</div>
+            </div>
+        </section>
+
+        <section class="operations-grid">
+            <div class="ui-panel">
+                <div class="ui-panel-header">
+                    <div>
+                        <h2>Attendance Snapshot</h2>
+                        <p>{{ selected_date_label }}{% if not selected_date_is_scheduled %} · not the regular {{ class_item.day }} class day{% endif %}</p>
+                    </div>
+                    <a class="ui-panel-link" href="{{ url_for('teacher_class_profile', class_code=class_item.class_code, tab='attendance', date=selected_date, month=selected_month) }}">Manage →</a>
+                </div>
+                <div class="panel-body">
+                    <div class="attendance-split">
+                        <div class="attendance-column present">
+                            <div class="attendance-column-head"><strong>Present Students</strong><span>{{ present_count }}</span></div>
+                            <div class="attendance-person-list">
+                                {% for student in present_students[:8] %}
+                                    <div class="attendance-person">
+                                        <div class="attendance-person-avatar">{{ student.full_name[:2]|upper }}</div>
+                                        <div class="attendance-person-copy">
+                                            <strong>{{ student.student_code }} · {{ student.full_name }}</strong>
+                                            <span>{{ student.attendance_time }}{% if student.attendance_source %} · {{ student.attendance_source }}{% endif %}</span>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="empty-state">No Present students for this date.</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="attendance-column absent">
+                            <div class="attendance-column-head"><strong>Absent Students</strong><span>{{ absent_count }}</span></div>
+                            <div class="attendance-person-list">
+                                {% for student in absent_students[:8] %}
+                                    <div class="attendance-person">
+                                        <div class="attendance-person-avatar">{{ student.full_name[:2]|upper }}</div>
+                                        <div class="attendance-person-copy">
+                                            <strong>{{ student.student_code }} · {{ student.full_name }}</strong>
+                                            <span>{{ student.phone or 'No phone number' }}</span>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="empty-state">No Absent students for this date.</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ui-panel">
+                <div class="ui-panel-header">
+                    <div><h2>{{ month_label }} Finance</h2><p>This class only</p></div>
+                    <a class="ui-panel-link" href="{{ url_for('teacher_class_profile', class_code=class_item.class_code, tab='payments', month=selected_month, date=selected_date) }}">Open →</a>
+                </div>
+                <div class="panel-body">
+                    <div class="today-summary">
+                        <div class="mini-card"><span>Expected</span><strong>Rs. {{ "{:,.0f}".format(class_finance.expected) }}</strong></div>
+                        <div class="mini-card"><span>Collected</span><strong class="text-green">Rs. {{ "{:,.0f}".format(class_finance.collected) }}</strong></div>
+                        <div class="mini-card"><span>Outstanding</span><strong class="text-orange">Rs. {{ "{:,.0f}".format(class_finance.outstanding) }}</strong></div>
+                    </div>
+                    <div class="finance-note">Teacher share: {{ class_finance.teacher_share_percent }}% · Current calculated income: Rs. {{ "{:,.0f}".format(class_finance.teacher_income) }}.</div>
+                </div>
+            </div>
+        </section>
+
+    {% elif active_tab == 'students' %}
+        <section class="ui-panel">
+            <div class="ui-panel-header">
+                <div><h2>Class Students</h2><p>{{ students|length }} active enrolled student(s)</p></div>
+            </div>
+            <div class="panel-body table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Grade</th>
+                            <th>School</th>
+                            <th>Phone</th>
+                            <th>{{ month_label }} Payment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for student in students %}
+                        <tr>
+                            <td><strong>{{ student.student_code }}</strong></td>
+                            <td>{{ student.full_name }}</td>
+                            <td>{{ student.grade }}</td>
+                            <td>{{ student.school or '—' }}</td>
+                            <td>{{ student.phone or '—' }}</td>
+                            <td>
+                                <span class="status-pill {% if student.payment.status == 'FREE CARD' %}FREE{% else %}{{ student.payment.status }}{% endif %}">
+                                    {{ student.payment.status }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="6" class="empty-state">No students are enrolled in this class.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    {% elif active_tab == 'attendance' %}
+        <div class="attendance-toolbar">
+            <div>
+                <h2 style="margin:0;font-size:13px;">Attendance · {{ selected_date_label }}</h2>
+                <p class="muted" style="margin:4px 0 0;font-size:8px;">
+                    {% if selected_date_is_scheduled %}
+                        Regular {{ class_item.day }} class day.
+                    {% else %}
+                        This date is not the regular {{ class_item.day }} schedule. You can still record a special/replacement class.
+                    {% endif %}
+                </p>
+            </div>
+
+            <form class="attendance-date-form" method="GET" action="{{ url_for('teacher_class_profile', class_code=class_item.class_code) }}">
+                <input type="hidden" name="tab" value="attendance">
+                <input type="hidden" name="month" value="{{ selected_month }}">
+                <div class="form-group">
+                    <label>Attendance Date</label>
+                    <input class="field" type="date" name="date" value="{{ selected_date }}" max="{{ today_date }}">
+                </div>
+                <button class="btn btn-secondary" type="submit">Open Date</button>
+            </form>
+        </div>
+
+        {% if selected_date_is_future %}
+            <div class="danger-note">Future dates can be viewed, but attendance cannot be saved until that date.</div>
+        {% endif %}
+
+        <section class="profile-kpi-grid">
+            <div class="kpi-card"><div class="kpi-top"><span class="kpi-label">Students</span><span class="kpi-icon">S</span></div><div class="kpi-value">{{ students|length }}</div><div class="kpi-note">Active enrollment</div></div>
+            <div class="kpi-card green"><div class="kpi-top"><span class="kpi-label">Present</span><span class="kpi-icon">✓</span></div><div class="kpi-value">{{ present_count }}</div><div class="kpi-note">Marked Present</div></div>
+            <div class="kpi-card orange"><div class="kpi-top"><span class="kpi-label">Absent</span><span class="kpi-icon">!</span></div><div class="kpi-value">{{ absent_count }}</div><div class="kpi-note">Not marked Present</div></div>
+            <div class="kpi-card blue"><div class="kpi-top"><span class="kpi-label">Rate</span><span class="kpi-icon">%</span></div><div class="kpi-value">{{ attendance_rate }}%</div><div class="kpi-note">Attendance rate</div></div>
+        </section>
+
+        <section class="ui-panel">
+            <div class="ui-panel-header">
+                <div>
+                    <h2>Mark Attendance</h2>
+                    <p>Tick students who are Present. Unticked students are shown as Absent.</p>
+                </div>
+            </div>
+            <div class="panel-body">
+                <form method="POST" action="{{ url_for('teacher_class_attendance_save', class_code=class_item.class_code) }}">
+                    <input type="hidden" name="attendance_date" value="{{ selected_date }}">
+                    <input type="hidden" name="month" value="{{ selected_month }}">
+
+                    <div class="attendance-mark-list">
+                        {% for student in students %}
+                            <label class="attendance-mark-row">
+                                <input class="attendance-check"
+                                       type="checkbox"
+                                       name="present_student_ids"
+                                       value="{{ student.student_id }}"
+                                       {% if student.is_present %}checked{% endif %}
+                                       {% if selected_date_is_future %}disabled{% endif %}>
+                                <div class="attendance-person-avatar">{{ student.full_name[:2]|upper }}</div>
+                                <div class="attendance-mark-copy">
+                                    <strong>{{ student.student_code }} · {{ student.full_name }}</strong>
+                                    <span>{{ student.phone or 'No phone' }}{% if student.school %} · {{ student.school }}{% endif %}</span>
+                                </div>
+                                {% if student.is_present %}
+                                    <span class="attendance-source">{{ student.attendance_time }} · {{ student.attendance_source }}</span>
+                                {% else %}
+                                    <span class="status-pill UNPAID">ABSENT</span>
+                                {% endif %}
+                            </label>
+                        {% else %}
+                            <div class="empty-state">No students are enrolled in this class.</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="submit-row">
+                        <span class="muted">Saving updates the Present list for this class and date only.</span>
+                        <button class="btn btn-primary" type="submit" {% if selected_date_is_future or not students %}disabled{% endif %}>
+                            Save Attendance
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="attendance-split">
+            <div class="attendance-column present">
+                <div class="attendance-column-head"><strong>Present</strong><span>{{ present_count }}</span></div>
+                <div class="attendance-person-list">
+                    {% for student in present_students %}
+                        <div class="attendance-person">
+                            <div class="attendance-person-avatar">{{ student.full_name[:2]|upper }}</div>
+                            <div class="attendance-person-copy">
+                                <strong>{{ student.student_code }} · {{ student.full_name }}</strong>
+                                <span>{{ student.attendance_time }} · {{ student.attendance_source }}</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">No Present students.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="attendance-column absent">
+                <div class="attendance-column-head"><strong>Absent</strong><span>{{ absent_count }}</span></div>
+                <div class="attendance-person-list">
+                    {% for student in absent_students %}
+                        <div class="attendance-person">
+                            <div class="attendance-person-avatar">{{ student.full_name[:2]|upper }}</div>
+                            <div class="attendance-person-copy">
+                                <strong>{{ student.student_code }} · {{ student.full_name }}</strong>
+                                <span>{{ student.phone or 'No phone number' }}</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">No Absent students.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+    {% elif active_tab == 'payments' %}
+        <div class="page-intro">
+            <div>
+                <h2>Payments · {{ month_label }}</h2>
+                <p>View only. Teachers cannot record, edit or void payments.</p>
+            </div>
+            <div class="month-controls">
+                <a class="btn btn-secondary" href="{{ url_for('teacher_class_profile', class_code=class_item.class_code, tab='payments', month=previous_month, date=selected_date) }}">← Previous</a>
+                <span class="month-pill">{{ month_label }}</span>
+                <a class="btn btn-secondary" href="{{ url_for('teacher_class_profile', class_code=class_item.class_code, tab='payments', month=next_month, date=selected_date) }}">Next →</a>
+            </div>
+        </div>
+
+        <section class="profile-kpi-grid">
+            <div class="kpi-card"><div class="kpi-top"><span class="kpi-label">Expected</span><span class="kpi-icon">Rs</span></div><div class="kpi-value">Rs. {{ "{:,.0f}".format(class_finance.expected) }}</div><div class="kpi-note">After approved Free Cards</div></div>
+            <div class="kpi-card green"><div class="kpi-top"><span class="kpi-label">Collected</span><span class="kpi-icon">✓</span></div><div class="kpi-value">Rs. {{ "{:,.0f}".format(class_finance.collected) }}</div><div class="kpi-note">Confirmed payments</div></div>
+            <div class="kpi-card orange"><div class="kpi-top"><span class="kpi-label">Outstanding</span><span class="kpi-icon">!</span></div><div class="kpi-value">Rs. {{ "{:,.0f}".format(class_finance.outstanding) }}</div><div class="kpi-note">Remaining balance</div></div>
+            <div class="kpi-card blue"><div class="kpi-top"><span class="kpi-label">My Share</span><span class="kpi-icon">%</span></div><div class="kpi-value">Rs. {{ "{:,.0f}".format(class_finance.teacher_income) }}</div><div class="kpi-note">{{ class_finance.teacher_share_percent }}% Teacher Share</div></div>
+        </section>
+
+        <section class="ui-panel">
+            <div class="ui-panel-header">
+                <div><h2>Student Payment Status</h2><p>{{ class_item.class_code }} · {{ month_label }}</p></div>
+            </div>
+            <div class="panel-body table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Status</th>
+                            <th>Fee</th>
+                            <th>Paid</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for student in students %}
+                        <tr>
+                            <td><strong>{{ student.student_code }} · {{ student.full_name }}</strong></td>
+                            <td>
+                                <span class="status-pill {% if student.payment.status == 'FREE CARD' %}FREE{% else %}{{ student.payment.status }}{% endif %}">
+                                    {{ student.payment.status }}
+                                </span>
+                            </td>
+                            <td>Rs. {{ "{:,.0f}".format(student.payment.fee) }}</td>
+                            <td class="text-green">Rs. {{ "{:,.0f}".format(student.payment.paid) }}</td>
+                            <td class="{% if student.payment.balance > 0 %}text-orange{% endif %}">Rs. {{ "{:,.0f}".format(student.payment.balance) }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="5" class="empty-state">No students are enrolled in this class.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    {% endif %}
+
+</div>
+{% endblock %}

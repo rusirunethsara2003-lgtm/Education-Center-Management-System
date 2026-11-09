@@ -1,0 +1,1109 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Payments - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Finance
+{% endblock %}
+
+
+{% block page_subtitle %}
+Monthly student fee management and collections
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('new_payment') }}"
+    class="btn btn-primary"
+>
+    + Record Payment
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       MONTH TOOLBAR
+    ====================================================== */
+
+    .payment-toolbar-light {
+        margin-bottom: 12px;
+
+        padding: 12px 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .payment-period span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .payment-period strong {
+        display: block;
+
+        margin-top: 4px;
+
+        font-size: 13px;
+    }
+
+
+    .payment-month-form {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+    }
+
+
+    .payment-control-light {
+        min-height: 35px;
+
+        padding: 0 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+        color: var(--text);
+
+        outline: none;
+
+        font-size: 9px;
+    }
+
+
+    .payment-control-light:focus {
+        border-color: var(--primary);
+    }
+
+
+    /* =====================================================
+       SUMMARY
+    ====================================================== */
+
+    .payment-summary-light {
+        margin-bottom: 12px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(0, 1fr)
+            );
+
+        gap: 10px;
+    }
+
+
+    .payment-summary-card-light {
+        min-height: 95px;
+
+        padding: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .payment-summary-card-light span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .payment-summary-card-light strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 18px;
+        font-weight: 750;
+    }
+
+
+    .payment-summary-card-light small {
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--muted-light);
+
+        font-size: 7px;
+    }
+
+
+    .payment-green {
+        color: var(--green);
+    }
+
+
+    .payment-orange {
+        color: var(--orange);
+    }
+
+
+    .payment-red {
+        color: var(--red);
+    }
+
+
+    .payment-blue {
+        color: var(--blue);
+    }
+
+
+    /* =====================================================
+       COLLECTION PROGRESS
+    ====================================================== */
+
+    .payment-progress-panel {
+        margin-bottom: 12px;
+
+        padding: 13px 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .payment-progress-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 10px;
+    }
+
+
+    .payment-progress-head span {
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .payment-progress-head strong {
+        font-size: 10px;
+    }
+
+
+    .payment-progress-track {
+        height: 7px;
+
+        margin-top: 9px;
+
+        overflow: hidden;
+
+        border-radius: 999px;
+
+        background: #eeeeef;
+    }
+
+
+    .payment-progress-fill {
+        height: 100%;
+
+        border-radius: 999px;
+
+        background: var(--primary);
+    }
+
+
+    /* =====================================================
+       TABLE
+    ====================================================== */
+
+    .payment-table-wrap-light {
+        overflow-x: auto;
+    }
+
+
+    .payment-table-light {
+        width: 100%;
+
+        min-width: 900px;
+
+        border-collapse: collapse;
+    }
+
+
+    .payment-table-light th {
+        padding: 10px 12px;
+
+        background: #fafafa;
+
+        border-bottom: 1px solid var(--border);
+
+        color: var(--muted);
+
+        text-align: left;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+    }
+
+
+    .payment-table-light td {
+        padding: 12px;
+
+        border-bottom: 1px solid var(--border);
+
+        font-size: 9px;
+
+        vertical-align: middle;
+    }
+
+
+    .payment-table-light tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+
+    .payment-primary-light {
+        display: block;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+
+    .payment-secondary-light {
+        display: block;
+
+        margin-top: 2px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .payment-receipt-link {
+        color: var(--primary);
+
+        text-decoration: none;
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+
+    .payment-receipt-link:hover {
+        text-decoration: underline;
+    }
+
+
+    .payment-status-light {
+        display: inline-flex;
+
+        padding: 4px 7px;
+
+        border-radius: 999px;
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .payment-status-light.confirmed {
+        background: var(--green-soft);
+
+        color: var(--green);
+    }
+
+
+    .payment-status-light.void {
+        background: var(--red-soft);
+
+        color: var(--red);
+    }
+
+
+    /* =====================================================
+       FREE CARDS
+    ====================================================== */
+
+    .payment-free-card-list {
+        margin: 0;
+        padding: 0;
+
+        list-style: none;
+    }
+
+
+    .payment-free-card-item {
+        padding: 12px 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .payment-free-card-item:last-child {
+        border-bottom: 0;
+    }
+
+
+    .payment-free-card-item strong {
+        display: block;
+
+        font-size: 9px;
+    }
+
+
+    .payment-free-card-item p {
+        margin: 3px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .payment-waived {
+        color: var(--blue);
+
+        font-size: 9px;
+        font-weight: 750;
+
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       EMPTY
+    ====================================================== */
+
+    .payment-empty-light {
+        min-height: 170px;
+
+        padding: 30px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        text-align: center;
+    }
+
+
+    .payment-empty-light strong {
+        font-size: 10px;
+    }
+
+
+    .payment-empty-light p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .payment-panel-gap {
+        margin-top: 12px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 950px) {
+
+        .payment-summary-light {
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .payment-toolbar-light {
+            align-items: stretch;
+
+            flex-direction: column;
+        }
+
+
+        .payment-month-form {
+            width: 100%;
+        }
+
+
+        .payment-control-light {
+            flex: 1;
+        }
+
+
+        .payment-summary-light {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<!-- =====================================================
+     FINANCE NAVIGATION
+====================================================== -->
+
+{% include "finance_nav.html" %}
+
+
+<!-- =====================================================
+     MONTH
+====================================================== -->
+
+<section class="payment-toolbar-light">
+
+
+    <div class="payment-period">
+
+        <span>
+            Viewing
+        </span>
+
+        <strong>
+            {{ month_label }}
+        </strong>
+
+    </div>
+
+
+    <form
+        method="GET"
+        action="{{ url_for('payments') }}"
+        class="payment-month-form"
+    >
+
+        <input
+            type="month"
+            name="month"
+            value="{{ selected_month }}"
+            class="payment-control-light"
+            required
+        >
+
+        <button
+            type="submit"
+            class="btn btn-secondary"
+        >
+            Apply
+        </button>
+
+    </form>
+
+
+</section>
+
+
+<!-- =====================================================
+     SUMMARY
+====================================================== -->
+
+<div class="payment-summary-light">
+
+
+    <div class="payment-summary-card-light">
+
+        <span>
+            Expected Payable
+        </span>
+
+        <strong>
+
+            Rs. {{ "{:,.2f}".format(
+                summary.expected or 0
+            ) }}
+
+        </strong>
+
+        <small>
+            After approved Free Card waivers
+        </small>
+
+    </div>
+
+
+    <div class="payment-summary-card-light">
+
+        <span>
+            Collected
+        </span>
+
+        <strong class="payment-green">
+
+            Rs. {{ "{:,.2f}".format(
+                summary.collected or 0
+            ) }}
+
+        </strong>
+
+        <small>
+            Confirmed payments
+        </small>
+
+    </div>
+
+
+    <div class="payment-summary-card-light">
+
+        <span>
+            Outstanding
+        </span>
+
+        <strong class="payment-orange">
+
+            Rs. {{ "{:,.2f}".format(
+                summary.outstanding or 0
+            ) }}
+
+        </strong>
+
+        <small>
+            Remaining balances
+        </small>
+
+    </div>
+
+
+    <div class="payment-summary-card-light">
+
+        <span>
+            Collection Rate
+        </span>
+
+        <strong>
+            {{ summary.rate or 0 }}%
+        </strong>
+
+        <small>
+            Collected against payable fees
+        </small>
+
+    </div>
+
+
+    <div class="payment-summary-card-light">
+
+        <span>
+            Paid
+        </span>
+
+        <strong class="payment-green">
+            {{ summary.paid_count or 0 }}
+        </strong>
+
+        <small>
+            Fully settled accounts
+        </small>
+
+    </div>
+
+
+    <div class="payment-summary-card-light">
+
+        <span>
+            Partial
+        </span>
+
+        <strong class="payment-orange">
+            {{ summary.partial_count or 0 }}
+        </strong>
+
+        <small>
+            Partially paid accounts
+        </small>
+
+    </div>
+
+
+    <div class="payment-summary-card-light">
+
+        <span>
+            Unpaid
+        </span>
+
+        <strong class="payment-red">
+            {{ summary.unpaid_count or 0 }}
+        </strong>
+
+        <small>
+            No confirmed payment
+        </small>
+
+    </div>
+
+
+    <div class="payment-summary-card-light">
+
+        <span>
+            Free Cards
+        </span>
+
+        <strong class="payment-blue">
+            {{ summary.free_card_count or 0 }}
+        </strong>
+
+        <small>
+
+            Waived Rs.
+            {{ "{:,.2f}".format(
+                summary.waived_amount or 0
+            ) }}
+
+        </small>
+
+    </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     COLLECTION RATE
+====================================================== -->
+
+<section class="payment-progress-panel">
+
+
+    <div class="payment-progress-head">
+
+        <span>
+            Monthly Collection Progress
+        </span>
+
+        <strong>
+            {{ summary.rate or 0 }}%
+        </strong>
+
+    </div>
+
+
+    <div class="payment-progress-track">
+
+        <div
+            class="payment-progress-fill"
+            style="
+                width:
+                {% if (summary.rate or 0) > 100 %}
+                    100%
+                {% else %}
+                    {{ summary.rate or 0 }}%
+                {% endif %}
+            "
+        ></div>
+
+    </div>
+
+
+</section>
+
+
+<!-- =====================================================
+     PAYMENT RECORDS
+====================================================== -->
+
+<section class="ui-panel">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Payments
+            </h2>
+
+            <p>
+                Transactions for {{ month_label }}
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for(
+                'finance_history',
+                month=selected_month
+            ) }}"
+            class="ui-panel-link"
+        >
+            Full History →
+        </a>
+
+    </div>
+
+
+    {% if payments %}
+
+
+    <div class="payment-table-wrap-light">
+
+
+        <table class="payment-table-light">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Receipt
+                    </th>
+
+                    <th>
+                        Date
+                    </th>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Class
+                    </th>
+
+                    <th>
+                        Amount
+                    </th>
+
+                    <th>
+                        Method
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for payment in payments %}
+
+
+                <tr>
+
+
+                    <td>
+
+                        <a
+                            href="{{ url_for(
+                                'payment_receipt',
+                                payment_id=payment.id
+                            ) }}"
+                            class="payment-receipt-link"
+                        >
+
+                            {{
+                                payment.receipt_no
+                                or
+                                ('Payment #' ~ payment.id)
+                            }}
+
+                        </a>
+
+                    </td>
+
+
+                    <td>
+                        {{ payment.payment_date }}
+                    </td>
+
+
+                    <td>
+
+                        <span class="payment-primary-light">
+
+                            {{ payment.student_code }}
+
+                            ·
+
+                            {{ payment.full_name }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="payment-primary-light">
+
+                            {{
+                                payment.class_name
+                                or
+                                payment.class_code
+                            }}
+
+                        </span>
+
+                        <span class="payment-secondary-light">
+
+                            {{ payment.teacher_name or '—' }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <strong
+                            class="
+                                {% if payment.status == 'CONFIRMED' %}
+                                    payment-green
+                                {% else %}
+                                    payment-red
+                                {% endif %}
+                            "
+                        >
+
+                            Rs.
+                            {{ "{:,.2f}".format(
+                                payment.amount or 0
+                            ) }}
+
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+
+                        {{ payment.payment_method or '—' }}
+
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="
+                                payment-status-light
+                                {{ (payment.status or '')|lower }}
+                            "
+                        >
+                            {{ payment.status }}
+                        </span>
+
+                    </td>
+
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <div class="payment-empty-light">
+
+        <strong>
+            No payments found.
+        </strong>
+
+        <p>
+            No payment transactions were recorded for {{ month_label }}.
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+<!-- =====================================================
+     APPROVED FREE CARDS
+====================================================== -->
+
+<section class="ui-panel payment-panel-gap">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Approved Free Cards
+            </h2>
+
+            <p>
+                Approved fee waivers for {{ month_label }}
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for(
+                'free_cards',
+                month=selected_month
+            ) }}"
+            class="ui-panel-link"
+        >
+            Manage Free Cards →
+        </a>
+
+    </div>
+
+
+    {% if approved_free_cards %}
+
+
+    <ul class="payment-free-card-list">
+
+
+        {% for card in approved_free_cards %}
+
+
+        <li class="payment-free-card-item">
+
+
+            <div>
+
+                <strong>
+
+                    {{ card.student_code }}
+
+                    ·
+
+                    {{ card.full_name }}
+
+                </strong>
+
+
+                <p>
+
+                    {{
+                        card.class_name
+                        or
+                        card.class_code
+                    }}
+
+                    ·
+
+                    {{ card.teacher_name }}
+
+                </p>
+
+            </div>
+
+
+            <div class="payment-waived">
+
+                Rs.
+                {{ "{:,.2f}".format(
+                    card.waived_amount or 0
+                ) }}
+
+                waived
+
+            </div>
+
+
+        </li>
+
+
+        {% endfor %}
+
+
+    </ul>
+
+
+    {% else %}
+
+
+    <div class="payment-empty-light">
+
+        <strong>
+            No approved Free Cards.
+        </strong>
+
+        <p>
+            There are no approved fee waivers for {{ month_label }}.
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+{% endblock %}

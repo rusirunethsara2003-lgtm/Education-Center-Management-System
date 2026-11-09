@@ -1,0 +1,2604 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ class_item.class_name }} - Class Profile
+{% endblock %}
+
+{% block page_title %}
+Class Profile
+{% endblock %}
+
+{% block page_subtitle %}
+{{ class_item.class_code }} · {{ class_item.class_name }}
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('class_management') }}"
+    class="btn btn-secondary"
+>
+    ← Classes
+</a>
+
+<a
+    href="{{ url_for(
+        'edit_class',
+        class_id=class_item.id
+    ) }}"
+    class="btn btn-primary"
+>
+    Edit Class
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       CLASS HEADER
+    ====================================================== */
+
+    .class-hero {
+        margin-bottom: 12px;
+
+        padding: 16px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 18px;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+    }
+
+
+    .class-identity {
+        display: flex;
+        align-items: center;
+
+        gap: 13px;
+
+        min-width: 0;
+    }
+
+
+    .class-icon {
+        width: 54px;
+        height: 54px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 54px;
+
+        border-radius: 12px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+
+    .class-code {
+        color: var(--primary);
+
+        font-size: 9px;
+        font-weight: 750;
+    }
+
+
+    .class-title h2 {
+        margin: 4px 0 0;
+
+        font-size: 19px;
+
+        letter-spacing: -0.02em;
+    }
+
+
+    .class-title p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 9px;
+    }
+
+
+    /* =====================================================
+       STATUS
+    ====================================================== */
+
+    .status-badge {
+        display: inline-flex;
+
+        padding: 5px 8px;
+
+        border-radius: 999px;
+
+        background: #f4f4f5;
+
+        color: #525252;
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .status-badge.active,
+    .status-badge.confirmed,
+    .status-badge.present,
+    .status-badge.paid,
+    .status-badge.free-card {
+        background: var(--green-soft);
+
+        color: var(--green);
+    }
+
+
+    .status-badge.inactive,
+    .status-badge.void,
+    .status-badge.rejected,
+    .status-badge.revoked {
+        background: var(--red-soft);
+
+        color: var(--red);
+    }
+
+
+    .status-badge.partial,
+    .status-badge.pending,
+    .status-badge.unpaid {
+        background: var(--orange-soft);
+
+        color: var(--orange);
+    }
+
+
+    /* =====================================================
+       TABS + MONTH
+    ====================================================== */
+
+    .class-toolbar {
+        margin-bottom: 12px;
+
+        padding: 8px 10px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .class-tabs {
+        display: flex;
+        align-items: center;
+
+        gap: 4px;
+
+        overflow-x: auto;
+    }
+
+
+    .class-tab {
+        min-height: 34px;
+
+        padding: 0 11px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+
+    .class-tab:hover {
+        background: #f5f5f5;
+
+        color: #262626;
+    }
+
+
+    .class-tab.active {
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-weight: 750;
+    }
+
+
+    .month-control {
+        display: flex;
+        align-items: center;
+
+        gap: 6px;
+
+        flex: 0 0 auto;
+    }
+
+
+    .month-arrow,
+    .month-label {
+        min-height: 32px;
+
+        padding: 0 9px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 7px;
+
+        background: #ffffff;
+
+        color: #404040;
+
+        text-decoration: none;
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+
+    .month-arrow:hover {
+        background: #f7f7f7;
+    }
+
+
+    /* =====================================================
+       SUMMARY CARDS
+    ====================================================== */
+
+    .summary-grid {
+        margin-bottom: 12px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(0, 1fr)
+            );
+
+        gap: 10px;
+    }
+
+
+    .summary-card {
+        min-height: 90px;
+
+        padding: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .summary-card span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .summary-card strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 18px;
+        font-weight: 750;
+    }
+
+
+    .green {
+        color: var(--green);
+    }
+
+
+    .orange {
+        color: var(--orange);
+    }
+
+
+    .blue {
+        color: var(--blue);
+    }
+
+
+    /* =====================================================
+       GRID
+    ====================================================== */
+
+    .profile-grid {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1.1fr)
+            minmax(300px, 0.75fr);
+
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       CLASS DETAILS
+    ====================================================== */
+
+    .detail-grid {
+        padding: 14px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap: 10px;
+    }
+
+
+    .detail-item {
+        min-height: 64px;
+
+        padding: 11px;
+
+        border: 1px solid var(--border);
+        border-radius: 9px;
+
+        background: #fafafa;
+    }
+
+
+    .detail-item.full {
+        grid-column: 1 / -1;
+    }
+
+
+    .detail-item span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .detail-item strong {
+        display: block;
+
+        margin-top: 6px;
+
+        color: #262626;
+
+        font-size: 10px;
+    }
+
+
+    /* =====================================================
+       FINANCE
+    ====================================================== */
+
+    .finance-box {
+        padding: 14px;
+    }
+
+
+    .finance-row {
+        padding: 10px 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .finance-row:last-child {
+        border-bottom: 0;
+    }
+
+
+    .finance-row span {
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .finance-row strong {
+        font-size: 10px;
+    }
+
+
+    .progress-track {
+        height: 7px;
+
+        margin-top: 10px;
+
+        overflow: hidden;
+
+        border-radius: 999px;
+
+        background: #f0f0f2;
+    }
+
+
+    .progress-bar {
+        height: 100%;
+
+        border-radius: 999px;
+
+        background: var(--primary);
+    }
+
+
+    /* =====================================================
+       TABLE
+    ====================================================== */
+
+    .table-wrap {
+        overflow-x: auto;
+    }
+
+
+    .data-table {
+        width: 100%;
+
+        min-width: 850px;
+
+        border-collapse: collapse;
+    }
+
+
+    .data-table th {
+        padding: 10px 12px;
+
+        background: #fafafa;
+
+        border-bottom: 1px solid var(--border);
+
+        color: var(--muted);
+
+        text-align: left;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+    }
+
+
+    .data-table td {
+        padding: 12px;
+
+        border-bottom: 1px solid var(--border);
+
+        color: #262626;
+
+        font-size: 9px;
+
+        vertical-align: middle;
+    }
+
+
+    .data-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+
+    .table-primary {
+        display: block;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+
+    .table-secondary {
+        display: block;
+
+        margin-top: 2px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .text-link {
+        color: var(--primary);
+
+        text-decoration: none;
+
+        font-weight: 700;
+    }
+
+
+    /* =====================================================
+       EMPTY
+    ====================================================== */
+
+    .empty-state {
+        min-height: 190px;
+
+        padding: 30px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        text-align: center;
+    }
+
+
+    .empty-state strong {
+        font-size: 10px;
+    }
+
+
+    .empty-state p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    /* =====================================================
+       SCHEDULE
+    ====================================================== */
+
+    .schedule-card {
+        padding: 18px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(0, 1fr)
+            );
+
+        gap: 10px;
+    }
+
+
+    .schedule-unit {
+        padding: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #fafafa;
+    }
+
+
+    .schedule-unit span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .schedule-unit strong {
+        display: block;
+
+        margin-top: 7px;
+
+        font-size: 11px;
+    }
+
+
+    /* =====================================================
+       TEACHER
+    ====================================================== */
+
+    .teacher-card {
+        padding: 18px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 14px;
+    }
+
+
+    .teacher-avatar {
+        width: 50px;
+        height: 50px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 50px;
+
+        border-radius: 50%;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-weight: 800;
+    }
+
+
+    .teacher-info {
+        min-width: 0;
+
+        flex: 1;
+    }
+
+
+    .teacher-info h3 {
+        margin: 0;
+
+        font-size: 14px;
+    }
+
+
+    .teacher-info p {
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .teacher-actions {
+        display: flex;
+
+        gap: 7px;
+
+        flex-wrap: wrap;
+    }
+
+
+    .small-btn {
+        min-height: 33px;
+
+        padding: 0 10px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 7px;
+
+        background: #ffffff;
+
+        color: #262626;
+
+        text-decoration: none;
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+
+    .small-btn.primary {
+        background: var(--primary);
+
+        border-color: var(--primary);
+
+        color: #ffffff;
+    }
+
+
+    .subsection-space {
+        margin-top: 12px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 1000px) {
+
+        .summary-grid {
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+        }
+
+
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .schedule-card {
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .class-hero {
+            align-items: flex-start;
+
+            flex-direction: column;
+        }
+
+
+        .class-toolbar {
+            align-items: flex-start;
+
+            flex-direction: column;
+        }
+
+
+        .month-control {
+            width: 100%;
+        }
+
+
+        .summary-grid,
+        .schedule-card,
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .detail-item.full {
+            grid-column: auto;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<!-- =====================================================
+     CLASS HEADER
+====================================================== -->
+
+<section class="class-hero">
+
+    <div class="class-identity">
+
+        <div class="class-icon">
+            {{ class_item.class_code }}
+        </div>
+
+
+        <div class="class-title">
+
+            <div class="class-code">
+                {{ class_item.class_code }}
+            </div>
+
+            <h2>
+                {{ class_item.class_name }}
+            </h2>
+
+            <p>
+
+                {{ class_item.grade }}
+
+                ·
+
+                {{ class_item.subject }}
+
+                ·
+
+                {{ class_item.teacher_name }}
+
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <span
+        class="
+            status-badge
+            {{ class_item.status|lower }}
+        "
+    >
+        {{ class_item.status }}
+    </span>
+
+</section>
+
+
+<!-- =====================================================
+     TABS + MONTH
+====================================================== -->
+
+<div class="class-toolbar">
+
+
+    <nav class="class-tabs">
+
+
+        {% for tab_key, tab_label in [
+
+            ('overview', 'Overview'),
+
+            ('students', 'Students'),
+
+            ('schedule', 'Schedule'),
+
+            ('attendance', 'Attendance'),
+
+            ('payments', 'Payments'),
+
+            ('teacher', 'Teacher')
+
+        ] %}
+
+
+            <a
+                href="{{ url_for(
+                    'class_profile',
+                    class_code=class_item.class_code,
+                    tab=tab_key,
+                    month=selected_month
+                ) }}"
+
+                class="
+                    class-tab
+
+                    {% if active_tab == tab_key %}
+                        active
+                    {% endif %}
+                "
+            >
+                {{ tab_label }}
+            </a>
+
+
+        {% endfor %}
+
+
+    </nav>
+
+
+    <div class="month-control">
+
+
+        <a
+            href="{{ url_for(
+                'class_profile',
+                class_code=class_item.class_code,
+                tab=active_tab,
+                month=previous_month
+            ) }}"
+            class="month-arrow"
+        >
+            ←
+        </a>
+
+
+        <span class="month-label">
+            {{ month_label }}
+        </span>
+
+
+        <a
+            href="{{ url_for(
+                'class_profile',
+                class_code=class_item.class_code,
+                tab=active_tab,
+                month=next_month
+            ) }}"
+            class="month-arrow"
+        >
+            →
+        </a>
+
+
+    </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     OVERVIEW
+====================================================== -->
+
+{% if active_tab == 'overview' %}
+
+
+<div class="summary-grid">
+
+
+    <div class="summary-card">
+
+        <span>
+            Current Students
+        </span>
+
+        <strong>
+            {{ active_student_count }}
+        </strong>
+
+    </div>
+
+
+    <div class="summary-card">
+
+        <span>
+            {{ month_label }} Collection
+        </span>
+
+        <strong class="green">
+
+            Rs.
+            {{ "{:,.0f}".format(
+                finance.collected or 0
+            ) }}
+
+        </strong>
+
+    </div>
+
+
+    <div class="summary-card">
+
+        <span>
+            Outstanding
+        </span>
+
+        <strong class="orange">
+
+            Rs.
+            {{ "{:,.0f}".format(
+                finance.outstanding or 0
+            ) }}
+
+        </strong>
+
+    </div>
+
+
+    <div class="summary-card">
+
+        <span>
+            Attendance Rate
+        </span>
+
+        <strong class="blue">
+            {{ attendance_stats.rate }}%
+        </strong>
+
+    </div>
+
+
+</div>
+
+
+<div class="profile-grid">
+
+
+    <!-- =================================================
+         CLASS INFORMATION
+    ================================================== -->
+
+    <section class="ui-panel">
+
+
+        <div class="ui-panel-header">
+
+            <div>
+
+                <h2>
+                    Class Information
+                </h2>
+
+                <p>
+                    Core class, schedule and fee details
+                </p>
+
+            </div>
+
+
+            <a
+                href="{{ url_for(
+                    'edit_class',
+                    class_id=class_item.id
+                ) }}"
+                class="ui-panel-link"
+            >
+                Edit →
+            </a>
+
+        </div>
+
+
+        <div class="detail-grid">
+
+
+            <div class="detail-item">
+
+                <span>
+                    Class Code
+                </span>
+
+                <strong>
+                    {{ class_item.class_code }}
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    Grade
+                </span>
+
+                <strong>
+                    {{ class_item.grade }}
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    Subject
+                </span>
+
+                <strong>
+                    {{ class_item.subject }}
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    Teacher
+                </span>
+
+                <strong>
+                    {{ class_item.teacher_name }}
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    Day
+                </span>
+
+                <strong>
+                    {{ class_item.day_name }}
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    Time
+                </span>
+
+                <strong>
+
+                    {{ class_item.start_display }}
+
+                    –
+
+                    {{ class_item.end_display }}
+
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    Room
+                </span>
+
+                <strong>
+                    {{ class_item.room or '—' }}
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    Monthly Fee
+                </span>
+
+                <strong>
+
+                    Rs.
+
+                    {{ "{:,.2f}".format(
+                        class_item.monthly_fee
+                        or 0
+                    ) }}
+
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    Teacher Share
+                </span>
+
+                <strong>
+                    {{ class_item.teacher_share_percent }}%
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    Status
+                </span>
+
+                <strong>
+                    {{ class_item.status }}
+                </strong>
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+    <!-- =================================================
+         FINANCIAL SNAPSHOT
+    ================================================== -->
+
+    <section class="ui-panel">
+
+
+        <div class="ui-panel-header">
+
+            <div>
+
+                <h2>
+                    Financial Snapshot
+                </h2>
+
+                <p>
+                    {{ month_label }}
+                </p>
+
+            </div>
+
+
+            <a
+                href="{{ url_for(
+                    'payments',
+                    month=selected_month
+                ) }}"
+                class="ui-panel-link"
+            >
+                Payments →
+            </a>
+
+        </div>
+
+
+        <div class="finance-box">
+
+
+            <div class="finance-row">
+
+                <span>
+                    Gross Expected
+                </span>
+
+                <strong>
+
+                    Rs.
+                    {{ "{:,.2f}".format(
+                        finance.gross_expected
+                        or 0
+                    ) }}
+
+                </strong>
+
+            </div>
+
+
+            <div class="finance-row">
+
+                <span>
+                    Free Card Waived
+                </span>
+
+                <strong>
+
+                    Rs.
+                    {{ "{:,.2f}".format(
+                        finance.waived_amount
+                        or 0
+                    ) }}
+
+                </strong>
+
+            </div>
+
+
+            <div class="finance-row">
+
+                <span>
+                    Expected Payable
+                </span>
+
+                <strong>
+
+                    Rs.
+                    {{ "{:,.2f}".format(
+                        finance.expected
+                        or 0
+                    ) }}
+
+                </strong>
+
+            </div>
+
+
+            <div class="finance-row">
+
+                <span>
+                    Collected
+                </span>
+
+                <strong class="green">
+
+                    Rs.
+                    {{ "{:,.2f}".format(
+                        finance.collected
+                        or 0
+                    ) }}
+
+                </strong>
+
+            </div>
+
+
+            <div class="finance-row">
+
+                <span>
+                    Outstanding
+                </span>
+
+                <strong class="orange">
+
+                    Rs.
+                    {{ "{:,.2f}".format(
+                        finance.outstanding
+                        or 0
+                    ) }}
+
+                </strong>
+
+            </div>
+
+
+            <div class="finance-row">
+
+                <span>
+                    Teacher Income
+                </span>
+
+                <strong>
+
+                    Rs.
+                    {{ "{:,.2f}".format(
+                        finance.teacher_income
+                        or 0
+                    ) }}
+
+                </strong>
+
+            </div>
+
+
+            <div class="finance-row">
+
+                <span>
+                    Center Share
+                </span>
+
+                <strong>
+
+                    Rs.
+                    {{ "{:,.2f}".format(
+                        finance.center_income
+                        or 0
+                    ) }}
+
+                </strong>
+
+            </div>
+
+
+            <div
+                style="
+                    margin-top:12px;
+
+                    color:var(--muted);
+
+                    font-size:8px;
+
+                    display:flex;
+
+                    justify-content:space-between;
+                "
+            >
+
+                <span>
+                    Collection Rate
+                </span>
+
+                <strong>
+                    {{ finance.collection_rate }}%
+                </strong>
+
+            </div>
+
+
+            <div class="progress-track">
+
+                <div
+                    class="progress-bar"
+
+                    style="
+                        width:
+                        {{ [finance.collection_rate, 100]|min }}%;
+                    "
+                ></div>
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+</div>
+
+
+<!-- =====================================================
+     STUDENTS
+====================================================== -->
+
+{% elif active_tab == 'students' %}
+
+
+<section class="ui-panel">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Class Students
+            </h2>
+
+            <p>
+                Current and historical enrollments
+                · {{ month_label }}
+            </p>
+
+        </div>
+
+
+        <span class="status-badge active">
+
+            {{ active_student_count }}
+
+            ACTIVE
+
+        </span>
+
+    </div>
+
+
+    {% if students %}
+
+
+    <div class="table-wrap">
+
+
+        <table class="data-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Enrollment
+                    </th>
+
+                    <th>
+                        Student Status
+                    </th>
+
+                    <th>
+                        Fee Status
+                    </th>
+
+                    <th>
+                        Paid
+                    </th>
+
+                    <th>
+                        Balance
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for student in students %}
+
+
+                {% set fee_class =
+                    student.fee_status
+                    |lower
+                    |replace(' ', '-')
+                %}
+
+
+                <tr>
+
+
+                    <td>
+
+                        <span class="table-primary">
+
+                            {{ student.student_code }}
+
+                            ·
+
+                            {{ student.full_name }}
+
+                        </span>
+
+                        <span class="table-secondary">
+                            {{ student.school or '—' }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="
+                                status-badge
+
+                                {% if student.is_active %}
+                                    active
+                                {% else %}
+                                    inactive
+                                {% endif %}
+                            "
+                        >
+
+                            {% if student.is_active %}
+
+                                ACTIVE
+
+                            {% else %}
+
+                                INACTIVE
+
+                            {% endif %}
+
+                        </span>
+
+
+                        <span class="table-secondary">
+
+                            Joined
+
+                            {{ student.enrolled_at }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        {{ student.student_status }}
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="
+                                status-badge
+                                {{ fee_class }}
+                            "
+                        >
+                            {{ student.fee_status }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        Rs.
+
+                        {{ "{:,.2f}".format(
+                            student.paid or 0
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        Rs.
+
+                        {{ "{:,.2f}".format(
+                            student.balance or 0
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        <a
+                            href="{{ url_for(
+                                'student_profile',
+                                student_id=student.student_id
+                            ) }}"
+                            class="text-link"
+                        >
+                            Open →
+                        </a>
+
+                    </td>
+
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <div class="empty-state">
+
+        <strong>
+            No students found.
+        </strong>
+
+        <p>
+            This class has no enrollment history.
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+<!-- =====================================================
+     SCHEDULE
+====================================================== -->
+
+{% elif active_tab == 'schedule' %}
+
+
+<section class="ui-panel">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Weekly Schedule
+            </h2>
+
+            <p>
+                Class timetable and room allocation
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for('timetable') }}"
+            class="ui-panel-link"
+        >
+            Full Timetable →
+        </a>
+
+    </div>
+
+
+    <div class="schedule-card">
+
+
+        <div class="schedule-unit">
+
+            <span>
+                Day
+            </span>
+
+            <strong>
+                {{ class_item.day_name }}
+            </strong>
+
+        </div>
+
+
+        <div class="schedule-unit">
+
+            <span>
+                Starts
+            </span>
+
+            <strong>
+                {{ class_item.start_display }}
+            </strong>
+
+        </div>
+
+
+        <div class="schedule-unit">
+
+            <span>
+                Ends
+            </span>
+
+            <strong>
+                {{ class_item.end_display }}
+            </strong>
+
+        </div>
+
+
+        <div class="schedule-unit">
+
+            <span>
+                Room
+            </span>
+
+            <strong>
+                {{ class_item.room or '—' }}
+            </strong>
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+<!-- =====================================================
+     ATTENDANCE
+====================================================== -->
+
+{% elif active_tab == 'attendance' %}
+
+
+<div class="summary-grid">
+
+
+    <div class="summary-card">
+
+        <span>
+            Attendance Records
+        </span>
+
+        <strong>
+            {{ attendance_stats.records }}
+        </strong>
+
+    </div>
+
+
+    <div class="summary-card">
+
+        <span>
+            Class Days
+        </span>
+
+        <strong>
+            {{ attendance_stats.class_days }}
+        </strong>
+
+    </div>
+
+
+    <div class="summary-card">
+
+        <span>
+            Average / Day
+        </span>
+
+        <strong>
+            {{ attendance_stats.average }}
+        </strong>
+
+    </div>
+
+
+    <div class="summary-card">
+
+        <span>
+            Attendance Rate
+        </span>
+
+        <strong class="blue">
+            {{ attendance_stats.rate }}%
+        </strong>
+
+    </div>
+
+
+</div>
+
+
+<section class="ui-panel">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Attendance History
+            </h2>
+
+            <p>
+
+                {{ month_label }}
+
+                ·
+
+                {{ class_item.class_name }}
+
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for('attendance_list') }}"
+            class="ui-panel-link"
+        >
+            All Attendance →
+        </a>
+
+    </div>
+
+
+    {% if attendance_records %}
+
+
+    <div class="table-wrap">
+
+
+        <table class="data-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Date
+                    </th>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Check-In
+                    </th>
+
+                    <th>
+                        Source
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for record in attendance_records %}
+
+
+                <tr>
+
+                    <td>
+                        {{ record.attendance_date }}
+                    </td>
+
+
+                    <td>
+
+                        <span class="table-primary">
+
+                            {{ record.student_code }}
+
+                            ·
+
+                            {{ record.full_name }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        {{ record.check_in_time }}
+                    </td>
+
+
+                    <td>
+                        {{ record.source }}
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="
+                                status-badge
+                                {{ record.status|lower }}
+                            "
+                        >
+                            {{ record.status }}
+                        </span>
+
+                    </td>
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <div class="empty-state">
+
+        <strong>
+            No attendance records.
+        </strong>
+
+        <p>
+
+            No attendance has been marked
+            for this class in {{ month_label }}.
+
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+<!-- =====================================================
+     PAYMENTS
+====================================================== -->
+
+{% elif active_tab == 'payments' %}
+
+
+<div class="summary-grid">
+
+
+    <div class="summary-card">
+
+        <span>
+            Expected Payable
+        </span>
+
+        <strong>
+
+            Rs.
+
+            {{ "{:,.0f}".format(
+                finance.expected or 0
+            ) }}
+
+        </strong>
+
+    </div>
+
+
+    <div class="summary-card">
+
+        <span>
+            Collected
+        </span>
+
+        <strong class="green">
+
+            Rs.
+
+            {{ "{:,.0f}".format(
+                finance.collected or 0
+            ) }}
+
+        </strong>
+
+    </div>
+
+
+    <div class="summary-card">
+
+        <span>
+            Outstanding
+        </span>
+
+        <strong class="orange">
+
+            Rs.
+
+            {{ "{:,.0f}".format(
+                finance.outstanding or 0
+            ) }}
+
+        </strong>
+
+    </div>
+
+
+    <div class="summary-card">
+
+        <span>
+            Free Cards
+        </span>
+
+        <strong class="blue">
+            {{ finance.free_card_count }}
+        </strong>
+
+    </div>
+
+
+</div>
+
+
+<section class="ui-panel">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Payment History
+            </h2>
+
+            <p>
+                {{ month_label }}
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for('new_payment') }}"
+            class="ui-panel-link"
+        >
+            Record Payment →
+        </a>
+
+    </div>
+
+
+    {% if payment_records %}
+
+
+    <div class="table-wrap">
+
+
+        <table class="data-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Receipt
+                    </th>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Date
+                    </th>
+
+                    <th>
+                        Amount
+                    </th>
+
+                    <th>
+                        Method
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for payment in payment_records %}
+
+
+                <tr>
+
+
+                    <td>
+                        {{ payment.receipt_no or '—' }}
+                    </td>
+
+
+                    <td>
+
+                        <span class="table-primary">
+
+                            {{ payment.student_code }}
+
+                            ·
+
+                            {{ payment.full_name }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        {{ payment.payment_date }}
+                    </td>
+
+
+                    <td>
+
+                        Rs.
+
+                        {{ "{:,.2f}".format(
+                            payment.amount or 0
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+                        {{ payment.payment_method or '—' }}
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="
+                                status-badge
+                                {{ payment.status|lower }}
+                            "
+                        >
+                            {{ payment.status }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <a
+                            href="{{ url_for(
+                                'payment_receipt',
+                                payment_id=payment.id
+                            ) }}"
+                            class="text-link"
+                        >
+                            Receipt →
+                        </a>
+
+                    </td>
+
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <div class="empty-state">
+
+        <strong>
+            No payments found.
+        </strong>
+
+        <p>
+            No payment transactions exist
+            for {{ month_label }}.
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+<!-- =====================================================
+     FREE CARDS INSIDE FINANCE
+====================================================== -->
+
+<section
+    class="
+        ui-panel
+        subsection-space
+    "
+>
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Free Cards
+            </h2>
+
+            <p>
+                Fee waivers for {{ month_label }}
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for(
+                'free_cards',
+                month=selected_month
+            ) }}"
+            class="ui-panel-link"
+        >
+            Manage Free Cards →
+        </a>
+
+    </div>
+
+
+    {% if free_card_records %}
+
+
+    <div class="table-wrap">
+
+
+        <table class="data-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Waived
+                    </th>
+
+                    <th>
+                        Requested By
+                    </th>
+
+                    <th>
+                        Reason
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for card in free_card_records %}
+
+
+                <tr>
+
+
+                    <td>
+
+                        {{ card.student_code }}
+
+                        ·
+
+                        {{ card.full_name }}
+
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="
+                                status-badge
+                                {{ card.status|lower }}
+                            "
+                        >
+                            {{ card.status }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        Rs.
+
+                        {{ "{:,.2f}".format(
+                            card.waived_amount or 0
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+                        {{ card.requested_by_name }}
+                    </td>
+
+
+                    <td>
+                        {{ card.reason }}
+                    </td>
+
+
+                    <td>
+
+                        <a
+                            href="{{ url_for(
+                                'free_card_detail',
+                                free_card_id=card.id
+                            ) }}"
+                            class="text-link"
+                        >
+                            Open →
+                        </a>
+
+                    </td>
+
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <div class="empty-state">
+
+        <strong>
+            No Free Cards.
+        </strong>
+
+        <p>
+
+            No Free Card records exist for
+            this class in {{ month_label }}.
+
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+<!-- =====================================================
+     TEACHER
+====================================================== -->
+
+{% elif active_tab == 'teacher' %}
+
+
+<section class="ui-panel">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Assigned Teacher
+            </h2>
+
+            <p>
+                Teacher responsible for this class
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="teacher-card">
+
+
+        <div class="teacher-avatar">
+
+            {{
+                (
+                    class_item.teacher_name
+                    or
+                    'T'
+                )[:2]
+                |upper
+            }}
+
+        </div>
+
+
+        <div class="teacher-info">
+
+            <h3>
+                {{ class_item.teacher_name }}
+            </h3>
+
+            <p>
+
+                {{ class_item.teacher_code }}
+
+                ·
+
+                {{
+                    class_item.teacher_subject
+                    or
+                    class_item.subject
+                }}
+
+                ·
+
+                {{
+                    class_item.teacher_phone
+                    or
+                    'No phone'
+                }}
+
+            </p>
+
+            <p>
+                Status:
+                {{ class_item.teacher_status }}
+            </p>
+
+        </div>
+
+
+        <div class="teacher-actions">
+
+
+            <a
+                href="{{ url_for(
+                    'teacher_profile',
+                    teacher_id=class_item.teacher_id,
+                    month=selected_month
+                ) }}"
+                class="small-btn primary"
+            >
+                Open Teacher Profile
+            </a>
+
+
+            <a
+                href="{{ url_for(
+                    'edit_class',
+                    class_id=class_item.id
+                ) }}"
+                class="small-btn"
+            >
+                Change Assignment
+            </a>
+
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+{% endif %}
+
+
+{% endblock %}

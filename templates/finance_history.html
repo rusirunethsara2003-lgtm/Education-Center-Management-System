@@ -1,0 +1,931 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Payment History - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Finance
+{% endblock %}
+
+
+{% block page_subtitle %}
+Search confirmed and voided payment transactions
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('new_payment') }}"
+    class="btn btn-primary"
+>
+    + Record Payment
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    .history-filter-panel {
+        margin-bottom: 12px;
+
+        padding: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .history-filter {
+        display: grid;
+
+        grid-template-columns:
+            160px
+            minmax(220px, 1fr)
+            160px
+            auto;
+
+        gap: 8px;
+
+        align-items: end;
+    }
+
+
+    .history-field label {
+        display: block;
+
+        margin-bottom: 5px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+        font-weight: 700;
+    }
+
+
+    .history-control {
+        width: 100%;
+        min-height: 36px;
+
+        padding: 0 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+        color: var(--text);
+
+        outline: none;
+
+        font-size: 9px;
+    }
+
+
+    .history-control:focus {
+        border-color: var(--primary);
+    }
+
+
+    .history-nav {
+        margin-top: 10px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 8px;
+    }
+
+
+    .history-arrow {
+        min-height: 32px;
+
+        padding: 0 10px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 7px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        text-decoration: none;
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+
+    .history-period {
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .history-period strong {
+        color: var(--text);
+
+        font-size: 9px;
+    }
+
+
+    .history-summary {
+        margin-bottom: 12px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+
+    .history-stat {
+        min-height: 92px;
+
+        padding: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .history-stat span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .history-stat strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 17px;
+        font-weight: 750;
+    }
+
+
+    .history-green {
+        color: var(--green);
+    }
+
+
+    .history-red {
+        color: var(--red);
+    }
+
+
+    .history-table-wrap {
+        overflow-x: auto;
+    }
+
+
+    .history-table {
+        width: 100%;
+
+        min-width: 1100px;
+
+        border-collapse: collapse;
+    }
+
+
+    .history-table th {
+        padding: 10px 12px;
+
+        background: #fafafa;
+
+        border-bottom: 1px solid var(--border);
+
+        color: var(--muted);
+
+        text-align: left;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+    }
+
+
+    .history-table td {
+        padding: 12px;
+
+        border-bottom: 1px solid var(--border);
+
+        font-size: 9px;
+
+        vertical-align: middle;
+    }
+
+
+    .history-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+
+    .history-primary {
+        display: block;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+
+    .history-secondary {
+        display: block;
+
+        margin-top: 2px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .history-student-link {
+        color: inherit;
+
+        text-decoration: none;
+    }
+
+
+    .history-student-link:hover
+    .history-primary {
+        color: var(--primary);
+    }
+
+
+    .history-receipt-link {
+        color: var(--primary);
+
+        text-decoration: none;
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+
+    .history-receipt-link:hover {
+        text-decoration: underline;
+    }
+
+
+    .history-status {
+        display: inline-flex;
+
+        padding: 4px 7px;
+
+        border-radius: 999px;
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .history-status.confirmed {
+        background: var(--green-soft);
+
+        color: var(--green);
+    }
+
+
+    .history-status.void {
+        background: var(--red-soft);
+
+        color: var(--red);
+    }
+
+
+    .history-amount {
+        font-weight: 750;
+    }
+
+
+    .history-amount.confirmed {
+        color: var(--green);
+    }
+
+
+    .history-amount.void {
+        color: var(--red);
+
+        text-decoration: line-through;
+    }
+
+
+    .history-empty {
+        min-height: 220px;
+
+        padding: 30px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        text-align: center;
+    }
+
+
+    .history-empty strong {
+        font-size: 11px;
+    }
+
+
+    .history-empty p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    @media (max-width: 900px) {
+
+        .history-filter {
+            grid-template-columns:
+                1fr
+                1fr;
+        }
+
+
+        .history-summary {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+    }
+
+
+    @media (max-width: 600px) {
+
+        .history-filter,
+        .history-summary {
+            grid-template-columns: 1fr;
+        }
+
+
+        .history-nav {
+            align-items: stretch;
+
+            flex-direction: column;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+{% include "finance_nav.html" %}
+
+
+<section class="history-filter-panel">
+
+
+    <form
+        method="GET"
+        action="{{ url_for('finance_history') }}"
+        class="history-filter"
+    >
+
+
+        <div class="history-field">
+
+            <label>
+                Fee Month
+            </label>
+
+            <input
+                type="month"
+                name="month"
+                value="{{ selected_month }}"
+                class="history-control"
+                required
+            >
+
+        </div>
+
+
+        <div class="history-field">
+
+            <label>
+                Search
+            </label>
+
+            <input
+                type="text"
+                name="search"
+                value="{{ search }}"
+                class="history-control"
+
+                placeholder="
+                    Student, ID, receipt or class
+                "
+            >
+
+        </div>
+
+
+        <div class="history-field">
+
+            <label>
+                Transaction Status
+            </label>
+
+            <select
+                name="status"
+                class="history-control"
+            >
+
+                <option
+                    value="ALL"
+
+                    {% if status_filter == 'ALL' %}
+                        selected
+                    {% endif %}
+                >
+                    All Transactions
+                </option>
+
+
+                <option
+                    value="CONFIRMED"
+
+                    {% if status_filter == 'CONFIRMED' %}
+                        selected
+                    {% endif %}
+                >
+                    Confirmed
+                </option>
+
+
+                <option
+                    value="VOID"
+
+                    {% if status_filter == 'VOID' %}
+                        selected
+                    {% endif %}
+                >
+                    Voided
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="btn btn-primary"
+        >
+            Apply Filters
+        </button>
+
+
+    </form>
+
+
+    <div class="history-nav">
+
+
+        <a
+            href="{{ url_for(
+                'finance_history',
+                month=previous_month,
+                search=search,
+                status=status_filter
+            ) }}"
+            class="history-arrow"
+        >
+            ← Previous Month
+        </a>
+
+
+        <div class="history-period">
+
+            Showing
+
+            <strong>
+                {{ month_label }}
+            </strong>
+
+        </div>
+
+
+        <a
+            href="{{ url_for(
+                'finance_history',
+                month=next_month,
+                search=search,
+                status=status_filter
+            ) }}"
+            class="history-arrow"
+        >
+            Next Month →
+        </a>
+
+
+    </div>
+
+
+</section>
+
+
+<div class="history-summary">
+
+
+    <div class="history-stat">
+
+        <span>
+            Transactions
+        </span>
+
+        <strong>
+            {{ summary.transactions or 0 }}
+        </strong>
+
+    </div>
+
+
+    <div class="history-stat">
+
+        <span>
+            Confirmed Transactions
+        </span>
+
+        <strong class="history-green">
+            {{ summary.confirmed_count or 0 }}
+        </strong>
+
+    </div>
+
+
+    <div class="history-stat">
+
+        <span>
+            Confirmed Amount
+        </span>
+
+        <strong class="history-green">
+
+            Rs. {{ "{:,.2f}".format(
+                summary.confirmed_amount or 0
+            ) }}
+
+        </strong>
+
+    </div>
+
+
+    <div class="history-stat">
+
+        <span>
+            Voided
+        </span>
+
+        <strong class="history-red">
+
+            {{ summary.void_count or 0 }}
+
+            {% if summary.void_amount %}
+
+            · Rs. {{ "{:,.2f}".format(
+                summary.void_amount
+            ) }}
+
+            {% endif %}
+
+        </strong>
+
+    </div>
+
+
+</div>
+
+
+<section class="ui-panel">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Payment History
+            </h2>
+
+            <p>
+                Latest 500 matching transactions
+            </p>
+
+        </div>
+
+
+        {% if search or status_filter != 'ALL' %}
+
+        <a
+            href="{{ url_for(
+                'finance_history',
+                month=selected_month
+            ) }}"
+            class="ui-panel-link"
+        >
+            Clear Filters
+        </a>
+
+        {% endif %}
+
+    </div>
+
+
+    {% if payments %}
+
+
+    <div class="history-table-wrap">
+
+
+        <table class="history-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Receipt
+                    </th>
+
+                    <th>
+                        Payment Date
+                    </th>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Class
+                    </th>
+
+                    <th>
+                        Fee Month
+                    </th>
+
+                    <th>
+                        Method
+                    </th>
+
+                    <th>
+                        Amount
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Recorded By
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for payment in payments %}
+
+
+                <tr>
+
+
+                    <td>
+
+                        {% if payment.receipt_no %}
+
+                        <a
+                            href="{{ url_for(
+                                'payment_receipt',
+                                payment_id=payment.id
+                            ) }}"
+                            class="history-receipt-link"
+                        >
+                            {{ payment.receipt_no }}
+                        </a>
+
+                        {% else %}
+
+                        <a
+                            href="{{ url_for(
+                                'payment_receipt',
+                                payment_id=payment.id
+                            ) }}"
+                            class="history-receipt-link"
+                        >
+                            Payment #{{ payment.id }}
+                        </a>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="history-primary">
+                            {{ payment.payment_date }}
+                        </span>
+
+                        {% if payment.created_at %}
+
+                        <span class="history-secondary">
+                            {{ payment.created_at }}
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        <a
+                            href="{{ url_for(
+                                'student_profile',
+                                student_id=payment.student_id,
+                                tab='payments'
+                            ) }}"
+                            class="history-student-link"
+                        >
+
+                            <span class="history-primary">
+
+                                {{ payment.student_code }}
+
+                                ·
+
+                                {{ payment.full_name }}
+
+                            </span>
+
+                            <span class="history-secondary">
+                                Grade {{ payment.grade }}
+                            </span>
+
+                        </a>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="history-primary">
+
+                            {{
+                                payment.class_name
+                                or
+                                payment.class_code
+                            }}
+
+                        </span>
+
+                        <span class="history-secondary">
+
+                            {{ payment.class_code }}
+
+                            ·
+
+                            {{ payment.teacher_name }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        {{ payment.fee_month }}
+                    </td>
+
+
+                    <td>
+                        {{ payment.payment_method or '—' }}
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="
+                                history-amount
+                                {{ (payment.status or '')|lower }}
+                            "
+                        >
+
+                            Rs. {{ "{:,.2f}".format(
+                                payment.amount or 0
+                            ) }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="
+                                history-status
+                                {{ (payment.status or '')|lower }}
+                            "
+                        >
+                            {{ payment.status }}
+                        </span>
+
+                        {% if
+                            payment.status == 'VOID'
+                            and
+                            payment.void_reason
+                        %}
+
+                        <span class="history-secondary">
+                            {{ payment.void_reason }}
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ payment.recorded_by or '—' }}
+
+                    </td>
+
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <div class="history-empty">
+
+        <strong>
+            No payment transactions found.
+        </strong>
+
+        <p>
+            Change the month, search text or status filter.
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+{% endblock %}

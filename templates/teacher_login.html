@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <title>Teacher Login - Sri Sumana</title>
+    <style>
+        *{box-sizing:border-box}html,body{margin:0;min-height:100%}body{min-height:100vh;display:grid;place-items:center;padding:20px;background:#f4f5f7;color:#171717;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.card{width:min(420px,100%);background:#fff;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 16px 42px rgba(15,23,42,.07);overflow:hidden}.head{padding:25px 24px 20px;border-bottom:1px solid #e5e7eb}.eyebrow{font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:#4f46e5}.head h1{margin:8px 0 0;font-size:24px}.head p{margin:7px 0 0;color:#737373;font-size:12px;line-height:1.6}.body{padding:22px 24px 24px}.alert{margin-bottom:12px;padding:11px 12px;border-radius:10px;font-size:11px;line-height:1.5}.alert.error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}.alert.success{background:#ecfdf3;color:#166534;border:1px solid #bbf7d0}.field{margin-bottom:14px}.field label{display:block;margin-bottom:6px;color:#525252;font-size:10px;font-weight:750}.field input{width:100%;height:45px;padding:0 12px;border:1px solid #d4d4d8;border-radius:10px;background:#fff;color:#171717;font-size:13px;outline:none}.field input:focus{border-color:#4f46e5;box-shadow:0 0 0 3px #eef2ff}.btn{width:100%;height:46px;border:0;border-radius:10px;background:#4f46e5;color:#fff;font-size:12px;font-weight:850;cursor:pointer}.foot{margin-top:14px;color:#737373;text-align:center;font-size:10px;line-height:1.6}.foot a{color:#4f46e5;text-decoration:none;font-weight:750}
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="head">
+        <div class="eyebrow">Sri Sumana Education Center</div>
+        <h1>Teacher Portal</h1>
+        <p>Sign in to view your classes, attendance, student payment status and Free Card requests.</p>
+    </div>
+    <div class="body">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('teacher_login') }}" autocomplete="on">
+            <input type="hidden" name="next" value="{{ next_url or '' }}">
+
+            <div class="field">
+                <label for="username">Teacher Username</label>
+                <input id="username" name="username" type="text" autocomplete="username" required maxlength="40" autofocus>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required>
+            </div>
+
+            <button class="btn" type="submit">Sign in to Teacher Dashboard</button>
+        </form>
+
+        <div class="foot">
+            Teacher accounts are created by the Owner.<br>
+            <a href="{{ url_for('login') }}">Owner / Staff Login</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

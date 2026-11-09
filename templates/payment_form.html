@@ -1,0 +1,2121 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Record Payment - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Record Payment
+{% endblock %}
+
+
+{% block page_subtitle %}
+Record full or partial monthly class payments
+{% endblock %}
+
+
+{% block page_actions %}
+
+{% if request.args.get('return_to') == 'scan' %}
+
+<a
+    href="{{ url_for('scan_qr') }}"
+    class="btn btn-secondary"
+>
+    ← Back to Scan QR
+</a>
+
+{% endif %}
+
+<a
+    href="{{ url_for('finance_history') }}"
+    class="btn btn-secondary"
+>
+    Payment History
+</a>
+
+<a
+    href="{{ url_for('payments') }}"
+    class="btn btn-primary"
+>
+    Payments
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    .payment-form-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    .payment-tabs {
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #ffffff;
+    }
+
+
+    .payment-tab {
+        min-height: 35px;
+        padding: 0 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border-radius: 7px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 9px;
+        font-weight: 650;
+        white-space: nowrap;
+    }
+
+
+    .payment-tab:hover {
+        background: #f5f5f5;
+        color: var(--text);
+    }
+
+
+    .payment-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 750;
+    }
+
+
+    .qr-payment-banner {
+        display: none;
+        padding: 12px 14px;
+        border: 1px solid #c7d2fe;
+        border-radius: 10px;
+        background: var(--primary-soft);
+    }
+
+
+    .qr-payment-banner.show {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+
+    .qr-payment-banner strong {
+        display: block;
+        color: var(--primary);
+        font-size: 9px;
+    }
+
+
+    .qr-payment-banner p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 7px;
+        line-height: 1.5;
+    }
+
+
+    .payment-layout {
+        display: grid;
+        grid-template-columns:
+            minmax(0, 1.35fr)
+            minmax(280px, .65fr);
+        gap: 12px;
+        align-items: start;
+    }
+
+
+    .payment-form-body {
+        padding: 16px;
+    }
+
+
+    .payment-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+
+    .payment-field {
+        min-width: 0;
+    }
+
+
+    .payment-field.full {
+        grid-column: 1 / -1;
+    }
+
+
+    .payment-field label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 8px;
+        font-weight: 750;
+    }
+
+
+    .required-mark {
+        color: var(--red);
+    }
+
+
+    .payment-input,
+    .payment-select,
+    .payment-textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--text);
+        outline: none;
+        font-size: 9px;
+    }
+
+
+    .payment-input,
+    .payment-select {
+        min-height: 42px;
+        padding: 0 11px;
+    }
+
+
+    .payment-textarea {
+        min-height: 84px;
+        padding: 10px 11px;
+        resize: vertical;
+        line-height: 1.5;
+    }
+
+
+    .payment-input:focus,
+    .payment-select:focus,
+    .payment-textarea:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, .08);
+    }
+
+
+    .payment-select:disabled,
+    .payment-input:disabled {
+        background: #f7f7f8;
+        color: var(--muted);
+        cursor: not-allowed;
+    }
+
+
+    .payment-help {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 7px;
+        line-height: 1.5;
+    }
+
+
+    .free-card-alert {
+        grid-column: 1 / -1;
+        display: none;
+        padding: 12px;
+        border: 1px solid #bfdbfe;
+        border-radius: 9px;
+        background: var(--blue-soft);
+        color: var(--blue);
+    }
+
+
+    .free-card-alert.show {
+        display: block;
+    }
+
+
+    .free-card-alert strong {
+        display: block;
+        font-size: 8px;
+    }
+
+
+    .free-card-alert p {
+        margin: 4px 0 0;
+        font-size: 7px;
+        line-height: 1.5;
+    }
+
+
+    .payment-summary {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+
+    .payment-summary-card {
+        min-height: 78px;
+        padding: 11px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fafafa;
+    }
+
+
+    .payment-summary-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .payment-summary-card strong {
+        display: block;
+        margin-top: 7px;
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 780;
+    }
+
+
+    .payment-summary-card.paid strong {
+        color: var(--green);
+    }
+
+
+    .payment-summary-card.balance strong {
+        color: var(--orange);
+    }
+
+
+    .payment-status {
+        margin-top: 7px;
+        min-height: 27px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        font-size: 7px;
+        font-weight: 850;
+    }
+
+
+    .payment-status.empty {
+        background: #f4f4f5;
+        color: var(--muted);
+    }
+
+
+    .payment-status.unpaid {
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+
+    .payment-status.partial {
+        background: var(--orange-soft);
+        color: var(--orange);
+    }
+
+
+    .payment-status.paid {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .payment-status.free-card {
+        background: var(--blue-soft);
+        color: var(--blue);
+    }
+
+
+    .payment-actions {
+        margin-top: 18px;
+        padding-top: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-top: 1px solid var(--border);
+    }
+
+
+    .payment-actions .btn-primary {
+        min-width: 165px;
+    }
+
+
+    .payment-side-body {
+        padding: 14px;
+    }
+
+
+    .payment-preview {
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fafafa;
+    }
+
+
+    .preview-student {
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .preview-student span {
+        display: block;
+        color: var(--primary);
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .preview-student strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+    }
+
+
+    .preview-student p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .preview-grid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+
+    .preview-box {
+        min-height: 60px;
+        padding: 9px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #ffffff;
+    }
+
+
+    .preview-box span {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .preview-box strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 9px;
+        line-height: 1.4;
+    }
+
+
+    .payment-warning {
+        margin-top: 12px;
+        padding: 12px;
+        border: 1px solid #fed7aa;
+        border-radius: 9px;
+        background: var(--orange-soft);
+    }
+
+
+    .payment-warning strong {
+        display: block;
+        color: var(--orange);
+        font-size: 8px;
+    }
+
+
+    .payment-warning p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 7px;
+        line-height: 1.55;
+    }
+
+
+    @media (max-width: 950px) {
+
+        .payment-layout {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 700px) {
+
+        .payment-grid,
+        .payment-summary,
+        .preview-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .payment-field.full,
+        .payment-summary,
+        .free-card-alert {
+            grid-column: auto;
+        }
+
+        .payment-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .payment-actions .btn {
+            width: 100%;
+        }
+
+        .qr-payment-banner.show {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="payment-form-page">
+
+
+    <nav class="payment-tabs">
+
+        <a
+            href="{{ url_for('finance_overview') }}"
+            class="payment-tab"
+        >
+            Overview
+        </a>
+
+        <a
+            href="{{ url_for('payments') }}"
+            class="payment-tab active"
+        >
+            Payments
+        </a>
+
+        <a
+            href="{{ url_for('finance_outstanding') }}"
+            class="payment-tab"
+        >
+            Outstanding
+        </a>
+
+        <a
+            href="{{ url_for('free_cards') }}"
+            class="payment-tab"
+        >
+            Free Cards
+        </a>
+
+        <a
+            href="{{ url_for('finance_history') }}"
+            class="payment-tab"
+        >
+            Payment History
+        </a>
+
+    </nav>
+
+
+    <div
+        id="qrPaymentBanner"
+        class="qr-payment-banner"
+    >
+
+        <div>
+
+            <strong>
+                Payment from QR Attendance
+            </strong>
+
+            <p>
+                Student, class, fee month and remaining balance were
+                preselected from the QR confirmation screen.
+            </p>
+
+        </div>
+
+        <a
+            href="{{ url_for('scan_qr') }}"
+            class="btn btn-secondary"
+        >
+            Cancel & Return to Scan
+        </a>
+
+    </div>
+
+
+    <div class="payment-layout">
+
+
+        <section class="ui-panel">
+
+            <div class="ui-panel-header">
+
+                <div>
+                    <h2>Payment Details</h2>
+                    <p>
+                        Confirm the student, class, fee month and amount
+                    </p>
+                </div>
+
+            </div>
+
+
+            <form
+                method="POST"
+                action="{{ url_for('new_payment') }}"
+                id="paymentForm"
+                class="payment-form-body"
+            >
+
+                <div class="payment-grid">
+
+
+                    <div class="payment-field">
+
+                        <label for="student_id">
+                            Student
+                            <span class="required-mark">*</span>
+                        </label>
+
+                        <select
+                            id="student_id"
+                            name="student_id"
+                            class="payment-select"
+                            required
+                        >
+
+                            <option value="">
+                                Select Student
+                            </option>
+
+                            {% for student in students %}
+
+                            <option value="{{ student.id }}">
+                                {{ student.student_code }}
+                                ·
+                                {{ student.full_name }}
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                        <span class="payment-help">
+                            Only active students are available.
+                        </span>
+
+                    </div>
+
+
+                    <div class="payment-field">
+
+                        <label for="class_code">
+                            Class
+                            <span class="required-mark">*</span>
+                        </label>
+
+                        <select
+                            id="class_code"
+                            name="class_code"
+                            class="payment-select"
+                            required
+                            disabled
+                        >
+
+                            <option value="">
+                                Select Student First
+                            </option>
+
+                        </select>
+
+                        <span class="payment-help">
+                            Only active classes enrolled by the selected
+                            student are shown.
+                        </span>
+
+                    </div>
+
+
+                    <div class="payment-field">
+
+                        <label for="fee_month">
+                            Fee Month
+                            <span class="required-mark">*</span>
+                        </label>
+
+                        <input
+                            type="month"
+                            id="fee_month"
+                            name="fee_month"
+                            class="payment-input"
+                            value="{{ request.args.get('fee_month', default_month) }}"
+                            required
+                        >
+
+                        <span class="payment-help">
+                            Fee month is separate from the payment date.
+                        </span>
+
+                    </div>
+
+
+                    <div class="payment-field">
+
+                        <label for="payment_method">
+                            Payment Method
+                            <span class="required-mark">*</span>
+                        </label>
+
+                        <select
+                            id="payment_method"
+                            name="payment_method"
+                            class="payment-select"
+                            required
+                        >
+
+                            <option value="CASH">
+                                Cash
+                            </option>
+
+                            <option value="CARD">
+                                Card
+                            </option>
+
+                            <option value="BANK TRANSFER">
+                                Bank Transfer
+                            </option>
+
+                            <option value="ONLINE">
+                                Online
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="payment-field">
+
+                        <label for="amount">
+                            Amount
+                            <span class="required-mark">*</span>
+                        </label>
+
+                        <input
+                            type="number"
+                            id="amount"
+                            name="amount"
+                            class="payment-input"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="0.00"
+                            required
+                        >
+
+                        <span
+                            id="amountHelp"
+                            class="payment-help"
+                        >
+                            Select student and class to view remaining balance.
+                        </span>
+
+                    </div>
+
+
+                    <div class="payment-field full">
+
+                        <label for="notes">
+                            Notes
+                        </label>
+
+                        <textarea
+                            id="notes"
+                            name="notes"
+                            class="payment-textarea"
+                            placeholder="Optional payment notes..."
+                        ></textarea>
+
+                    </div>
+
+
+                    <div
+                        id="freeCardAlert"
+                        class="free-card-alert"
+                    >
+
+                        <strong>
+                            Approved Free Card
+                        </strong>
+
+                        <p>
+                            This fee month is covered by an approved
+                            Free Card. Payment recording is blocked.
+                        </p>
+
+                    </div>
+
+
+                    <div class="payment-summary">
+
+
+                        <div class="payment-summary-card">
+
+                            <span>
+                                Monthly Fee
+                            </span>
+
+                            <strong id="summaryFee">
+                                Rs. 0
+                            </strong>
+
+                        </div>
+
+
+                        <div class="payment-summary-card paid">
+
+                            <span>
+                                Already Paid
+                            </span>
+
+                            <strong id="summaryPaid">
+                                Rs. 0
+                            </strong>
+
+                        </div>
+
+
+                        <div class="payment-summary-card balance">
+
+                            <span>
+                                Balance
+                            </span>
+
+                            <strong id="summaryBalance">
+                                Rs. 0
+                            </strong>
+
+                        </div>
+
+
+                        <div class="payment-summary-card">
+
+                            <span>
+                                Status
+                            </span>
+
+                            <div
+                                id="summaryStatus"
+                                class="payment-status empty"
+                            >
+                                —
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="payment-actions">
+
+                    <button
+                        type="submit"
+                        id="confirmPaymentButton"
+                        class="btn btn-primary"
+                    >
+                        Confirm Payment
+                    </button>
+
+                    {% if request.args.get('return_to') == 'scan' %}
+
+                    <a
+                        href="{{ url_for('scan_qr') }}"
+                        class="btn btn-secondary"
+                    >
+                        Cancel & Return to QR
+                    </a>
+
+                    {% else %}
+
+                    <a
+                        href="{{ url_for('payments') }}"
+                        class="btn btn-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                    {% endif %}
+
+                </div>
+
+
+            </form>
+
+        </section>
+
+
+        <aside>
+
+
+            <section class="ui-panel">
+
+                <div class="ui-panel-header">
+
+                    <div>
+                        <h2>Payment Preview</h2>
+                        <p>Review before confirming</p>
+                    </div>
+
+                </div>
+
+
+                <div class="payment-side-body">
+
+                    <div class="payment-preview">
+
+                        <div class="preview-student">
+
+                            <span id="previewStudentCode">
+                                STUDENT
+                            </span>
+
+                            <strong id="previewStudent">
+                                Select Student
+                            </strong>
+
+                            <p id="previewClass">
+                                Select Class
+                            </p>
+
+                        </div>
+
+
+                        <div class="preview-grid">
+
+
+                            <div class="preview-box">
+
+                                <span>Fee Month</span>
+
+                                <strong id="previewMonth">
+                                    —
+                                </strong>
+
+                            </div>
+
+
+                            <div class="preview-box">
+
+                                <span>Method</span>
+
+                                <strong id="previewMethod">
+                                    Cash
+                                </strong>
+
+                            </div>
+
+
+                            <div class="preview-box">
+
+                                <span>Payment Amount</span>
+
+                                <strong id="previewAmount">
+                                    Rs. 0
+                                </strong>
+
+                            </div>
+
+
+                            <div class="preview-box">
+
+                                <span>Balance After Payment</span>
+
+                                <strong id="previewAfterBalance">
+                                    Rs. 0
+                                </strong>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <div class="payment-warning">
+
+                <strong>
+                    Financial record
+                </strong>
+
+                <p>
+                    Verify the amount before confirming. The server
+                    independently checks active enrollment, Free Card
+                    coverage and overpayment before saving the transaction.
+                </p>
+
+            </div>
+
+
+        </aside>
+
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+    const paymentStudents =
+        {{ students | tojson }};
+
+
+    const prefillStudentId =
+        {{ request.args.get('student_id', '') | tojson }};
+
+
+    const prefillClassCode =
+        {{ request.args.get('class_code', '') | tojson }};
+
+
+    const prefillFeeMonth =
+        {{ request.args.get('fee_month', '') | tojson }};
+
+
+    const prefillAmount =
+        {{ request.args.get('amount', '') | tojson }};
+
+
+    const returnTo =
+        {{ request.args.get('return_to', '') | tojson }};
+
+
+    let currentBalance = 0;
+    let currentFee = 0;
+    let currentPaid = 0;
+    let currentFreeCard = false;
+
+
+    function money(value) {
+
+        return (
+            "Rs. "
+            +
+            Number(
+                value || 0
+            ).toLocaleString(
+                undefined,
+                {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2
+                }
+            )
+        );
+
+    }
+
+
+    function getSelectedStudent() {
+
+        const id =
+            document.getElementById(
+                "student_id"
+            ).value;
+
+
+        return paymentStudents.find(
+            function(student) {
+
+                return (
+                    String(student.id)
+                    ===
+                    String(id)
+                );
+
+            }
+        ) || null;
+
+    }
+
+
+    function populateClasses(
+        preferredClassCode = ""
+    ) {
+
+        const classSelect =
+            document.getElementById(
+                "class_code"
+            );
+
+
+        const student =
+            getSelectedStudent();
+
+
+        classSelect.innerHTML =
+            "";
+
+
+        if (
+            !student
+        ) {
+
+            classSelect.disabled =
+                true;
+
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value = "";
+            option.textContent =
+                "Select Student First";
+
+
+            classSelect.appendChild(
+                option
+            );
+
+
+            resetBalanceSummary();
+            updatePreview();
+
+            return;
+
+        }
+
+
+        const classes =
+            student.classes
+            ||
+            [];
+
+
+        if (
+            classes.length === 0
+        ) {
+
+            classSelect.disabled =
+                true;
+
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value = "";
+            option.textContent =
+                "No Active Classes";
+
+
+            classSelect.appendChild(
+                option
+            );
+
+
+            resetBalanceSummary();
+            updatePreview();
+
+            return;
+
+        }
+
+
+        classSelect.disabled =
+            false;
+
+
+        const placeholder =
+            document.createElement(
+                "option"
+            );
+
+
+        placeholder.value = "";
+        placeholder.textContent =
+            "Select Class";
+
+
+        classSelect.appendChild(
+            placeholder
+        );
+
+
+        classes.forEach(
+            function(item) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    item.class_code;
+
+
+                option.textContent =
+                    [
+                        item.class_code,
+                        item.class_name,
+                        item.teacher_name
+                    ]
+                    .filter(Boolean)
+                    .join(
+                        " · "
+                    );
+
+
+                option.dataset.monthlyFee =
+                    item.monthly_fee
+                    ??
+                    0;
+
+
+                classSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        if (
+            preferredClassCode
+            &&
+            classes.some(
+                function(item) {
+
+                    return (
+                        String(item.class_code)
+                        ===
+                        String(preferredClassCode)
+                    );
+
+                }
+            )
+        ) {
+
+            classSelect.value =
+                preferredClassCode;
+
+        }
+
+
+        updatePreview();
+
+    }
+
+
+    async function loadPaymentBalance(
+        options = {}
+    ) {
+
+        const studentId =
+            document.getElementById(
+                "student_id"
+            ).value;
+
+
+        const classCode =
+            document.getElementById(
+                "class_code"
+            ).value;
+
+
+        const feeMonth =
+            document.getElementById(
+                "fee_month"
+            ).value;
+
+
+        if (
+            !studentId
+            ||
+            !classCode
+            ||
+            !feeMonth
+        ) {
+
+            resetBalanceSummary();
+            updatePreview();
+
+            return;
+
+        }
+
+
+        const params =
+            new URLSearchParams(
+                {
+                    student_id:
+                        studentId,
+
+                    class_code:
+                        classCode,
+
+                    fee_month:
+                        feeMonth
+                }
+            );
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "{{ url_for('payment_balance') }}"
+                    +
+                    "?"
+                    +
+                    params.toString(),
+                    {
+                        headers: {
+                            "Accept":
+                                "application/json"
+                        }
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !response.ok
+                ||
+                !data.success
+            ) {
+
+                resetBalanceSummary();
+
+                return;
+
+            }
+
+
+            currentFee =
+                Number(
+                    data.fee
+                    ||
+                    0
+                );
+
+
+            currentPaid =
+                Number(
+                    data.paid
+                    ||
+                    0
+                );
+
+
+            currentBalance =
+                Number(
+                    data.balance
+                    ||
+                    0
+                );
+
+
+            currentFreeCard =
+                Boolean(
+                    data.free_card
+                );
+
+
+            document.getElementById(
+                "summaryFee"
+            ).textContent =
+                money(
+                    currentFee
+                );
+
+
+            document.getElementById(
+                "summaryPaid"
+            ).textContent =
+                money(
+                    currentPaid
+                );
+
+
+            document.getElementById(
+                "summaryBalance"
+            ).textContent =
+                (
+                    currentFreeCard
+                    ?
+                    "WAIVED"
+                    :
+                    money(
+                        currentBalance
+                    )
+                );
+
+
+            setStatus(
+                data.status
+                ||
+                "—"
+            );
+
+
+            const amountInput =
+                document.getElementById(
+                    "amount"
+                );
+
+
+            const confirmButton =
+                document.getElementById(
+                    "confirmPaymentButton"
+                );
+
+
+            const alert =
+                document.getElementById(
+                    "freeCardAlert"
+                );
+
+
+            if (
+                currentFreeCard
+            ) {
+
+                alert.classList.add(
+                    "show"
+                );
+
+
+                amountInput.value = "";
+                amountInput.disabled =
+                    true;
+
+
+                confirmButton.disabled =
+                    true;
+
+
+                document.getElementById(
+                    "amountHelp"
+                ).textContent =
+                    "Payment is blocked because an approved Free Card covers this fee month.";
+
+            }
+
+            else {
+
+                alert.classList.remove(
+                    "show"
+                );
+
+
+                amountInput.disabled =
+                    false;
+
+
+                confirmButton.disabled =
+                    false;
+
+
+                if (
+                    currentBalance > 0
+                ) {
+
+                    amountInput.max =
+                        String(
+                            currentBalance
+                        );
+
+
+                    document.getElementById(
+                        "amountHelp"
+                    ).textContent =
+                        (
+                            "Remaining balance: "
+                            +
+                            money(
+                                currentBalance
+                            )
+                        );
+
+                }
+
+                else {
+
+                    amountInput.removeAttribute(
+                        "max"
+                    );
+
+
+                    document.getElementById(
+                        "amountHelp"
+                    ).textContent =
+                        "This monthly class fee is already fully paid.";
+
+                }
+
+
+                if (
+                    options.usePrefillAmount
+                    &&
+                    prefillAmount
+                ) {
+
+                    const requested =
+                        Number(
+                            prefillAmount
+                        );
+
+
+                    if (
+                        requested > 0
+                    ) {
+
+                        amountInput.value =
+                            String(
+                                currentBalance > 0
+                                ?
+                                Math.min(
+                                    requested,
+                                    currentBalance
+                                )
+                                :
+                                requested
+                            );
+
+                    }
+
+                }
+
+            }
+
+
+            updatePreview();
+
+        }
+
+        catch (error) {
+
+            resetBalanceSummary();
+
+        }
+
+    }
+
+
+    function setStatus(status) {
+
+        const element =
+            document.getElementById(
+                "summaryStatus"
+            );
+
+
+        const value =
+            String(
+                status || ""
+            ).toUpperCase();
+
+
+        element.className =
+            "payment-status";
+
+
+        if (
+            value === "PAID"
+        ) {
+
+            element.classList.add(
+                "paid"
+            );
+
+        }
+
+        else if (
+            value === "PARTIAL"
+        ) {
+
+            element.classList.add(
+                "partial"
+            );
+
+        }
+
+        else if (
+            value === "UNPAID"
+        ) {
+
+            element.classList.add(
+                "unpaid"
+            );
+
+        }
+
+        else if (
+            value === "FREE CARD"
+        ) {
+
+            element.classList.add(
+                "free-card"
+            );
+
+        }
+
+        else {
+
+            element.classList.add(
+                "empty"
+            );
+
+        }
+
+
+        element.textContent =
+            value
+            ||
+            "—";
+
+    }
+
+
+    function resetBalanceSummary() {
+
+        currentBalance = 0;
+        currentFee = 0;
+        currentPaid = 0;
+        currentFreeCard = false;
+
+
+        document.getElementById(
+            "summaryFee"
+        ).textContent =
+            "Rs. 0";
+
+
+        document.getElementById(
+            "summaryPaid"
+        ).textContent =
+            "Rs. 0";
+
+
+        document.getElementById(
+            "summaryBalance"
+        ).textContent =
+            "Rs. 0";
+
+
+        setStatus(
+            ""
+        );
+
+
+        document.getElementById(
+            "freeCardAlert"
+        ).classList.remove(
+            "show"
+        );
+
+
+        const amount =
+            document.getElementById(
+                "amount"
+            );
+
+
+        amount.disabled =
+            false;
+
+
+        amount.removeAttribute(
+            "max"
+        );
+
+
+        document.getElementById(
+            "confirmPaymentButton"
+        ).disabled =
+            false;
+
+    }
+
+
+    function updatePreview() {
+
+        const student =
+            getSelectedStudent();
+
+
+        const classSelect =
+            document.getElementById(
+                "class_code"
+            );
+
+
+        const selectedOption =
+            classSelect.options[
+                classSelect.selectedIndex
+            ];
+
+
+        document.getElementById(
+            "previewStudentCode"
+        ).textContent =
+            student
+            ?
+            student.student_code
+            :
+            "STUDENT";
+
+
+        document.getElementById(
+            "previewStudent"
+        ).textContent =
+            student
+            ?
+            student.full_name
+            :
+            "Select Student";
+
+
+        document.getElementById(
+            "previewClass"
+        ).textContent =
+            (
+                selectedOption
+                &&
+                selectedOption.value
+            )
+            ?
+            selectedOption.textContent
+            :
+            "Select Class";
+
+
+        const feeMonth =
+            document.getElementById(
+                "fee_month"
+            ).value;
+
+
+        if (
+            feeMonth
+        ) {
+
+            const parts =
+                feeMonth.split(
+                    "-"
+                );
+
+
+            if (
+                parts.length === 2
+            ) {
+
+                const date =
+                    new Date(
+                        Number(
+                            parts[0]
+                        ),
+                        Number(
+                            parts[1]
+                        ) - 1,
+                        1
+                    );
+
+
+                document.getElementById(
+                    "previewMonth"
+                ).textContent =
+                    date.toLocaleDateString(
+                        undefined,
+                        {
+                            month:
+                                "long",
+
+                            year:
+                                "numeric"
+                        }
+                    );
+
+            }
+
+        }
+
+        else {
+
+            document.getElementById(
+                "previewMonth"
+            ).textContent =
+                "—";
+
+        }
+
+
+        const method =
+            document.getElementById(
+                "payment_method"
+            );
+
+
+        document.getElementById(
+            "previewMethod"
+        ).textContent =
+            method.options[
+                method.selectedIndex
+            ].text;
+
+
+        const amount =
+            Number(
+                document.getElementById(
+                    "amount"
+                ).value
+                ||
+                0
+            );
+
+
+        document.getElementById(
+            "previewAmount"
+        ).textContent =
+            money(
+                amount
+            );
+
+
+        document.getElementById(
+            "previewAfterBalance"
+        ).textContent =
+            (
+                currentFreeCard
+                ?
+                "WAIVED"
+                :
+                money(
+                    Math.max(
+                        currentBalance
+                        -
+                        amount,
+                        0
+                    )
+                )
+            );
+
+    }
+
+
+    function validatePaymentForm(
+        event
+    ) {
+
+        if (
+            currentFreeCard
+        ) {
+
+            event.preventDefault();
+
+            alert(
+                "Payment cannot be recorded because this fee month is covered by an approved Free Card."
+            );
+
+            return;
+
+        }
+
+
+        const amount =
+            Number(
+                document.getElementById(
+                    "amount"
+                ).value
+                ||
+                0
+            );
+
+
+        if (
+            amount <= 0
+        ) {
+
+            event.preventDefault();
+
+            alert(
+                "Payment amount must be greater than zero."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            currentBalance > 0
+            &&
+            amount > currentBalance
+        ) {
+
+            event.preventDefault();
+
+            alert(
+                "Payment exceeds the remaining balance."
+            );
+
+        }
+
+    }
+
+
+    async function applyQrPrefill() {
+
+        if (
+            returnTo === "scan"
+        ) {
+
+            document.getElementById(
+                "qrPaymentBanner"
+            ).classList.add(
+                "show"
+            );
+
+        }
+
+
+        if (
+            prefillFeeMonth
+        ) {
+
+            document.getElementById(
+                "fee_month"
+            ).value =
+                prefillFeeMonth;
+
+        }
+
+
+        if (
+            !prefillStudentId
+        ) {
+
+            updatePreview();
+
+            return;
+
+        }
+
+
+        const studentSelect =
+            document.getElementById(
+                "student_id"
+            );
+
+
+        const studentExists =
+            paymentStudents.some(
+                function(student) {
+
+                    return (
+                        String(student.id)
+                        ===
+                        String(
+                            prefillStudentId
+                        )
+                    );
+
+                }
+            );
+
+
+        if (
+            !studentExists
+        ) {
+
+            updatePreview();
+
+            return;
+
+        }
+
+
+        studentSelect.value =
+            String(
+                prefillStudentId
+            );
+
+
+        populateClasses(
+            prefillClassCode
+        );
+
+
+        if (
+            prefillClassCode
+        ) {
+
+            document.getElementById(
+                "class_code"
+            ).value =
+                prefillClassCode;
+
+        }
+
+
+        await loadPaymentBalance(
+            {
+                usePrefillAmount:
+                    true
+            }
+        );
+
+
+        updatePreview();
+
+    }
+
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        async function() {
+
+            document.getElementById(
+                "student_id"
+            ).addEventListener(
+                "change",
+                async function() {
+
+                    document.getElementById(
+                        "amount"
+                    ).value =
+                        "";
+
+
+                    populateClasses();
+
+
+                    await loadPaymentBalance();
+
+                }
+            );
+
+
+            document.getElementById(
+                "class_code"
+            ).addEventListener(
+                "change",
+                async function() {
+
+                    document.getElementById(
+                        "amount"
+                    ).value =
+                        "";
+
+
+                    await loadPaymentBalance();
+
+                }
+            );
+
+
+            document.getElementById(
+                "fee_month"
+            ).addEventListener(
+                "change",
+                async function() {
+
+                    document.getElementById(
+                        "amount"
+                    ).value =
+                        "";
+
+
+                    await loadPaymentBalance();
+
+                }
+            );
+
+
+            document.getElementById(
+                "amount"
+            ).addEventListener(
+                "input",
+                updatePreview
+            );
+
+
+            document.getElementById(
+                "payment_method"
+            ).addEventListener(
+                "change",
+                updatePreview
+            );
+
+
+            document.getElementById(
+                "paymentForm"
+            ).addEventListener(
+                "submit",
+                validatePaymentForm
+            );
+
+
+            populateClasses();
+
+
+            await applyQrPrefill();
+
+        }
+    );
+
+</script>
+
+{% endblock %}

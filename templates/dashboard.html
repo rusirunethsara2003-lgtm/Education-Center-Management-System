@@ -1,0 +1,1417 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Dashboard - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Education Center Overview
+{% endblock %}
+
+
+{% block page_subtitle %}
+Sri Sumana Education Center · Avissawella
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('reports') }}"
+    class="btn btn-secondary"
+>
+    Reports
+</a>
+
+<a
+    href="{{ url_for('new_payment') }}"
+    class="btn btn-primary"
+>
+    + Record Payment
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    .dashboard-page {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+
+    .section-heading {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 780;
+    }
+
+
+    .section-heading p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+
+    .month-pill {
+        min-height: 34px;
+        padding: 0 11px;
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--text);
+        font-size: 8px;
+        font-weight: 750;
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       KPI ROW
+    ====================================================== */
+
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+
+    .kpi-card {
+        min-height: 118px;
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+
+    .kpi-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+
+    .kpi-label {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 650;
+    }
+
+
+    .kpi-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 32px;
+        border-radius: 9px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 10px;
+        font-weight: 850;
+    }
+
+
+    .kpi-card.green .kpi-icon {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .kpi-card.orange .kpi-icon {
+        background: var(--orange-soft);
+        color: var(--orange);
+    }
+
+
+    .kpi-value {
+        margin-top: 9px;
+        color: var(--text);
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -.02em;
+    }
+
+
+    .kpi-note {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 7px;
+        line-height: 1.45;
+    }
+
+
+    /* =====================================================
+       FINANCE
+    ====================================================== */
+
+    .finance-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+
+    .finance-card {
+        min-height: 104px;
+        padding: 13px;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        background: #ffffff;
+    }
+
+
+    .finance-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+
+    .finance-card strong {
+        display: block;
+        margin-top: 7px;
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 790;
+    }
+
+
+    .finance-card.collected strong {
+        color: var(--green);
+    }
+
+
+    .finance-card.outstanding strong {
+        color: var(--orange);
+    }
+
+
+    .finance-card.rate strong {
+        color: var(--primary);
+    }
+
+
+    .finance-card small {
+        display: block;
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    /* =====================================================
+       OPERATIONS
+    ====================================================== */
+
+    .operations-grid {
+        display: grid;
+        grid-template-columns:
+            minmax(0, 1.45fr)
+            minmax(300px, .75fr);
+        gap: 12px;
+        align-items: start;
+    }
+
+
+    .panel-body {
+        padding: 14px;
+    }
+
+
+    .today-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+
+    .mini-card {
+        min-height: 76px;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fafafa;
+    }
+
+
+    .mini-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .mini-card strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 13px;
+        font-weight: 780;
+    }
+
+
+    .class-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+
+    .class-row {
+        padding: 11px;
+        display: grid;
+        grid-template-columns:
+            minmax(0, 1.1fr)
+            minmax(110px, .55fr)
+            minmax(90px, .45fr)
+            auto;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #ffffff;
+    }
+
+
+    .class-main strong {
+        display: block;
+        font-size: 9px;
+    }
+
+
+    .class-main span,
+    .class-meta span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .class-meta strong {
+        display: block;
+        font-size: 8px;
+    }
+
+
+    .class-status {
+        min-height: 27px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 7px;
+        font-weight: 850;
+        white-space: nowrap;
+    }
+
+
+    .class-status.in-progress {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .empty-operation {
+        min-height: 190px;
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+
+    .empty-operation-icon {
+        width: 46px;
+        height: 46px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #f4f4f5;
+        color: var(--muted);
+        font-size: 16px;
+    }
+
+
+    .empty-operation strong {
+        display: block;
+        font-size: 9px;
+    }
+
+
+    .empty-operation p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 7px;
+        line-height: 1.5;
+    }
+
+
+    .next-class-box {
+        margin-top: 10px;
+        padding: 11px;
+        border: 1px solid #c7d2fe;
+        border-radius: 9px;
+        background: var(--primary-soft);
+    }
+
+
+    .next-class-box span {
+        display: block;
+        color: var(--primary);
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .next-class-box strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 9px;
+    }
+
+
+    .next-class-box p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    /* =====================================================
+       NEEDS ATTENTION
+    ====================================================== */
+
+    .attention-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+
+    .attention-item {
+        min-height: 60px;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+        text-decoration: none;
+    }
+
+
+    .attention-item:last-child {
+        border-bottom: 0;
+    }
+
+
+    .attention-item:hover {
+        background: #fafafa;
+    }
+
+
+    .attention-icon {
+        width: 31px;
+        height: 31px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 31px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--muted);
+        font-size: 10px;
+    }
+
+
+    .attention-copy {
+        min-width: 0;
+        flex: 1;
+    }
+
+
+    .attention-copy strong {
+        display: block;
+        font-size: 8px;
+    }
+
+
+    .attention-copy span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .attention-count {
+        min-width: 29px;
+        height: 29px;
+        padding: 0 7px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: #f4f4f5;
+        color: var(--text);
+        font-size: 8px;
+        font-weight: 850;
+    }
+
+
+    .attention-count.warn {
+        background: var(--orange-soft);
+        color: var(--orange);
+    }
+
+
+    /* =====================================================
+       QUICK ACTIONS
+    ====================================================== */.quick-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+
+    .quick-action {
+        min-height: 92px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #ffffff;
+        color: var(--text);
+        text-decoration: none;
+    }
+
+
+    .quick-action:hover {
+        border-color: #c7d2fe;
+        background: #fafbff;
+    }
+
+
+    .quick-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 10px;
+        font-weight: 850;
+    }
+
+
+    .quick-action strong {
+        display: block;
+        margin-top: 9px;
+        font-size: 8px;
+    }
+
+
+    .quick-action span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7px;
+        line-height: 1.4;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 1050px) {
+
+        .kpi-grid,
+        .finance-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+
+        .operations-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .quick-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .section-heading {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+
+        .kpi-grid,
+        .finance-grid,
+        .today-summary,
+        .quick-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .class-row {
+            grid-template-columns: 1fr;
+        }
+
+
+        .class-status {
+            justify-self: start;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+{# ---------------------------------------------------------
+   Extract existing backend values without changing app.py.
+---------------------------------------------------------- #}
+
+{% set dash = namespace(
+    students='0',
+    teachers='0',
+    classes='0',
+    pending='0',
+    free_cards='0',
+    today_attendance=0,
+    pending_free_cards=0,
+    payment_attention=0
+) %}
+
+
+{% for item in stats %}
+
+    {% if item.title == 'Total Students' %}
+        {% set dash.students = item.value %}
+    {% elif item.title == 'Total Teachers' %}
+        {% set dash.teachers = item.value %}
+    {% elif item.title == 'Active Classes' %}
+        {% set dash.classes = item.value %}
+    {% elif item.title == 'Pending Approvals' %}
+        {% set dash.pending = item.value %}
+    {% elif item.title == 'Active Free Cards' %}
+        {% set dash.free_cards = item.value %}
+    {% endif %}
+
+{% endfor %}
+
+
+{% for item in pending_actions %}
+
+    {% if item.name == 'Scan QR' %}
+        {% set dash.today_attendance = item.count %}
+    {% elif item.name == 'Free Card Approvals' %}
+        {% set dash.pending_free_cards = item.count %}
+    {% elif item.name == 'Record Payment' %}
+        {% set dash.payment_attention = item.count %}
+    {% endif %}
+
+{% endfor %}
+
+
+<div class="dashboard-page">
+
+
+    <!-- =================================================
+         BUSINESS OVERVIEW
+    ================================================== -->
+
+    <div class="section-heading">
+
+        <div>
+
+            <h2>
+                Business Overview
+            </h2>
+
+            <p>
+                Students, teachers, classes and current center activity.
+            </p>
+
+        </div>
+
+
+        <span class="month-pill">
+            {{ finance_month }}
+        </span>
+
+    </div>
+
+
+    <section class="kpi-grid">
+
+
+        <div class="kpi-card">
+
+            <div class="kpi-top">
+
+                <span class="kpi-label">
+                    Total Students
+                </span>
+
+                <span class="kpi-icon">
+                    S
+                </span>
+
+            </div>
+
+            <div class="kpi-value">
+                {{ dash.students }}
+            </div>
+
+            <div class="kpi-note">
+                Active approved student profiles
+            </div>
+
+        </div>
+
+
+        <div class="kpi-card green">
+
+            <div class="kpi-top">
+
+                <span class="kpi-label">
+                    Active Teachers
+                </span>
+
+                <span class="kpi-icon">
+                    T
+                </span>
+
+            </div>
+
+            <div class="kpi-value">
+                {{ dash.teachers }}
+            </div>
+
+            <div class="kpi-note">
+                Teaching staff currently active
+            </div>
+
+        </div>
+
+
+        <div class="kpi-card">
+
+            <div class="kpi-top">
+
+                <span class="kpi-label">
+                    Active Classes
+                </span>
+
+                <span class="kpi-icon">
+                    C
+                </span>
+
+            </div>
+
+            <div class="kpi-value">
+                {{ dash.classes }}
+            </div>
+
+            <div class="kpi-note">
+                Classes currently running
+            </div>
+
+        </div>
+
+
+        <div class="kpi-card orange">
+
+            <div class="kpi-top">
+
+                <span class="kpi-label">
+                    Pending Approvals
+                </span>
+
+                <span class="kpi-icon">
+                    !
+                </span>
+
+            </div>
+
+            <div class="kpi-value">
+                {{ dash.pending }}
+            </div>
+
+            <div class="kpi-note">
+                Student registrations requiring review
+            </div>
+
+        </div>
+
+
+    </section>
+
+
+    <!-- =================================================
+         FINANCE SNAPSHOT
+    ================================================== -->
+
+    <div class="section-heading">
+
+        <div>
+
+            <h2>
+                Finance Snapshot
+            </h2>
+
+            <p>
+                Current monthly payable, collection and outstanding position.
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for('finance_overview') }}"
+            class="ui-panel-link"
+        >
+            Open Finance →
+        </a>
+
+    </div>
+
+
+    <section class="finance-grid">
+
+
+        <div class="finance-card">
+
+            <span>
+                Expected Payable
+            </span>
+
+            <strong>
+                Rs. {{ "{:,.0f}".format(finance.expected) }}
+            </strong>
+
+            <small>
+                Expected after approved fee waivers
+            </small>
+
+        </div>
+
+
+        <div class="finance-card collected">
+
+            <span>
+                Collected
+            </span>
+
+            <strong>
+                Rs. {{ "{:,.0f}".format(finance.collected) }}
+            </strong>
+
+            <small>
+                Confirmed payments this month
+            </small>
+
+        </div>
+
+
+        <div class="finance-card outstanding">
+
+            <span>
+                Outstanding
+            </span>
+
+            <strong>
+                Rs. {{ "{:,.0f}".format(finance.outstanding) }}
+            </strong>
+
+            <small>
+                Remaining payable balance
+            </small>
+
+        </div>
+
+
+        <div class="finance-card rate">
+
+            <span>
+                Collection Rate
+            </span>
+
+            <strong>
+                {{ finance.rate }}%
+            </strong>
+
+            <small>
+                {{ finance.paid_count }} paid ·
+                {{ finance.partial_count }} partial ·
+                {{ finance.unpaid_count }} unpaid
+            </small>
+
+        </div>
+
+
+    </section>
+
+
+    <!-- =================================================
+         TODAY + ATTENTION
+    ================================================== -->
+
+    <section class="operations-grid">
+
+
+        <!-- =============================================
+             TODAY'S OPERATIONS
+        ============================================== -->
+
+        <div class="ui-panel">
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        Today's Operations
+                    </h2>
+
+                    <p>
+                        {{ today_name }} · remaining classes and attendance activity
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="{{ url_for('timetable') }}"
+                    class="ui-panel-link"
+                >
+                    Timetable →
+                </a>
+
+            </div>
+
+
+            <div class="panel-body">
+
+
+                <div class="today-summary">
+
+
+                    <div class="mini-card">
+
+                        <span>
+                            Remaining Classes
+                        </span>
+
+                        <strong>
+                            {{ today_classes | length }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="mini-card">
+
+                        <span>
+                            Attendance Check-ins
+                        </span>
+
+                        <strong>
+                            {{ dash.today_attendance }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="mini-card">
+
+                        <span>
+                            Active Free Cards
+                        </span>
+
+                        <strong>
+                            {{ dash.free_cards }}
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+                {% if today_classes %}
+
+                <div class="class-list">
+
+                    {% for item in today_classes %}
+
+                    <div class="class-row">
+
+
+                        <div class="class-main">
+
+                            <strong>
+                                {{ item.class_name or item.subject }}</strong>
+
+                            <span>
+                                {{ item.class_code }}
+                                ·
+                                {{ item.teacher_name }}
+                            </span>
+
+                        </div>
+
+
+                        <div class="class-meta">
+
+                            <strong>
+                                {{ item.start_display }}
+                                –
+                                {{ item.end_display }}
+                            </strong>
+
+                            <span>
+                                Time
+                            </span>
+
+                        </div>
+
+
+                        <div class="class-meta">
+
+                            <strong>
+                                {{ item.room or '—' }}
+                            </strong>
+
+                            <span>
+                                Room
+                            </span>
+
+                        </div>
+
+
+                        <span
+                            class="
+                                class-status
+                                {% if item.status_label == 'IN PROGRESS' %}
+                                    in-progress
+                                {% endif %}
+                            "
+                        >
+                            {{ item.status_label }}
+                        </span>
+
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+                {% else %}
+
+                <div class="empty-operation">
+
+                    <div>
+
+                        <div class="empty-operation-icon">
+                            ✓
+                        </div>
+
+                        <strong>
+                            No more classes today
+                        </strong>
+
+                        {% if next_class %}
+
+                        <p>
+                            Today's remaining schedule is clear.
+                        </p>
+
+                        {% else %}
+
+                        <p>
+                            There are no upcoming active classes.
+                        </p>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+
+                {% if next_class %}
+
+                <div class="next-class-box">
+
+                    <span>
+                        NEXT CLASS
+                    </span>
+
+                    <strong>
+                        {{ next_class.class_name or next_class.subject }}
+                        ·
+                        {{ next_class.teacher_name }}
+                    </strong>
+
+                    <p>
+                        {{ next_class.next_date }}
+                        ·
+                        {{ next_class.start_display }}
+                        –
+                        {{ next_class.end_display }}
+                        {% if next_class.room %}
+                            · {{ next_class.room }}
+                        {% endif %}
+                    </p>
+
+                </div>
+
+                {% endif %}
+
+
+            </div>
+
+        </div>
+
+
+        <!-- =============================================
+             NEEDS ATTENTION
+        ============================================== -->
+
+        <aside class="ui-panel">
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        Needs Attention
+                    </h2>
+
+                    <p>
+                        Items that may require owner action
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="attention-list">
+
+
+                <a
+                    href="{{ url_for('pending_approvals') }}"
+                    class="attention-item"
+                >
+
+                    <span class="attention-icon">
+                        ✓
+                    </span>
+
+                    <span class="attention-copy">
+
+                        <strong>
+                            Student Approvals
+                        </strong>
+
+                        <span>
+                            Pending registrations
+                        </span>
+
+                    </span>
+
+                    <span
+                        class="
+                            attention-count
+                            {% if dash.pending | int > 0 %}
+                                warn
+                            {% endif %}
+                        "
+                    >
+                        {{ dash.pending }}
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('teacher_free_card_approvals') }}"
+                    class="attention-item"
+                >
+
+                    <span class="attention-icon">
+                        ◇
+                    </span>
+
+                    <span class="attention-copy">
+
+                        <strong>
+                            Free Card Approvals
+                        </strong>
+
+                        <span>
+                            Requests waiting for review
+                        </span>
+
+                    </span>
+
+                    <span
+                        class="
+                            attention-count
+                            {% if dash.pending_free_cards | int > 0 %}
+                                warn
+                            {% endif %}
+                        "
+                    >
+                        {{ dash.pending_free_cards }}
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('finance_outstanding') }}"
+                    class="attention-item"
+                >
+
+                    <span class="attention-icon">
+                        Rs
+                    </span>
+
+                    <span class="attention-copy">
+
+                        <strong>
+                            Payment Follow-up
+                        </strong>
+
+                        <span>
+                            Partial and unpaid class fees
+                        </span>
+
+                    </span>
+
+                    <span
+                        class="
+                            attention-count
+                            {% if dash.payment_attention | int > 0 %}
+                                warn
+                            {% endif %}
+                        "
+                    >
+                        {{ dash.payment_attention }}
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('attendance_today') }}"
+                    class="attention-item"
+                >
+
+                    <span class="attention-icon">
+                        ◉
+                    </span>
+
+                    <span class="attention-copy">
+
+                        <strong>
+                            Today's Attendance
+                        </strong>
+
+                        <span>
+                            Review today's check-ins
+                        </span>
+
+                    </span>
+
+                    <span class="attention-count">
+                        {{ dash.today_attendance }}
+                    </span>
+
+                </a>
+
+
+            </div>
+
+        </aside>
+
+
+    </section>
+
+
+    <!-- =================================================
+         QUICK ACTIONS
+    ================================================== -->
+
+    <div class="section-heading">
+
+        <div>
+
+            <h2>
+                Quick Actions
+            </h2>
+
+            <p>
+                Common front-desk and owner tasks.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <section class="quick-grid">
+
+
+        <a
+            href="{{ url_for('register_student') }}"
+            class="quick-action"
+        >
+
+            <span class="quick-icon">
+                +
+            </span>
+
+            <div>
+
+                <strong>
+                    Register Student
+                </strong>
+
+                <span>
+                    Create a new student registration
+                </span>
+
+            </div>
+
+        </a>
+
+
+        <a
+            href="{{ url_for('scan_qr') }}"
+            class="quick-action"
+        >
+
+            <span class="quick-icon">
+                QR
+            </span>
+
+            <div>
+
+                <strong>
+                    Scan QR
+                </strong>
+
+                <span>
+                    Check payment status and mark attendance
+                </span>
+
+            </div>
+
+        </a>
+
+
+        <a
+            href="{{ url_for('new_payment') }}"
+            class="quick-action"
+        >
+
+            <span class="quick-icon">
+                Rs
+            </span>
+
+            <div>
+
+                <strong>
+                    Record Payment
+                </strong>
+
+                <span>
+                    Record full or partial monthly payment
+                </span>
+
+            </div>
+
+        </a>
+
+
+        <a
+            href="{{ url_for('new_class') }}"
+            class="quick-action"
+        >
+
+            <span class="quick-icon">
+                C
+            </span>
+
+            <div>
+
+                <strong>
+                    Add Class
+                </strong>
+
+                <span>
+                    Create a class and schedule
+                </span>
+
+            </div>
+
+        </a>
+
+
+    </section>
+
+
+</div>
+
+{% endblock %}

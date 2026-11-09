@@ -1,0 +1,1077 @@
+{% extends "base.html" %}
+
+{% block title %}
+Staff & Access - Sri Sumana
+{% endblock %}
+
+{% block page_title %}
+Staff & Access
+{% endblock %}
+
+{% block page_subtitle %}
+Manage staff accounts, access status and account security
+{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('new_staff') }}" class="btn btn-primary">
+    + Add Staff
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .access-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .admin-tabs {
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .admin-tab {
+        min-height: 35px;
+        padding: 0 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border-radius: 7px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 9px;
+        font-weight: 650;
+        white-space: nowrap;
+    }
+
+    .admin-tab:hover {
+        background: #f5f5f5;
+        color: var(--text);
+    }
+
+    .admin-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 750;
+    }
+
+    .access-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .access-summary-card {
+        min-height: 100px;
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .access-summary-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+    .access-summary-card strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 20px;
+        font-weight: 750;
+    }
+
+    .access-summary-card small {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .access-summary-card.green strong {
+        color: var(--green);
+    }
+
+    .access-summary-card.red strong {
+        color: var(--red);
+    }
+
+    .access-summary-card.blue strong {
+        color: var(--blue);
+    }
+
+    .access-toolbar {
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .access-toolbar-info strong {
+        display: block;
+        font-size: 10px;
+    }
+
+    .access-toolbar-info span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .access-search {
+        width: 260px;
+        min-height: 36px;
+        padding: 0 11px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--text);
+        outline: none;
+        font-size: 8px;
+    }
+
+    .access-search:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, .08);
+    }
+
+    .access-table-wrap {
+        overflow-x: auto;
+    }
+
+    .access-table {
+        width: 100%;
+        min-width: 950px;
+        border-collapse: collapse;
+    }
+
+    .access-table th {
+        padding: 10px 12px;
+        background: #fafafa;
+        border-bottom: 1px solid var(--border);
+        color: var(--muted);
+        text-align: left;
+        font-size: 7px;
+        font-weight: 700;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .access-table td {
+        padding: 12px;
+        border-bottom: 1px solid var(--border);
+        font-size: 8px;
+        vertical-align: middle;
+    }
+
+    .access-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .access-table tbody tr:hover {
+        background: #fcfcfc;
+    }
+
+    .staff-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 190px;
+    }
+
+    .staff-avatar {
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .staff-name {
+        display: block;
+        font-size: 9px;
+        font-weight: 750;
+    }
+
+    .staff-username {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .access-role {
+        min-height: 24px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+    .access-status {
+        min-height: 24px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border-radius: 999px;
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+    .access-status.active {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+    .access-status.inactive {
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+    .access-date-primary {
+        display: block;
+        font-size: 8px;
+        font-weight: 650;
+    }
+
+    .access-date-secondary {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .access-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .access-action-btn {
+        min-height: 31px;
+        padding: 0 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: #fff;
+        color: var(--text);
+        font-size: 7px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .access-action-btn.reset {
+        color: var(--primary);
+    }
+
+    .access-action-btn.deactivate {
+        border-color: #fecaca;
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+    .access-action-btn.activate {
+        border-color: #bbf7d0;
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+    .access-inline-form {
+        margin: 0;
+    }
+
+    .access-empty {
+        min-height: 250px;
+        padding: 35px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .access-empty-icon {
+        width: 52px;
+        height: 52px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .access-empty p {
+        max-width: 320px;
+        margin: 5px 0 14px;
+        color: var(--muted);
+        font-size: 8px;
+        line-height: 1.6;
+    }
+
+    .access-security-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        padding: 13px;
+    }
+
+    .access-security-item {
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fafafa;
+    }
+
+    .access-security-item strong {
+        display: block;
+        font-size: 8px;
+    }
+
+    .access-security-item p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 7px;
+        line-height: 1.55;
+    }
+
+    .access-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+        padding: 20px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, .42);
+        backdrop-filter: blur(2px);
+    }
+
+    .access-modal-backdrop.show {
+        display: flex;
+    }
+
+    .access-modal {
+        width: min(460px, 100%);
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 20px 60px rgba(15,23,42,.14);
+    }
+
+    .access-modal-header {
+        padding: 15px 16px;
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .access-modal-header h3 {
+        margin: 0;
+        font-size: 12px;
+    }
+
+    .access-modal-header p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .access-modal-close {
+        width: 30px;
+        height: 30px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    .access-modal-body {
+        padding: 16px;
+    }
+
+    .access-field {
+        margin-bottom: 12px;
+    }
+
+    .access-field label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+    .access-field input {
+        width: 100%;
+        min-height: 40px;
+        padding: 0 11px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 9px;
+    }
+
+    .access-field small {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .access-modal-actions {
+        margin-top: 15px;
+        padding-top: 13px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 7px;
+        border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 1000px) {
+        .access-summary-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .access-security-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 650px) {
+        .access-summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .access-toolbar {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .access-search {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+{% set stats = namespace(active=0, inactive=0, never_logged_in=0) %}
+
+{% for member in staff_members %}
+
+    {% if member.status == "ACTIVE" %}
+        {% set stats.active = stats.active + 1 %}
+    {% else %}
+        {% set stats.inactive = stats.inactive + 1 %}
+    {% endif %}
+
+    {% if not member.last_login_at %}
+        {% set stats.never_logged_in = stats.never_logged_in + 1 %}
+    {% endif %}
+
+{% endfor %}
+
+
+<div class="access-page">
+
+    <nav class="admin-tabs">
+
+        <a href="{{ url_for('administration_overview') }}" class="admin-tab">
+            Overview
+        </a>
+
+        <a href="{{ url_for('staff_access') }}" class="admin-tab active">
+            Staff & Access
+        </a>
+
+        <a href="{{ url_for('audit_logs') }}" class="admin-tab">
+            Audit Logs
+        </a>
+
+        <a href="{{ url_for('security_center') }}" class="admin-tab">
+            Security
+        </a>
+
+        <a href="{{ url_for('change_password') }}" class="admin-tab">
+            Change Password
+        </a>
+
+    </nav>
+
+
+    <div class="access-summary-grid">
+
+        <div class="access-summary-card">
+            <span>Total Staff</span>
+            <strong>{{ staff_members|length }}</strong>
+            <small>Staff accounts in the system</small>
+        </div>
+
+        <div class="access-summary-card green">
+            <span>Active Staff</span>
+            <strong>{{ stats.active }}</strong>
+            <small>Accounts currently allowed to sign in</small>
+        </div>
+
+        <div class="access-summary-card red">
+            <span>Inactive Staff</span>
+            <strong>{{ stats.inactive }}</strong>
+            <small>Accounts with access disabled</small>
+        </div>
+
+        <div class="access-summary-card blue">
+            <span>Never Logged In</span>
+            <strong>{{ stats.never_logged_in }}</strong>
+            <small>Staff who have not signed in yet</small>
+        </div>
+
+    </div>
+
+
+    <section class="access-toolbar">
+
+        <div class="access-toolbar-info">
+            <strong>Staff Accounts</strong>
+            <span>Search and manage staff access to Sri Sumana</span>
+        </div>
+
+        <input
+            type="search"
+            id="staffSearch"
+            class="access-search"
+            placeholder="Search name, username or status..."
+            autocomplete="off"
+            oninput="filterStaffTable()"
+        >
+
+    </section>
+
+
+    <section class="ui-panel">
+
+        <div class="ui-panel-header">
+
+            <div>
+                <h2>Staff Directory</h2>
+                <p>Owner-managed staff login accounts</p>
+            </div>
+
+            <a href="{{ url_for('new_staff') }}" class="btn btn-primary">
+                + Add Staff
+            </a>
+
+        </div>
+
+
+        {% if staff_members %}
+
+        <div class="access-table-wrap">
+
+            <table class="access-table" id="staffTable">
+
+                <thead>
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Role</th>
+                        <th>Last Login</th>
+                        <th>Created</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% for member in staff_members %}
+
+                    <tr
+                        class="staff-row"
+                        data-search="{{ member.full_name }} {{ member.username }} {{ member.role }} {{ member.status }}"
+                    >
+
+                        <td>
+                            <div class="staff-cell">
+
+                                <div class="staff-avatar">
+                                    {{ member.full_name[0] if member.full_name else "S" }}
+                                </div>
+
+                                <div>
+                                    <span class="staff-name">
+                                        {{ member.full_name }}
+                                    </span>
+
+                                    <span class="staff-username">
+                                        @{{ member.username }}
+                                    </span>
+                                </div>
+
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="access-role">
+                                {{ member.role }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {% if member.last_login_at %}
+                                <span class="access-date-primary">
+                                    {{ member.last_login_at[:10] }}
+                                </span>
+                                <span class="access-date-secondary">
+                                    {{ member.last_login_at[11:19] }}
+                                </span>
+                            {% else %}
+                                <span class="access-date-primary">Never</span>
+                                <span class="access-date-secondary">
+                                    No login recorded
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if member.created_at %}
+                                <span class="access-date-primary">
+                                    {{ member.created_at[:10] }}
+                                </span>
+                                <span class="access-date-secondary">
+                                    Account created
+                                </span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if member.status == "ACTIVE" %}
+                                <span class="access-status active">
+                                    ACTIVE
+                                </span>
+                            {% else %}
+                                <span class="access-status inactive">
+                                    INACTIVE
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="access-actions">
+
+                                <button
+                                    type="button"
+                                    class="access-action-btn reset"
+                                    data-name="{{ member.full_name }}"
+                                    data-username="{{ member.username }}"
+                                    data-action="{{ url_for('reset_staff_password', user_id=member.id) }}"
+                                    onclick="openResetPasswordModal(this)"
+                                >
+                                    Reset Password
+                                </button>
+
+                                <form
+                                    method="POST"
+                                    action="{{ url_for('toggle_staff', user_id=member.id) }}"
+                                    class="access-inline-form"
+                                    onsubmit="return confirmStaffStatusChange('{{ member.full_name|e }}', '{{ member.status }}')"
+                                >
+
+                                    {% if member.status == "ACTIVE" %}
+
+                                    <button
+                                        type="submit"
+                                        class="access-action-btn deactivate"
+                                    >
+                                        Deactivate
+                                    </button>
+
+                                    {% else %}
+
+                                    <button
+                                        type="submit"
+                                        class="access-action-btn activate"
+                                    >
+                                        Activate
+                                    </button>
+
+                                    {% endif %}
+
+                                </form>
+
+                            </div>
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <div
+            id="searchEmptyState"
+            class="access-empty"
+            style="display:none;"
+        >
+            <div class="access-empty-icon">?</div>
+
+            <strong>No matching staff accounts</strong>
+
+            <p>
+                Try another staff name, username or status.
+            </p>
+        </div>
+
+        {% else %}
+
+        <div class="access-empty">
+
+            <div class="access-empty-icon">S</div>
+
+            <strong>No staff accounts yet</strong>
+
+            <p>
+                Create the first staff account to allow authorized
+                operational access to the education center system.
+            </p>
+
+            <a href="{{ url_for('new_staff') }}" class="btn btn-primary">
+                + Create First Staff
+            </a>
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <section class="ui-panel">
+
+        <div class="ui-panel-header">
+            <div>
+                <h2>Access Security</h2>
+                <p>Staff access controls currently enforced by the system</p>
+            </div>
+        </div>
+
+        <div class="access-security-grid">
+
+            <div class="access-security-item">
+                <strong>Role-based access</strong>
+                <p>
+                    Staff accounts receive STAFF permissions,
+                    while Owner-only pages remain restricted.
+                </p>
+            </div>
+
+            <div class="access-security-item">
+                <strong>Account deactivation</strong>
+                <p>
+                    Deactivated staff accounts cannot continue
+                    using authenticated system access.
+                </p>
+            </div>
+
+            <div class="access-security-item">
+                <strong>Secure passwords</strong>
+                <p>
+                    Passwords use secure password hashing and
+                    controlled reset actions.
+                </p>
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<div
+    id="resetPasswordBackdrop"
+    class="access-modal-backdrop"
+    onclick="closeResetPasswordModalFromBackdrop(event)"
+>
+
+    <div class="access-modal">
+
+        <div class="access-modal-header">
+
+            <div>
+                <h3>Reset Staff Password</h3>
+                <p id="resetPasswordStaffInfo">
+                    Create a new temporary password.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="access-modal-close"
+                onclick="closeResetPasswordModal()"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <form
+            method="POST"
+            id="resetPasswordForm"
+            class="access-modal-body"
+        >
+
+            <div class="access-field">
+
+                <label for="new_password">
+                    New Password
+                </label>
+
+                <input
+                    type="password"
+                    id="new_password"
+                    name="new_password"
+                    autocomplete="new-password"
+                    minlength="10"
+                    required
+                >
+
+                <small>
+                    Minimum 10 characters with uppercase,
+                    lowercase and a number.
+                </small>
+
+            </div>
+
+
+            <div class="access-field">
+
+                <label for="confirm_password">
+                    Confirm Password
+                </label>
+
+                <input
+                    type="password"
+                    id="confirm_password"
+                    name="confirm_password"
+                    autocomplete="new-password"
+                    minlength="10"
+                    required
+                >
+
+                <small id="passwordMatchText">
+                    Enter the same password again.
+                </small>
+
+            </div>
+
+
+            <div class="access-modal-actions">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="closeResetPasswordModal()"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    id="resetPasswordSubmit"
+                >
+                    Reset Password
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+function filterStaffTable() {
+    const input = document.getElementById("staffSearch");
+    const table = document.getElementById("staffTable");
+    const empty = document.getElementById("searchEmptyState");
+
+    if (!input || !table) return;
+
+    const query = input.value.trim().toLowerCase();
+    const rows = table.querySelectorAll(".staff-row");
+
+    let visible = 0;
+
+    rows.forEach(function(row) {
+        const text = (row.dataset.search || "").toLowerCase();
+        const show = text.includes(query);
+
+        row.style.display = show ? "" : "none";
+
+        if (show) visible++;
+    });
+
+    if (empty) {
+        empty.style.display = visible === 0 ? "flex" : "none";
+    }
+}
+
+
+function confirmStaffStatusChange(name, status) {
+    if (status === "ACTIVE") {
+        return confirm(
+            "Deactivate " +
+            name +
+            "? This staff account will no longer have active access."
+        );
+    }
+
+    return confirm(
+        "Activate " +
+        name +
+        "? This staff account will regain system access."
+    );
+}
+
+
+function openResetPasswordModal(button) {
+    const backdrop = document.getElementById("resetPasswordBackdrop");
+    const form = document.getElementById("resetPasswordForm");
+    const info = document.getElementById("resetPasswordStaffInfo");
+
+    const password = document.getElementById("new_password");
+    const confirmPassword = document.getElementById("confirm_password");
+
+    form.action = button.dataset.action;
+
+    info.textContent =
+        button.dataset.name +
+        " · @" +
+        button.dataset.username;
+
+    password.value = "";
+    confirmPassword.value = "";
+
+    updatePasswordMatch();
+
+    backdrop.classList.add("show");
+    document.body.style.overflow = "hidden";
+
+    setTimeout(function() {
+        password.focus();
+    }, 50);
+}
+
+
+function closeResetPasswordModal() {
+    const backdrop = document.getElementById("resetPasswordBackdrop");
+
+    if (backdrop) {
+        backdrop.classList.remove("show");
+    }
+
+    document.body.style.overflow = "";
+}
+
+
+function closeResetPasswordModalFromBackdrop(event) {
+    if (event.target.id === "resetPasswordBackdrop") {
+        closeResetPasswordModal();
+    }
+}
+
+
+function updatePasswordMatch() {
+    const password = document.getElementById("new_password");
+    const confirmPassword = document.getElementById("confirm_password");
+    const message = document.getElementById("passwordMatchText");
+    const submit = document.getElementById("resetPasswordSubmit");
+
+    if (!password || !confirmPassword || !message || !submit) return;
+
+    if (!confirmPassword.value) {
+        message.textContent = "Enter the same password again.";
+        message.style.color = "var(--muted)";
+        submit.disabled = false;
+        return;
+    }
+
+    if (password.value === confirmPassword.value) {
+        message.textContent = "Passwords match.";
+        message.style.color = "var(--green)";
+        submit.disabled = false;
+    } else {
+        message.textContent = "Passwords do not match.";
+        message.style.color = "var(--red)";
+        submit.disabled = true;
+    }
+}
+
+
+document.addEventListener("DOMContentLoaded", function() {
+    const password = document.getElementById("new_password");
+    const confirmPassword = document.getElementById("confirm_password");
+
+    if (password) {
+        password.addEventListener("input", updatePasswordMatch);
+    }
+
+    if (confirmPassword) {
+        confirmPassword.addEventListener("input", updatePasswordMatch);
+    }
+});
+
+
+document.addEventListener("keydown", function(event) {
+    if (event.key === "Escape") {
+        closeResetPasswordModal();
+    }
+});
+</script>
+{% endblock %}

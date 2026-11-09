@@ -1,0 +1,583 @@
+{% extends "base.html" %}
+
+{% block title %}
+Quick Access - Sri Sumana
+{% endblock %}
+
+{% block page_title %}
+Sri Sumana Quick Access
+{% endblock %}
+
+{% block page_subtitle %}
+Choose the main task you want to do
+{% endblock %}
+
+{% block page_actions %}
+
+{% if current_user and current_user.role == 'OWNER' %}
+<a
+    href="{{ url_for('dashboard') }}"
+    class="btn btn-secondary"
+>
+    Owner Dashboard
+</a>
+{% else %}
+<a
+    href="{{ url_for('staff_dashboard') }}"
+    class="btn btn-secondary"
+>
+    Staff Dashboard
+</a>
+{% endif %}
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    .quick-home {
+        min-height: calc(100vh - 150px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 18px;
+    }
+
+
+    .quick-welcome {
+        text-align: center;
+        padding: 4px 12px 0;
+    }
+
+
+    .quick-welcome h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+    }
+
+
+    .quick-welcome p {
+        margin: 8px auto 0;
+        max-width: 620px;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+
+    .quick-main-grid {
+        width: min(980px, 100%);
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+
+    .quick-main-card {
+        min-height: 300px;
+        padding: 28px;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        border: 1px solid var(--border);
+        border-radius: 20px;
+
+        background: #ffffff;
+
+        color: var(--text);
+        text-decoration: none;
+
+        box-shadow:
+            0 10px 30px
+            rgba(15, 23, 42, 0.04);
+
+        transition:
+            transform .16s ease,
+            border-color .16s ease,
+            box-shadow .16s ease;
+    }
+
+
+    .quick-main-card:hover {
+        transform: translateY(-3px);
+        box-shadow:
+            0 16px 34px
+            rgba(15, 23, 42, 0.08);
+    }
+
+
+    .quick-main-card.scan {
+        border-color: #c7d2fe;
+        background:
+            linear-gradient(
+                145deg,
+                #eef2ff,
+                #ffffff
+            );
+    }
+
+
+    .quick-main-card.register {
+        border-color: #bbf7d0;
+        background:
+            linear-gradient(
+                145deg,
+                #ecfdf3,
+                #ffffff
+            );
+    }
+
+
+    .quick-icon {
+        width: 76px;
+        height: 76px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 22px;
+
+        color: #ffffff;
+
+        font-size: 22px;
+        font-weight: 900;
+    }
+
+
+    .quick-main-card.scan .quick-icon {
+        background: var(--primary);
+    }
+
+
+    .quick-main-card.register .quick-icon {
+        background: var(--green);
+    }
+
+
+    .quick-copy {
+        margin-top: 34px;
+    }
+
+
+    .quick-copy h3 {
+        margin: 0;
+        font-size: 25px;
+        font-weight: 820;
+        letter-spacing: -0.025em;
+    }
+
+
+    .quick-copy p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.6;
+    }
+
+
+    .quick-go {
+        margin-top: 24px;
+        min-height: 48px;
+        padding: 0 16px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+
+        border-radius: 12px;
+
+        color: #ffffff;
+
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+
+    .quick-main-card.scan .quick-go {
+        background: var(--primary);
+    }
+
+
+    .quick-main-card.register .quick-go {
+        background: var(--green);
+    }
+
+
+    .quick-secondary {
+        width: min(980px, 100%);
+        margin: 0 auto;
+
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+
+    .quick-secondary-link {
+        min-height: 64px;
+        padding: 11px 13px;
+
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 11px;
+
+        background: #ffffff;
+
+        color: var(--text);
+        text-decoration: none;
+    }
+
+
+    .quick-secondary-link:hover {
+        background: #fafafa;
+    }
+
+
+    .secondary-icon {
+        width: 34px;
+        height: 34px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 34px;
+
+        border-radius: 9px;
+
+        background: var(--primary-soft);
+        color: var(--primary);
+
+        font-size: 10px;
+        font-weight: 850;
+    }
+
+
+    .quick-secondary-link strong {
+        display: block;
+        font-size: 9px;
+    }
+
+
+    .quick-secondary-link span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .quick-status {
+        width: min(980px, 100%);
+        margin: 0 auto;
+
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+
+    .status-card {
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #ffffff;
+    }
+
+
+    .status-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .status-card strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+
+    .status-card.green strong {
+        color: var(--green);
+    }
+
+
+    .status-card.orange strong {
+        color: var(--orange);
+    }
+
+
+    @media (max-width: 850px) {
+
+        .quick-home {
+            min-height: auto;
+            justify-content: flex-start;
+        }
+
+        .quick-main-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-main-card {
+            min-height: 235px;
+        }
+
+        .quick-secondary {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-status {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+    }
+
+
+    @media (max-width: 560px) {
+
+        .quick-home {
+            gap: 14px;
+        }
+
+        .quick-welcome {
+            text-align: left;
+            padding: 0;
+        }
+
+        .quick-welcome h2 {
+            font-size: 20px;
+        }
+
+        .quick-main-grid {
+            gap: 12px;
+        }
+
+        .quick-main-card {
+            min-height: 220px;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .quick-icon {
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            font-size: 17px;
+        }
+
+        .quick-copy {
+            margin-top: 22px;
+        }
+
+        .quick-copy h3 {
+            font-size: 20px;
+        }
+
+        .quick-copy p {
+            font-size: 9px;
+        }
+
+        .quick-go {
+            min-height: 46px;
+        }
+
+        .quick-status {
+            grid-template-columns: 1fr 1fr;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="quick-home">
+
+
+    <section class="quick-welcome">
+
+        <h2>
+            What do you want to do?
+        </h2>
+
+        <p>
+            Daily work starts here. Scan a student QR for attendance,
+            or register a new student.
+        </p>
+
+    </section>
+
+
+    <section class="quick-main-grid">
+
+
+        <a
+            href="{{ url_for('scan_qr') }}"
+            class="quick-main-card scan"
+        >
+
+            <div>
+
+                <div class="quick-icon">
+                    QR
+                </div>
+
+                <div class="quick-copy">
+
+                    <h3>
+                        Scan Student QR
+                    </h3>
+
+                    <p>
+                        Open the camera, scan the student pass,
+                        check payment status and mark attendance.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="quick-go">
+                <span>Start QR Scanner</span>
+                <span>→</span>
+            </div>
+
+        </a>
+
+
+        <a
+            href="{{ url_for('register_student') }}"
+            class="quick-main-card register"
+        >
+
+            <div>
+
+                <div class="quick-icon">
+                    +
+                </div>
+
+                <div class="quick-copy">
+
+                    <h3>
+                        Register Student
+                    </h3>
+
+                    <p>
+                        Enter student and guardian information,
+                        choose classes and submit for approval.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="quick-go">
+                <span>New Registration</span>
+                <span>→</span>
+            </div>
+
+        </a>
+
+
+    </section>
+
+
+    <section class="quick-status">
+
+        <div class="status-card">
+            <span>Today's Classes</span>
+            <strong>{{ today_class_count }}</strong>
+        </div>
+
+        <div class="status-card green">
+            <span>QR Check-ins</span>
+            <strong>{{ attendance_count }}</strong>
+        </div>
+
+        <div class="status-card orange">
+            <span>Payment Follow-up</span>
+            <strong>{{ payment_followup_count }}</strong>
+        </div>
+
+        <div class="status-card">
+            <span>Pending Approvals</span>
+            <strong>{{ pending_count }}</strong>
+        </div>
+
+    </section>
+
+
+    <section class="quick-secondary">
+
+
+        <a
+            href="{{ url_for('new_payment') }}"
+            class="quick-secondary-link"
+        >
+
+            <span class="secondary-icon">Rs</span>
+
+            <span>
+                <strong>Record Payment</strong>
+                <span>Full or partial class payment</span>
+            </span>
+
+        </a>
+
+
+        <a
+            href="{{ url_for('attendance_today') }}"
+            class="quick-secondary-link"
+        >
+
+            <span class="secondary-icon">◉</span>
+
+            <span>
+                <strong>Today's Attendance</strong>
+                <span>Review today's check-ins</span>
+            </span>
+
+        </a>
+
+
+        <a
+            href="{{ url_for('pending_approvals') }}"
+            class="quick-secondary-link"
+        >
+
+            <span class="secondary-icon">✓</span>
+
+            <span>
+                <strong>Pending Approvals</strong>
+                <span>Review new registrations</span>
+            </span>
+
+        </a>
+
+
+    </section>
+
+
+</div>
+
+{% endblock %}

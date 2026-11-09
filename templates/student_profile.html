@@ -1,0 +1,2879 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+{{ student.full_name }} - Student Profile
+{% endblock %}
+
+
+{% block page_title %}
+Student Profile
+{% endblock %}
+
+
+{% block page_subtitle %}
+{{ student.student_code }} · {{ student.full_name }}
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('students') }}"
+    class="btn btn-secondary"
+>
+    ← Students
+</a>
+
+
+<a
+    href="{{ url_for(
+        'edit_student',
+        student_id=student.id
+    ) }}"
+    class="btn btn-primary"
+>
+    Edit Student
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       STUDENT HERO
+    ====================================================== */
+
+    .student-hero {
+        margin-bottom: 12px;
+
+        padding: 16px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 20px;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+    }
+
+
+    .student-identity {
+        display: flex;
+        align-items: center;
+
+        gap: 14px;
+
+        min-width: 0;
+    }
+
+
+    .student-avatar {
+        width: 54px;
+        height: 54px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 54px;
+
+        border-radius: 12px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 17px;
+        font-weight: 800;
+        overflow: hidden;
+    }
+
+
+    .student-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+
+    .student-name-block {
+        min-width: 0;
+    }
+
+
+    .student-code {
+        color: var(--primary);
+
+        font-size: 9px;
+        font-weight: 750;
+    }
+
+
+    .student-name-block h2 {
+        margin: 4px 0 0;
+
+        font-size: 19px;
+        line-height: 1.2;
+
+        letter-spacing: -0.02em;
+    }
+
+
+    .student-name-block p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 9px;
+    }
+
+
+    .student-status {
+        display: inline-flex;
+        align-items: center;
+
+        padding: 6px 9px;
+
+        border-radius: 999px;
+
+        font-size: 8px;
+        font-weight: 800;
+    }
+
+
+    .student-status.active {
+        color: var(--green);
+
+        background: var(--green-soft);
+    }
+
+
+    .student-status.inactive {
+        color: var(--red);
+
+        background: var(--red-soft);
+    }
+
+
+    /* =====================================================
+       TABS
+    ====================================================== */
+
+    .student-tabs {
+        margin-bottom: 12px;
+
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .student-tab {
+        min-height: 35px;
+
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+
+    .student-tab:hover {
+        color: #262626;
+
+        background: #f5f5f5;
+    }
+
+
+    .student-tab.active {
+        color: var(--primary);
+
+        background: var(--primary-soft);
+
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       SUMMARY
+    ====================================================== */
+
+    .student-summary {
+        margin-bottom: 12px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(0, 1fr)
+            );
+
+        gap: 10px;
+    }
+
+
+    .student-summary-card {
+        min-height: 90px;
+
+        padding: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .student-summary-card span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .student-summary-card strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 18px;
+        font-weight: 750;
+    }
+
+
+    .green {
+        color: var(--green);
+    }
+
+
+    .blue {
+        color: var(--blue);
+    }
+
+
+    .orange {
+        color: var(--orange);
+    }
+
+
+    /* =====================================================
+       GRID
+    ====================================================== */
+
+    .profile-grid {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(290px, 0.55fr);
+
+        gap: 12px;
+    }
+
+
+    .profile-grid.equal {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+
+    /* =====================================================
+       DETAIL GRID
+    ====================================================== */
+
+    .detail-grid {
+        padding: 14px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap: 10px;
+    }
+
+
+    .detail-item {
+        min-height: 65px;
+
+        padding: 11px;
+
+        border: 1px solid var(--border);
+        border-radius: 9px;
+
+        background: #fafafa;
+    }
+
+
+    .detail-item.full {
+        grid-column: 1 / -1;
+    }
+
+
+    .detail-item span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .detail-item strong {
+        display: block;
+
+        margin-top: 6px;
+
+        color: #262626;
+
+        font-size: 10px;
+
+        word-break: break-word;
+    }
+
+
+    /* =====================================================
+       ACTION BOX
+    ====================================================== */
+
+    .action-section {
+        padding: 14px;
+    }
+
+
+    .action-block {
+        margin-bottom: 10px;
+        padding: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 9px;
+
+        background: #fafafa;
+    }
+
+
+    .action-block:last-child {
+        margin-bottom: 0;
+    }
+
+
+    .action-block h3 {
+        margin: 0;
+
+        font-size: 10px;
+    }
+
+
+    .action-block p {
+        margin: 5px 0 10px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+        line-height: 1.45;
+    }
+
+
+    .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+
+        gap: 7px;
+    }
+
+
+    .small-action {
+        min-height: 34px;
+
+        padding: 0 11px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: #262626;
+
+        text-decoration: none;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        cursor: pointer;
+    }
+
+
+    .small-action:hover {
+        background: #f5f5f5;
+    }
+
+
+    .small-action.primary {
+        border-color: var(--primary);
+
+        background: var(--primary);
+
+        color: #ffffff;
+    }
+
+
+    .small-action.danger {
+        border-color: #fecaca;
+
+        background: var(--red-soft);
+
+        color: var(--red);
+    }
+
+
+    .small-action.success {
+        border-color: #bbf7d0;
+
+        background: var(--green-soft);
+
+        color: var(--green);
+    }
+
+
+    /* =====================================================
+       TABLE
+    ====================================================== */
+
+    .student-table-wrap {
+        overflow-x: auto;
+    }
+
+
+    .student-table {
+        width: 100%;
+
+        min-width: 760px;
+
+        border-collapse: collapse;
+    }
+
+
+    .student-table th {
+        padding: 10px 12px;
+
+        background: #fafafa;
+
+        border-bottom: 1px solid var(--border);
+
+        color: var(--muted);
+
+        text-align: left;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+    }
+
+
+    .student-table td {
+        padding: 12px;
+
+        border-bottom: 1px solid var(--border);
+
+        color: #262626;
+
+        font-size: 9px;
+
+        vertical-align: middle;
+    }
+
+
+    .student-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+
+    .table-primary {
+        display: block;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+
+    .table-secondary {
+        display: block;
+
+        margin-top: 2px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    /* =====================================================
+       BADGES
+    ====================================================== */
+
+    .status-badge {
+        display: inline-flex;
+
+        padding: 4px 7px;
+
+        border-radius: 999px;
+
+        background: #f4f4f5;
+
+        color: #525252;
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .status-badge.active,
+    .status-badge.approved,
+    .status-badge.confirmed,
+    .status-badge.present {
+        color: var(--green);
+
+        background: var(--green-soft);
+    }
+
+
+    .status-badge.inactive,
+    .status-badge.revoked,
+    .status-badge.voided,
+    .status-badge.rejected {
+        color: var(--red);
+
+        background: var(--red-soft);
+    }
+
+
+    .status-badge.pending,
+    .status-badge.partial {
+        color: var(--orange);
+
+        background: var(--orange-soft);
+    }
+
+
+    /* =====================================================
+       CLASS ADD
+    ====================================================== */
+
+    .add-class-form {
+        padding: 14px;
+
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            auto;
+
+        gap: 8px;
+    }
+
+
+    .add-class-form select {
+        width: 100%;
+
+        min-height: 38px;
+
+        padding: 0 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: #262626;
+
+        outline: none;
+    }
+
+
+    /* =====================================================
+       QR
+    ====================================================== */
+
+    .qr-layout {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(280px, 0.5fr);
+
+        gap: 12px;
+    }
+
+
+    .qr-status-box {
+        padding: 18px;
+
+        text-align: center;
+    }
+
+
+    .qr-icon {
+        width: 90px;
+        height: 90px;
+
+        margin: 0 auto 13px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 14px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 22px;
+        font-weight: 800;
+    }
+
+
+    .qr-status-box h3 {
+        margin: 0;
+
+        font-size: 14px;
+    }
+
+
+    .qr-status-box p {
+        margin: 6px 0 15px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    /* =====================================================
+       EMPTY
+    ====================================================== */
+
+    .student-empty {
+        min-height: 190px;
+
+        padding: 30px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        text-align: center;
+    }
+
+
+    .student-empty strong {
+        font-size: 10px;
+    }
+
+
+    .student-empty p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    /* =====================================================
+       ACTIVITY
+    ====================================================== */
+
+    .activity-list {
+        padding: 0;
+        margin: 0;
+
+        list-style: none;
+    }
+
+
+    .activity-row {
+        padding: 12px 14px;
+
+        display: grid;
+
+        grid-template-columns:
+            150px
+            minmax(0, 1fr)
+            150px;
+
+        gap: 12px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .activity-row:last-child {
+        border-bottom: 0;
+    }
+
+
+    .activity-time {
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .activity-main strong {
+        display: block;
+
+        font-size: 9px;
+    }
+
+
+    .activity-main span {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .activity-user {
+        text-align: right;
+
+        font-size: 8px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 1000px) {
+
+        .student-summary {
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+        }
+
+
+        .profile-grid,
+        .profile-grid.equal,
+        .qr-layout {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 620px) {
+
+        .student-hero {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+
+        .student-summary {
+            grid-template-columns: 1fr;
+        }
+
+
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .detail-item.full {
+            grid-column: auto;
+        }
+
+
+        .add-class-form {
+            grid-template-columns: 1fr;
+        }
+
+
+        .activity-row {
+            grid-template-columns: 1fr;
+        }
+
+
+        .activity-user {
+            text-align: left;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<!-- =====================================================
+     STUDENT HERO
+====================================================== -->
+
+<section class="student-hero">
+
+
+    <div class="student-identity">
+
+
+        <div class="student-avatar">
+
+            {% if student.photo_filename %}
+
+                <img
+                    src="{{ url_for('student_photo_file', filename=student.photo_filename) }}"
+                    alt="{{ student.full_name }}"
+                >
+
+            {% else %}
+
+                {{
+                    (
+                        student.full_name
+                        or
+                        'ST'
+                    )[:2]
+                    | upper
+                }}
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="student-name-block">
+
+            <div class="student-code">
+                {{ student.student_code }}
+            </div>
+
+            <h2>
+                {{ student.full_name }}
+            </h2>
+
+            <p>
+
+                Grade {{ student.grade }}
+
+                {% if student.school %}
+
+                    · {{ student.school }}
+
+                {% endif %}
+
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+    <span
+        class="
+            student-status
+
+            {% if student.status == 'ACTIVE' %}
+                active
+            {% else %}
+                inactive
+            {% endif %}
+        "
+    >
+        {{ student.status }}
+    </span>
+
+
+</section>
+
+
+<!-- =====================================================
+     TABS
+====================================================== -->
+
+<nav class="student-tabs">
+
+
+    <a
+        href="{{ url_for(
+            'student_profile',
+            student_id=student.id,
+            tab='overview'
+        ) }}"
+
+        class="
+            student-tab
+
+            {% if active_tab == 'overview' %}
+                active
+            {% endif %}
+        "
+    >
+        Overview
+    </a>
+
+
+    <a
+        href="{{ url_for(
+            'student_profile',
+            student_id=student.id,
+            tab='classes'
+        ) }}"
+
+        class="
+            student-tab
+
+            {% if active_tab == 'classes' %}
+                active
+            {% endif %}
+        "
+    >
+        Classes
+    </a>
+
+
+    <a
+        href="{{ url_for(
+            'student_profile',
+            student_id=student.id,
+            tab='attendance'
+        ) }}"
+
+        class="
+            student-tab
+
+            {% if active_tab == 'attendance' %}
+                active
+            {% endif %}
+        "
+    >
+        Attendance
+    </a>
+
+
+    <a
+        href="{{ url_for(
+            'student_profile',
+            student_id=student.id,
+            tab='payments'
+        ) }}"
+
+        class="
+            student-tab
+
+            {% if active_tab == 'payments' %}
+                active
+            {% endif %}
+        "
+    >
+        Payments
+    </a>
+
+
+    <a
+        href="{{ url_for(
+            'student_profile',
+            student_id=student.id,
+            tab='free-cards'
+        ) }}"
+
+        class="
+            student-tab
+
+            {% if active_tab == 'free-cards' %}
+                active
+            {% endif %}
+        "
+    >
+        Free Cards
+    </a>
+
+
+    <a
+        href="{{ url_for(
+            'student_profile',
+            student_id=student.id,
+            tab='qr'
+        ) }}"
+
+        class="
+            student-tab
+
+            {% if active_tab == 'qr' %}
+                active
+            {% endif %}
+        "
+    >
+        QR Pass
+    </a>
+
+
+    {% if current_user and current_user.role == 'OWNER' %}
+
+        <a
+            href="{{ url_for(
+                'student_profile',
+                student_id=student.id,
+                tab='activity'
+            ) }}"
+
+            class="
+                student-tab
+
+                {% if active_tab == 'activity' %}
+                    active
+                {% endif %}
+            "
+        >
+            Activity
+        </a>
+
+    {% endif %}
+
+
+</nav>
+
+
+<!-- =====================================================
+     OVERVIEW
+====================================================== -->
+
+{% if active_tab == 'overview' %}
+
+
+    <div class="student-summary">
+
+
+        <div class="student-summary-card">
+
+            <span>
+                Active Classes
+            </span>
+
+            <strong>
+                {{ active_class_count }}
+            </strong>
+
+        </div>
+
+
+        <div class="student-summary-card">
+
+            <span>
+                Attendance Records
+            </span>
+
+            <strong class="blue">
+                {{ attendance_count }}
+            </strong>
+
+        </div>
+
+
+        <div class="student-summary-card">
+
+            <span>
+                Confirmed Payments
+            </span>
+
+            <strong class="green">
+
+                Rs.
+                {{ "{:,.2f}".format(
+                    total_paid or 0
+                ) }}
+
+            </strong>
+
+        </div>
+
+
+        <div class="student-summary-card">
+
+            <span>
+                Approved Free Cards
+            </span>
+
+            <strong class="orange">
+                {{ approved_free_cards }}
+            </strong>
+
+        </div>
+
+
+    </div>
+
+
+    <div class="profile-grid">
+
+
+        <!-- PERSONAL DETAILS -->
+
+        <section class="ui-panel">
+
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        Student Information
+                    </h2>
+
+                    <p>
+                        Personal and guardian details
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="{{ url_for(
+                        'edit_student',
+                        student_id=student.id
+                    ) }}"
+                    class="ui-panel-link"
+                >
+                    Edit →
+                </a>
+
+            </div>
+
+
+            <div class="detail-grid">
+
+
+                <div class="detail-item">
+
+                    <span>
+                        Student ID
+                    </span>
+
+                    <strong>
+                        {{ student.student_code }}
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-item">
+
+                    <span>
+                        Grade
+                    </span>
+
+                    <strong>
+                        {{ student.grade }}
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-item">
+
+                    <span>
+                        Phone
+                    </span>
+
+                    <strong>
+                        {{ student.phone or '—' }}
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-item">
+
+                    <span>
+                        School
+                    </span>
+
+                    <strong>
+                        {{ student.school or '—' }}
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-item">
+
+                    <span>
+                        Parent / Guardian
+                    </span>
+
+                    <strong>
+                        {{ student.parent_name or '—' }}
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-item">
+
+                    <span>
+                        Parent Phone
+                    </span>
+
+                    <strong>
+                        {{ student.parent_phone or '—' }}
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-item full">
+
+                    <span>
+                        Address
+                    </span>
+
+                    <strong>
+                        {{ student.address or '—' }}
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-item">
+
+                    <span>
+                        Created
+                    </span>
+
+                    <strong>
+                        {{ student.created_at or '—' }}
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-item">
+
+                    <span>
+                        Student Status
+                    </span>
+
+                    <strong>
+                        {{ student.status }}
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+        <!-- ACCOUNT ACTIONS -->
+
+        <section class="ui-panel">
+
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        Student Management
+                    </h2>
+
+                    <p>
+                        Profile and access controls
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="action-section">
+
+
+                <div class="action-block">
+
+                    <h3>
+                        Student Profile
+                    </h3>
+
+                    <p>
+                        Update student personal and guardian information.
+                    </p>
+
+                    <div class="action-buttons">
+
+                        <a
+                            href="{{ url_for(
+                                'edit_student',
+                                student_id=student.id
+                            ) }}"
+                            class="small-action primary"
+                        >
+                            Edit Profile
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+                <div class="action-block">
+
+                    <h3>
+                        QR Pass
+                    </h3>
+
+                    <p>
+                        Open the secure student attendance pass.
+                    </p>
+
+                    <div class="action-buttons">
+
+                        <a
+                            href="{{ url_for(
+                                'student_qr_pass',
+                                student_id=student.id
+                            ) }}"
+                            class="small-action"
+                        >
+                            Open QR Pass
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+                {% if
+                    current_user
+                    and
+                    current_user.role == 'OWNER'
+                %}
+
+                    <div class="action-block">
+
+                        <h3>
+                            Account Status
+                        </h3>
+
+                        <p>
+
+                            {% if student.status == 'ACTIVE' %}
+
+                                Deactivating the student also revokes
+                                QR attendance access.
+
+                            {% else %}
+
+                                Activating generates a new secure QR token.
+
+                            {% endif %}
+
+                        </p>
+
+
+                        <form
+                            method="POST"
+
+                            action="{{ url_for(
+                                'toggle_student',
+                                student_id=student.id
+                            ) }}"
+                        >
+
+                            {% if student.status == 'ACTIVE' %}
+
+                                <button
+                                    type="submit"
+                                    class="small-action danger"
+
+                                    onclick="
+                                        return confirm(
+                                            'Deactivate this student?'
+                                        );
+                                    "
+                                >
+                                    Deactivate Student
+                                </button>
+
+                            {% else %}
+
+                                <button
+                                    type="submit"
+                                    class="small-action success"
+
+                                    onclick="
+                                        return confirm(
+                                            'Activate this student?'
+                                        );
+                                    "
+                                >
+                                    Activate Student
+                                </button>
+
+                            {% endif %}
+
+                        </form>
+
+                    </div>
+
+                {% endif %}
+
+
+            </div>
+
+
+        </section>
+
+
+    </div>
+
+
+<!-- =====================================================
+     CLASSES
+====================================================== -->
+
+{% elif active_tab == 'classes' %}
+
+
+    <section class="ui-panel">
+
+
+        <div class="ui-panel-header">
+
+            <div>
+
+                <h2>
+                    Class Enrollments
+                </h2>
+
+                <p>
+                    Current and historical student classes
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if classes %}
+
+
+            <div class="student-table-wrap">
+
+
+                <table class="student-table">
+
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Class
+                            </th>
+
+                            <th>
+                                Teacher
+                            </th>
+
+                            <th>
+                                Schedule
+                            </th>
+
+                            <th>
+                                Monthly Fee
+                            </th>
+
+                            <th>
+                                Enrollment
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+
+                        {% for class in classes %}
+
+
+                            {% set enrollment_active =
+                                (
+                                    class.enrollment_status == 'ACTIVE'
+                                    or
+                                    class.enrollment_status is none
+                                )
+                            %}
+
+
+                            <tr>
+
+
+                                <td>
+
+                                    <span class="table-primary">
+
+                                        {{
+                                            class.class_name
+                                            or
+                                            class.class_code
+                                        }}
+
+                                    </span>
+
+                                    <span class="table-secondary">
+
+                                        {{ class.class_code }}
+
+                                        ·
+
+                                        {{ class.subject or '—' }}
+
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+                                    {{
+                                        class.current_teacher
+                                        or
+                                        class.teacher
+                                        or
+                                        '—'
+                                    }}
+
+                                </td>
+
+
+                                <td>
+
+                                    <span class="table-primary">
+
+                                        {{ class.day_name }}
+
+                                    </span>
+
+                                    <span class="table-secondary">
+
+                                        {{ class.start_display }}
+
+                                        –
+
+                                        {{ class.end_display }}
+
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+                                    Rs.
+
+                                    {{ "{:,.2f}".format(
+                                        class.monthly_fee or 0
+                                    ) }}
+
+                                </td>
+
+
+                                <td>
+
+                                    <span
+                                        class="
+                                            status-badge
+
+                                            {% if enrollment_active %}
+                                                active
+                                            {% else %}
+                                                inactive
+                                            {% endif %}
+                                        "
+                                    >
+
+                                        {% if enrollment_active %}
+
+                                            ACTIVE
+
+                                        {% else %}
+
+                                            INACTIVE
+
+                                        {% endif %}
+
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+
+                                    {% if
+                                        enrollment_active
+                                        and
+                                        current_user
+                                        and
+                                        current_user.role == 'OWNER'
+                                    %}
+
+                                        <form
+                                            method="POST"
+
+                                            action="{{ url_for(
+                                                'remove_student_class',
+                                                student_id=student.id,
+                                                class_code=class.class_code
+                                            ) }}"
+                                        >
+
+                                            <button
+                                                type="submit"
+                                                class="small-action danger"
+
+                                                onclick="
+                                                    return confirm(
+                                                        'Remove this class from the student?'
+                                                    );
+                                                "
+                                            >
+                                                Remove
+                                            </button>
+
+                                        </form>
+
+                                    {% else %}
+
+                                        —
+
+                                    {% endif %}
+
+
+                                </td>
+
+
+                            </tr>
+
+
+                        {% endfor %}
+
+
+                    </tbody>
+
+
+                </table>
+
+
+            </div>
+
+
+        {% else %}
+
+
+            <div class="student-empty">
+
+                <strong>
+                    No class history found.
+                </strong>
+
+                <p>
+                    This student has not been enrolled in a class.
+                </p>
+
+            </div>
+
+
+        {% endif %}
+
+
+    </section>
+
+
+    {% if
+        current_user
+        and
+        current_user.role == 'OWNER'
+    %}
+
+
+        <section
+            class="ui-panel"
+            style="margin-top:12px;"
+        >
+
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        Add Class
+                    </h2>
+
+                    <p>
+                        Only active classes matching the student's grade
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            {% if student.status == 'ACTIVE' %}
+
+
+                {% if available_classes %}
+
+
+                    <form
+                        method="POST"
+
+                        action="{{ url_for(
+                            'add_student_class',
+                            student_id=student.id
+                        ) }}"
+
+                        class="add-class-form"
+                    >
+
+
+                        <select
+                            name="class_code"
+                            required
+                        >
+
+                            <option value="">
+                                Select a class
+                            </option>
+
+
+                            {% for class in available_classes %}
+
+                                <option
+                                    value="{{ class.class_code }}"
+                                >
+
+                                    {{ class.class_name }}
+
+                                    ·
+
+                                    {{ class.teacher_name }}
+
+                                    ·
+
+                                    {{ class.day_name }}
+
+                                    {{ class.start_display }}
+
+                                </option>
+
+                            {% endfor %}
+
+
+                        </select>
+
+
+                        <button
+                            type="submit"
+                            class="small-action primary"
+                        >
+                            Add Class
+                        </button>
+
+
+                    </form>
+
+
+                {% else %}
+
+
+                    <div class="student-empty">
+
+                        <strong>
+                            No available classes.
+                        </strong>
+
+                        <p>
+                            The student is already enrolled in all
+                            matching active classes.
+                        </p>
+
+                    </div>
+
+
+                {% endif %}
+
+
+            {% else %}
+
+
+                <div class="student-empty">
+
+                    <strong>
+                        Student is inactive.
+                    </strong>
+
+                    <p>
+                        Activate the student before adding classes.
+                    </p>
+
+                </div>
+
+
+            {% endif %}
+
+
+        </section>
+
+
+    {% endif %}
+
+
+<!-- =====================================================
+     ATTENDANCE
+====================================================== -->
+
+{% elif active_tab == 'attendance' %}
+
+
+    <section class="ui-panel">
+
+
+        <div class="ui-panel-header">
+
+            <div>
+
+                <h2>
+                    Attendance History
+                </h2>
+
+                <p>
+                    {{ attendance_count }} attendance records
+                </p>
+
+            </div>
+
+
+            <a
+                href="{{ url_for('attendance_list') }}"
+                class="ui-panel-link"
+            >
+                All Attendance →
+            </a>
+
+        </div>
+
+
+        {% if attendance_records %}
+
+
+            <div class="student-table-wrap">
+
+
+                <table class="student-table">
+
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Class
+                            </th>
+
+                            <th>
+                                Teacher
+                            </th>
+
+                            <th>
+                                Check-In
+                            </th>
+
+                            <th>
+                                Source
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+
+                        {% for record in attendance_records %}
+
+
+                            <tr>
+
+                                <td>
+                                    {{ record.attendance_date }}
+                                </td>
+
+
+                                <td>
+
+                                    <span class="table-primary">
+
+                                        {{
+                                            record.class_name
+                                            or
+                                            record.class_code
+                                        }}
+
+                                    </span>
+
+                                    <span class="table-secondary">
+                                        {{ record.class_code }}
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+                                    {{ record.teacher_name or '—' }}
+                                </td>
+
+
+                                <td>
+                                    {{ record.check_in_time }}
+                                </td>
+
+
+                                <td>
+                                    {{ record.source or '—' }}
+                                </td>
+
+
+                                <td>
+
+                                    <span
+                                        class="
+                                            status-badge
+                                            {{ (record.status or '')|lower }}
+                                        "
+                                    >
+                                        {{ record.status }}
+                                    </span>
+
+                                </td>
+
+                            </tr>
+
+
+                        {% endfor %}
+
+
+                    </tbody>
+
+
+                </table>
+
+
+            </div>
+
+
+        {% else %}
+
+
+            <div class="student-empty">
+
+                <strong>
+                    No attendance records.
+                </strong>
+
+                <p>
+                    Attendance will appear after the student's QR is scanned.
+                </p>
+
+            </div>
+
+
+        {% endif %}
+
+
+    </section>
+
+
+<!-- =====================================================
+     PAYMENTS
+====================================================== -->
+
+{% elif active_tab == 'payments' %}
+
+
+    <section class="ui-panel">
+
+
+        <div class="ui-panel-header">
+
+            <div>
+
+                <h2>
+                    Payment History
+                </h2>
+
+                <p>
+                    Confirmed total:
+                    Rs. {{ "{:,.2f}".format(total_paid or 0) }}
+                </p>
+
+            </div>
+
+
+            <a
+                href="{{ url_for('new_payment') }}"
+                class="ui-panel-link"
+            >
+                Record Payment →
+            </a>
+
+        </div>
+
+
+        {% if payment_records %}
+
+
+            <div class="student-table-wrap">
+
+
+                <table class="student-table">
+
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Receipt
+                            </th>
+
+                            <th>
+                                Fee Month
+                            </th>
+
+                            <th>
+                                Class
+                            </th>
+
+                            <th>
+                                Amount
+                            </th>
+
+                            <th>
+                                Method
+                            </th>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+
+                        {% for payment in payment_records %}
+
+
+                            <tr>
+
+                                <td>
+
+                                    {% if payment.receipt_no %}
+
+                                        <a
+                                            href="{{ url_for(
+                                                'payment_receipt',
+                                                payment_id=payment.id
+                                            ) }}"
+                                            class="ui-panel-link"
+                                        >
+                                            {{ payment.receipt_no }}
+                                        </a>
+
+                                    {% else %}
+
+                                        —
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+                                    {{ payment.fee_month }}
+                                </td>
+
+
+                                <td>
+
+                                    <span class="table-primary">
+
+                                        {{
+                                            payment.class_name
+                                            or
+                                            payment.class_code
+                                        }}
+
+                                    </span>
+
+                                    <span class="table-secondary">
+                                        {{ payment.teacher_name or '—' }}
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+                                    Rs.
+
+                                    {{ "{:,.2f}".format(
+                                        payment.amount or 0
+                                    ) }}
+
+                                </td>
+
+
+                                <td>
+                                    {{ payment.payment_method or '—' }}
+                                </td>
+
+
+                                <td>
+                                    {{ payment.payment_date }}
+                                </td>
+
+
+                                <td>
+
+                                    <span
+                                        class="
+                                            status-badge
+                                            {{ (payment.status or '')|lower }}
+                                        "
+                                    >
+                                        {{ payment.status }}
+                                    </span>
+
+                                </td>
+
+                            </tr>
+
+
+                        {% endfor %}
+
+
+                    </tbody>
+
+
+                </table>
+
+
+            </div>
+
+
+        {% else %}
+
+
+            <div class="student-empty">
+
+                <strong>
+                    No payment records.
+                </strong>
+
+                <p>
+                    Student payment transactions will appear here.
+                </p>
+
+            </div>
+
+
+        {% endif %}
+
+
+    </section>
+
+
+<!-- =====================================================
+     FREE CARDS
+====================================================== -->
+
+{% elif active_tab == 'free-cards' %}
+
+
+    <section class="ui-panel">
+
+
+        <div class="ui-panel-header">
+
+            <div>
+
+                <h2>
+                    Free Card History
+                </h2>
+
+                <p>
+                    Fee waiver requests for this student
+                </p>
+
+            </div>
+
+
+            <a
+                href="{{ url_for('new_free_card_request') }}"
+                class="ui-panel-link"
+            >
+                Request Free Card →
+            </a>
+
+        </div>
+
+
+        {% if free_card_records %}
+
+
+            <div class="student-table-wrap">
+
+
+                <table class="student-table">
+
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Fee Month
+                            </th>
+
+                            <th>
+                                Class
+                            </th>
+
+                            <th>
+                                Teacher
+                            </th>
+
+                            <th>
+                                Waived
+                            </th>
+
+                            <th>
+                                Requested
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+
+                        {% for card in free_card_records %}
+
+
+                            <tr>
+
+                                <td>
+                                    {{ card.fee_month }}
+                                </td>
+
+
+                                <td>
+
+                                    <span class="table-primary">
+
+                                        {{
+                                            card.class_name
+                                            or
+                                            card.class_code
+                                        }}
+
+                                    </span>
+
+                                    <span class="table-secondary">
+                                        {{ card.class_code }}
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+                                    {{ card.teacher_name or '—' }}
+                                </td>
+
+
+                                <td>
+
+                                    Rs.
+
+                                    {{ "{:,.2f}".format(
+                                        card.waived_amount or 0
+                                    ) }}
+
+                                </td>
+
+
+                                <td>
+
+                                    <span class="table-primary">
+                                        {{ card.requested_by_name }}
+                                    </span>
+
+                                    <span class="table-secondary">
+                                        {{ card.requested_at }}
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+                                    <span
+                                        class="
+                                            status-badge
+                                            {{ (card.status or '')|lower }}
+                                        "
+                                    >
+                                        {{ card.status }}
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+                                    <a
+                                        href="{{ url_for(
+                                            'free_card_detail',
+                                            free_card_id=card.id
+                                        ) }}"
+                                        class="small-action"
+                                    >
+                                        Open
+                                    </a>
+
+                                </td>
+
+                            </tr>
+
+
+                        {% endfor %}
+
+
+                    </tbody>
+
+
+                </table>
+
+
+            </div>
+
+
+        {% else %}
+
+
+            <div class="student-empty">
+
+                <strong>
+                    No Free Card history.
+                </strong>
+
+                <p>
+                    No waiver requests exist for this student.
+                </p>
+
+            </div>
+
+
+        {% endif %}
+
+
+    </section>
+
+
+<!-- =====================================================
+     QR PASS
+====================================================== -->
+
+{% elif active_tab == 'qr' %}
+
+
+    <div class="qr-layout">
+
+
+        <section class="ui-panel">
+
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        Secure QR Pass
+                    </h2>
+
+                    <p>
+                        Student attendance identification
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="qr-status-box">
+
+
+                <div class="qr-icon">
+                    QR
+                </div>
+
+
+                <h3>
+                    {{ student.student_code }}
+                </h3>
+
+
+                <p>
+
+                    QR Status:
+
+                    <strong>
+                        {{ student.qr_status or 'ACTIVE' }}
+                    </strong>
+
+                </p>
+
+
+                <div class="action-buttons">
+
+                    <a
+                        href="{{ url_for(
+                            'student_qr_pass',
+                            student_id=student.id
+                        ) }}"
+                        class="small-action primary"
+                    >
+                        Open QR Pass
+                    </a>
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+        <section class="ui-panel">
+
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        QR Management
+                    </h2>
+
+                    <p>
+                        Secure QR lifecycle controls
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="action-section">
+
+
+                <div class="action-block">
+
+                    <h3>
+                        Current QR
+                    </h3>
+
+                    <p>
+
+                        Created:
+
+                        {{ student.qr_created_at or '—' }}
+
+                    </p>
+
+                    <span
+                        class="
+                            status-badge
+
+                            {% if
+                                (student.qr_status or 'ACTIVE')
+                                ==
+                                'ACTIVE'
+                            %}
+                                active
+                            {% else %}
+                                revoked
+                            {% endif %}
+                        "
+                    >
+                        {{ student.qr_status or 'ACTIVE' }}
+                    </span>
+
+                </div>
+
+
+                {% if
+                    current_user
+                    and
+                    current_user.role == 'OWNER'
+                %}
+
+
+                    <div class="action-block">
+
+                        <h3>
+                            Regenerate QR
+                        </h3>
+
+                        <p>
+                            Creates a new secure token and invalidates
+                            the previous QR.
+                        </p>
+
+
+                        <form
+                            method="POST"
+
+                            action="{{ url_for(
+                                'regenerate_student_qr',
+                                student_id=student.id
+                            ) }}"
+                        >
+
+                            <button
+                                type="submit"
+                                class="small-action primary"
+
+                                onclick="
+                                    return confirm(
+                                        'Generate a new QR for this student?'
+                                    );
+                                "
+                            >
+                                Regenerate QR
+                            </button>
+
+                        </form>
+
+                    </div>
+
+
+                    {% if
+                        (student.qr_status or 'ACTIVE')
+                        ==
+                        'ACTIVE'
+                    %}
+
+                        <div class="action-block">
+
+                            <h3>
+                                Revoke QR
+                            </h3>
+
+                            <p>
+                                The current QR will stop working immediately.
+                            </p>
+
+
+                            <form
+                                method="POST"
+
+                                action="{{ url_for(
+                                    'revoke_student_qr',
+                                    student_id=student.id
+                                ) }}"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="small-action danger"
+
+                                    onclick="
+                                        return confirm(
+                                            'Revoke this QR?'
+                                        );
+                                    "
+                                >
+                                    Revoke QR
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    {% endif %}
+
+
+                {% endif %}
+
+
+            </div>
+
+
+        </section>
+
+
+    </div>
+
+
+<!-- =====================================================
+     ACTIVITY
+====================================================== -->
+
+{% elif active_tab == 'activity' %}
+
+
+    {% if
+        current_user
+        and
+        current_user.role == 'OWNER'
+    %}
+
+
+        <section class="ui-panel">
+
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        Student Activity
+                    </h2>
+
+                    <p>
+                        Audit history related to this student
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="{{ url_for('audit_logs') }}"
+                    class="ui-panel-link"
+                >
+                    Full Audit Logs →
+                </a>
+
+            </div>
+
+
+            {% if activity_records %}
+
+
+                <ul class="activity-list">
+
+
+                    {% for activity in activity_records %}
+
+
+                        <li class="activity-row">
+
+
+                            <div class="activity-time">
+                                {{ activity.created_at }}
+                            </div>
+
+
+                            <div class="activity-main">
+
+                                <strong>
+                                    {{ activity.action }}
+                                </strong>
+
+                                <span>
+
+                                    Result:
+
+                                    {{
+                                        activity.status_code
+                                        or
+                                        '—'
+                                    }}
+
+                                </span>
+
+                            </div>
+
+
+                            <div class="activity-user">
+
+                                <strong>
+                                    {{
+                                        activity.actor_full_name
+                                        or
+                                        activity.actor_username
+                                        or
+                                        'Unknown'
+                                    }}
+                                </strong>
+
+                                <div
+                                    style="
+                                        color:var(--muted);
+                                        margin-top:2px;
+                                    "
+                                >
+                                    {{ activity.actor_role or '—' }}
+                                </div>
+
+                            </div>
+
+
+                        </li>
+
+
+                    {% endfor %}
+
+
+                </ul>
+
+
+            {% else %}
+
+
+                <div class="student-empty">
+
+                    <strong>
+                        No student audit activity yet.
+                    </strong>
+
+                    <p>
+                        Future student management actions will appear here.
+                    </p>
+
+                </div>
+
+
+            {% endif %}
+
+
+        </section>
+
+
+    {% else %}
+
+
+        <div class="student-empty">
+
+            <strong>
+                Owner access required.
+            </strong>
+
+        </div>
+
+
+    {% endif %}
+
+
+{% endif %}
+
+
+{% endblock %}

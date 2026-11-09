@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Free Card Requests - Sri Sumana{% endblock %}
+
+{% block page_title %}Teacher Free Card Requests{% endblock %}
+
+{% block page_subtitle %}
+Review Free Card requests submitted by teachers. Only the Owner can approve or reject these requests.
+{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('free_cards') }}" class="btn btn-secondary">All Free Cards</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .approval-page {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .summary-card {
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .summary-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+    .summary-card strong {
+        display: block;
+        margin-top: 7px;
+        font-size: 22px;
+        font-weight: 800;
+    }
+
+    .request-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .request-card {
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .request-main {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(180px, .8fr) minmax(180px, .8fr);
+        gap: 14px;
+        padding: 14px;
+        align-items: start;
+    }
+
+    .request-title {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .request-sub {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 8px;
+        line-height: 1.5;
+    }
+
+    .meta-label {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+        margin-bottom: 4px;
+    }
+
+    .meta-value {
+        display: block;
+        font-size: 8px;
+        font-weight: 750;
+        line-height: 1.5;
+    }
+
+    .reason-box {
+        margin: 0 14px 14px;
+        padding: 11px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fafafa;
+    }
+
+    .reason-box span {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+        margin-bottom: 5px;
+    }
+
+    .reason-box p {
+        margin: 0;
+        font-size: 8px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+    }
+
+    .request-actions {
+        padding: 12px 14px;
+        border-top: 1px solid var(--border);
+        background: #fafafa;
+        display: grid;
+        grid-template-columns: auto minmax(260px, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .approve-form,
+    .reject-form {
+        margin: 0;
+    }
+
+    .reject-form {
+        display: grid;
+        grid-template-columns: minmax(180px, 1fr) auto;
+        gap: 8px;
+    }
+
+    .reject-input {
+        width: 100%;
+        min-height: 34px;
+        padding: 0 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--text);
+        font-size: 8px;
+        outline: none;
+    }
+
+    .reject-input:focus {
+        border-color: #a5b4fc;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, .08);
+    }
+
+    .btn-approve,
+    .btn-reject,
+    .btn-view {
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 8px;
+        font-size: 8px;
+        font-weight: 800;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .btn-approve {
+        border: 1px solid #bbf7d0;
+        background: #ecfdf5;
+        color: #15803d;
+    }
+
+    .btn-reject {
+        border: 1px solid #fecaca;
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .btn-view {
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+    }
+
+    .empty-state {
+        padding: 38px 20px;
+        text-align: center;
+    }
+
+    .empty-state strong {
+        display: block;
+        font-size: 10px;
+    }
+
+    .empty-state p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .history-table th,
+    .history-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        font-size: 8px;
+        vertical-align: middle;
+    }
+
+    .history-table th {
+        color: var(--muted);
+        font-size: 7px;
+        font-weight: 750;
+        background: #fafafa;
+    }
+
+    .status-pill {
+        min-height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        font-size: 7px;
+        font-weight: 850;
+    }
+
+    .status-approved {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+    .status-rejected {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    @media (max-width: 900px) {
+        .summary-grid,
+        .request-main,
+        .request-actions,
+        .reject-form {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="approval-page">
+
+    <section class="summary-grid">
+        <div class="summary-card">
+            <span>Pending Teacher Requests</span>
+            <strong>{{ pending_requests|length }}</strong>
+        </div>
+        <div class="summary-card">
+            <span>Approval Authority</span>
+            <strong style="font-size:15px;">Owner Only</strong>
+        </div>
+        <div class="summary-card">
+            <span>Workflow</span>
+            <strong style="font-size:15px;">Review → Decide</strong>
+        </div>
+    </section>
+
+    <section class="ui-panel">
+        <div class="ui-panel-header">
+            <div>
+                <h2>Pending Requests</h2>
+                <p>Requests submitted from the Teacher Dashboard.</p>
+            </div>
+        </div>
+
+        {% if pending_requests %}
+        <div class="request-list">
+            {% for item in pending_requests %}
+            <article class="request-card">
+                <div class="request-main">
+                    <div>
+                        <h3 class="request-title">{{ item.student_name }}</h3>
+                        <div class="request-sub">
+                            {{ item.student_code }} · Grade {{ item.grade or '—' }}
+                            {% if item.school %} · {{ item.school }}{% endif %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="meta-label">Class</span>
+                        <span class="meta-value">{{ item.class_name }}</span>
+                        <span class="request-sub">{{ item.class_code }} · {{ item.subject or '—' }}</span>
+                    </div>
+
+                    <div>
+                        <span class="meta-label">Requested By</span>
+                        <span class="meta-value">{{ item.request_teacher_name }}</span>
+                        <span class="request-sub">
+                            {{ item.fee_month }} · Rs. {{ "{:,.0f}".format(item.monthly_fee or 0) }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="reason-box">
+                    <span>Teacher Reason</span>
+                    <p>{{ item.reason }}</p>
+                </div>
+
+                <div class="request-actions">
+                    <form method="post"
+                          action="{{ url_for('approve_free_card', free_card_id=item.id) }}"
+                          class="approve-form"
+                          onsubmit="return confirm('Approve this Free Card request?');">
+                        <input type="hidden" name="return_to" value="{{ url_for('teacher_free_card_approvals') }}">
+                        <input type="hidden" name="review_note" value="Approved from Teacher Request queue">
+                        <button type="submit" class="btn-approve">Approve</button>
+                    </form>
+
+                    <form method="post"
+                          action="{{ url_for('reject_free_card', free_card_id=item.id) }}"
+                          class="reject-form"
+                          onsubmit="return confirm('Reject this Free Card request?');">
+                        <input type="hidden" name="return_to" value="{{ url_for('teacher_free_card_approvals') }}">
+                        <input type="text"
+                               name="rejected_reason"
+                               class="reject-input"
+                               maxlength="500"
+                               placeholder="Reason for rejection"
+                               required>
+                        <button type="submit" class="btn-reject">Reject</button>
+                    </form>
+
+                    <a href="{{ url_for('free_card_detail', free_card_id=item.id) }}" class="btn-view">View Details</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <strong>No pending teacher Free Card requests</strong>
+            <p>New requests submitted by teachers will appear here automatically.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="ui-panel">
+        <div class="ui-panel-header">
+            <div>
+                <h2>Recent Decisions</h2>
+                <p>Latest approved or rejected Teacher Free Card requests.</p>
+            </div>
+        </div>
+
+        {% if recent_requests %}
+        <div style="overflow-x:auto;">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Teacher</th>
+                        <th>Month</th>
+                        <th>Status</th>
+                        <th>Reviewed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in recent_requests %}
+                    <tr>
+                        <td>{{ item.student_name }}<br><span style="color:var(--muted);">{{ item.student_code }}</span></td>
+                        <td>{{ item.class_name }}</td>
+                        <td>{{ item.request_teacher_name }}</td>
+                        <td>{{ item.fee_month }}</td>
+                        <td>
+                            <span class="status-pill {% if item.status == 'APPROVED' %}status-approved{% else %}status-rejected{% endif %}">
+                                {{ item.status }}
+                            </span>
+                        </td>
+                        <td>{{ item.reviewed_at or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <strong>No reviewed teacher requests yet</strong>
+            <p>Approved and rejected requests will appear here.</p>
+        </div>
+        {% endif %}
+    </section>
+
+</div>
+{% endblock %}

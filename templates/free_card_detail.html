@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Card Request</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .fc-detail-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.fc-card{background:#18181b;border:1px solid #2f2f34;border-radius:18px;padding:20px}.fc-status{display:inline-block;padding:7px 10px;border-radius:999px;font-size:9px;font-weight:900}.fc-status.PENDING{color:#facc15;background:rgba(250,204,21,.1);border:1px solid rgba(250,204,21,.25)}.fc-status.APPROVED{color:#34d399;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25)}.fc-status.REJECTED,.fc-status.REVOKED{color:#f87171;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25)}.fc-info{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}.fc-info>div{background:#101012;border-radius:10px;padding:12px}.fc-info span{display:block;color:#71717a;font-size:9px}.fc-info strong{display:block;margin-top:5px;font-size:12px}.fc-reason{margin-top:14px;background:#101012;border-radius:10px;padding:14px;line-height:1.6;font-size:12px}.impact{background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.25);border-radius:12px;padding:15px;margin-top:14px}.impact strong{color:#34d399;font-size:22px}.action-form{margin-top:14px}.action-form textarea,.action-form input{width:100%;box-sizing:border-box;background:#101012;color:#fff;border:1px solid #34343a;border-radius:9px;padding:11px;margin:7px 0}.btn-approve,.btn-reject,.btn-revoke{width:100%;padding:11px;border-radius:9px;font-weight:800;cursor:pointer}.btn-approve{border:0;background:#34d399;color:#04120d}.btn-reject,.btn-revoke{color:#f87171;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3)}@media(max-width:850px){.fc-detail-grid{grid-template-columns:1fr}}@media(max-width:560px){.fc-info{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand"><h1>Sri Sumana</h1><p>{{ 'Owner Portal' if current_user.role == 'OWNER' else 'Staff Portal' }}</p></div>
+        <nav>
+            <a href="{{ url_for('dashboard') if current_user.role == 'OWNER' else url_for('staff_dashboard') }}">Overview</a>
+            <a href="{{ url_for('students') }}">Students</a>
+            <a href="{{ url_for('payments') }}">Payments</a>
+            <a class="active" href="{{ url_for('free_cards') }}">Free Cards</a>
+            {% if current_user.role == 'OWNER' %}<a href="{{ url_for('reports') }}">Reports</a>{% endif %}
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <header class="topbar"><div><h2>Free Card Request #{{ free_card.id }}</h2><p>{{ free_card.student_code }} · {{ free_card.student_name }}</p></div><a class="primary-small" href="{{ url_for('free_cards', month=free_card.fee_month) }}">← Free Cards</a></header>
+        <section class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
+
+            <div class="fc-detail-grid">
+                <div class="fc-card">
+                    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><small style="color:#34d399;font-weight:800">{{ free_card.student_code }}</small><h3 style="margin:5px 0">{{ free_card.student_name }}</h3><p style="margin:0;color:#a1a1aa">{{ free_card.grade }}{% if free_card.school %} · {{ free_card.school }}{% endif %}</p></div><span class="fc-status {{ free_card.status }}">{{ free_card.status }}</span></div>
+
+                    <div class="fc-info">
+                        <div><span>Class</span><strong>{{ free_card.class_name }} · {{ free_card.class_code }}</strong></div>
+                        <div><span>Teacher</span><strong>{{ free_card.teacher_name }}</strong></div>
+                        <div><span>Fee Month</span><strong>{{ free_card.fee_month }}</strong></div>
+                        <div><span>Monthly Fee</span><strong>Rs. {{ "{:,.2f}".format(free_card.monthly_fee or 0) }}</strong></div>
+                        <div><span>Requested By</span><strong>{{ free_card.requested_by_name }}</strong></div>
+                        <div><span>Requested At</span><strong>{{ free_card.requested_at }}</strong></div>
+                    </div>
+
+                    <div class="fc-reason"><small style="color:#71717a">Request Reason</small><div style="margin-top:7px">{{ free_card.reason }}</div></div>
+
+                    {% if free_card.status == 'APPROVED' %}<div class="impact"><small>Approved Fee Waiver</small><br><strong>Rs. {{ "{:,.2f}".format(free_card.waived_amount or 0) }}</strong><div style="margin-top:6px;font-size:11px">Expected payable = Rs. 0. This fee is excluded from Outstanding.</div></div>{% endif %}
+
+                    {% if free_card.reviewed_at %}<div class="fc-reason"><small style="color:#71717a">Reviewed</small><div style="margin-top:7px">{{ free_card.reviewed_by_name }} · {{ free_card.reviewed_at }}</div>{% if free_card.review_note %}<div style="margin-top:7px;color:#a1a1aa">{{ free_card.review_note }}</div>{% endif %}{% if free_card.rejected_reason %}<div style="margin-top:7px;color:#f87171">Reason: {{ free_card.rejected_reason }}</div>{% endif %}</div>{% endif %}
+                    {% if free_card.revoked_at %}<div class="fc-reason"><small style="color:#f87171">Revoked</small><div style="margin-top:7px">{{ free_card.revoked_by_name }} · {{ free_card.revoked_at }}</div><div style="margin-top:7px;color:#f87171">{{ free_card.revoke_reason }}</div></div>{% endif %}
+                </div>
+
+                <div>
+                    {% if current_user.role == 'OWNER' and free_card.status == 'PENDING' %}
+                    <div class="fc-card"><h3>Owner Review</h3><form class="action-form" method="POST" action="{{ url_for('approve_free_card', free_card_id=free_card.id) }}"><label style="font-size:10px">Approval Note (optional)</label><textarea name="review_note" rows="3" maxlength="500"></textarea><button class="btn-approve" type="submit" onclick="return confirm('Approve this Free Card? The monthly fee will be waived.')">Approve Free Card</button></form><form class="action-form" method="POST" action="{{ url_for('reject_free_card', free_card_id=free_card.id) }}"><label style="font-size:10px">Rejection Reason *</label><textarea name="rejected_reason" rows="3" maxlength="500" required></textarea><button class="btn-reject" type="submit" onclick="return confirm('Reject this Free Card request?')">Reject Request</button></form></div>
+                    {% elif current_user.role == 'OWNER' and free_card.status == 'APPROVED' %}
+                    <div class="fc-card"><h3>Revoke Free Card</h3><p style="color:#a1a1aa;font-size:11px;line-height:1.6">Revoking restores the monthly fee as payable and Outstanding may increase.</p><form class="action-form" method="POST" action="{{ url_for('revoke_free_card', free_card_id=free_card.id) }}"><label style="font-size:10px">Revoke Reason *</label><textarea name="revoke_reason" rows="3" maxlength="500" required></textarea><button class="btn-revoke" type="submit" onclick="return confirm('Revoke this approved Free Card?')">Revoke Free Card</button></form></div>
+                    {% else %}
+                    <div class="fc-card"><h3>Status</h3><p style="color:#a1a1aa;font-size:11px;line-height:1.7">{% if free_card.status == 'PENDING' %}Waiting for Owner review.{% elif free_card.status == 'REJECTED' %}This request was rejected. A new request may be submitted if needed.{% elif free_card.status == 'REVOKED' %}This Free Card is no longer active.{% else %}Free Card is active for the selected fee month.{% endif %}</p></div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

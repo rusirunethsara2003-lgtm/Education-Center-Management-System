@@ -1,0 +1,1130 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Administration - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Administration
+{% endblock %}
+
+
+{% block page_subtitle %}
+Staff access, security, audit activity and system administration
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('new_staff') }}"
+    class="btn btn-primary"
+>
+    + Add Staff
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    .admin-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       ADMIN TABS
+    ====================================================== */
+
+    .admin-tabs {
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .admin-tab {
+        min-height: 35px;
+
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+
+    .admin-tab:hover {
+        background: #f5f5f5;
+
+        color: var(--text);
+    }
+
+
+    .admin-tab.active {
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       SUMMARY
+    ====================================================== */
+
+    .admin-summary-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+
+    .admin-summary-card {
+        min-height: 100px;
+
+        padding: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .admin-summary-card span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .admin-summary-card strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 20px;
+        font-weight: 750;
+    }
+
+
+    .admin-summary-card small {
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .admin-green {
+        color: var(--green);
+    }
+
+
+    .admin-blue {
+        color: var(--blue);
+    }
+
+
+    .admin-orange {
+        color: var(--orange);
+    }
+
+
+    .admin-red {
+        color: var(--red);
+    }
+
+
+    /* =====================================================
+       TWO COLUMN
+    ====================================================== */
+
+    .admin-grid-two {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1.15fr)
+            minmax(300px, 0.85fr);
+
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       QUICK ACTIONS
+    ====================================================== */
+
+    .admin-actions-grid {
+        padding: 13px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 9px;
+    }
+
+
+    .admin-action-card {
+        min-height: 92px;
+
+        padding: 12px;
+
+        display: block;
+
+        border: 1px solid var(--border);
+        border-radius: 9px;
+
+        background: #fafafa;
+
+        color: var(--text);
+
+        text-decoration: none;
+    }
+
+
+    .admin-action-card:hover {
+        border-color: var(--primary);
+
+        background: var(--primary-soft);
+    }
+
+
+    .admin-action-icon {
+        width: 30px;
+        height: 30px;
+
+        margin-bottom: 9px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 8px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 8px;
+        font-weight: 800;
+    }
+
+
+    .admin-action-card strong {
+        display: block;
+
+        font-size: 8px;
+    }
+
+
+    .admin-action-card span {
+        display: block;
+
+        margin-top: 4px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        line-height: 1.5;
+    }
+
+
+    /* =====================================================
+       SECURITY STATUS
+    ====================================================== */
+
+    .admin-status-list {
+        padding: 4px 14px;
+    }
+
+
+    .admin-status-row {
+        min-height: 54px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .admin-status-row:last-child {
+        border-bottom: 0;
+    }
+
+
+    .admin-status-row strong {
+        display: block;
+
+        font-size: 8px;
+    }
+
+
+    .admin-status-row p {
+        margin: 3px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .admin-status-badge {
+        min-height: 24px;
+
+        padding: 0 8px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .admin-status-badge.good {
+        background: var(--green-soft);
+
+        color: var(--green);
+    }
+
+
+    .admin-status-badge.info {
+        background: var(--blue-soft);
+
+        color: var(--blue);
+    }
+
+
+    .admin-status-badge.warning {
+        background: var(--orange-soft);
+
+        color: var(--orange);
+    }
+
+
+    /* =====================================================
+       TABLE
+    ====================================================== */
+
+    .admin-table-wrap {
+        overflow-x: auto;
+    }
+
+
+    .admin-table {
+        width: 100%;
+
+        min-width: 800px;
+
+        border-collapse: collapse;
+    }
+
+
+    .admin-table th {
+        padding: 10px 12px;
+
+        background: #fafafa;
+
+        border-bottom: 1px solid var(--border);
+
+        color: var(--muted);
+
+        text-align: left;
+
+        font-size: 7px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+    }
+
+
+    .admin-table td {
+        padding: 11px 12px;
+
+        border-bottom: 1px solid var(--border);
+
+        font-size: 8px;
+    }
+
+
+    .admin-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+
+    .admin-primary {
+        display: block;
+
+        font-weight: 700;
+    }
+
+
+    .admin-secondary {
+        display: block;
+
+        margin-top: 2px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    /* =====================================================
+       BACKUP CARD
+    ====================================================== */
+
+    .backup-summary {
+        padding: 14px;
+    }
+
+
+    .backup-summary-box {
+        padding: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 9px;
+
+        background: #fafafa;
+    }
+
+
+    .backup-summary-box strong {
+        display: block;
+
+        font-size: 9px;
+    }
+
+
+    .backup-summary-box span {
+        display: block;
+
+        margin-top: 4px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 1000px) {
+
+        .admin-summary-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+
+        .admin-grid-two {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .admin-summary-grid,
+        .admin-actions-grid {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="admin-page">
+
+
+    <!-- =================================================
+         ADMIN NAV
+    ================================================== -->
+
+    <nav class="admin-tabs">
+
+        <a
+            href="{{ url_for('administration_overview') }}"
+            class="admin-tab active"
+        >
+            Overview
+        </a>
+
+        <a
+            href="{{ url_for('staff_access') }}"
+            class="admin-tab"
+        >
+            Staff & Access
+        </a>
+
+        <a
+            href="{{ url_for('audit_logs') }}"
+            class="admin-tab"
+        >
+            Audit Logs
+        </a>
+
+        <a
+            href="{{ url_for('security_center') }}"
+            class="admin-tab"
+        >
+            Security
+        </a>
+
+        <a
+            href="{{ url_for('change_password') }}"
+            class="admin-tab"
+        >
+            Change Password
+        </a>
+
+    </nav>
+
+
+    <!-- =================================================
+         SUMMARY
+    ================================================== -->
+
+    <div class="admin-summary-grid">
+
+        <div class="admin-summary-card">
+
+            <span>
+                Total Staff
+            </span>
+
+            <strong>
+                {{ stats.total_staff }}
+            </strong>
+
+            <small>
+                Staff accounts in the system
+            </small>
+
+        </div>
+
+
+        <div class="admin-summary-card">
+
+            <span>
+                Active Staff
+            </span>
+
+            <strong class="admin-green">
+                {{ stats.active_staff }}
+            </strong>
+
+            <small>
+                Staff currently allowed to sign in
+            </small>
+
+        </div>
+
+
+        <div class="admin-summary-card">
+
+            <span>
+                Audit Activity Today
+            </span>
+
+            <strong class="admin-blue">
+                {{ stats.audit_today }}
+            </strong>
+
+            <small>
+                System actions recorded today
+            </small>
+
+        </div>
+
+
+        <div class="admin-summary-card">
+
+            <span>
+                Failed Login Events
+            </span>
+
+            <strong
+                class="
+                    {% if stats.failed_login_events %}
+                        admin-orange
+                    {% else %}
+                        admin-green
+                    {% endif %}
+                "
+            >
+                {{ stats.failed_login_events }}
+            </strong>
+
+            <small>
+                Login failure events in last 15 minutes
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         QUICK ACTIONS + SECURITY
+    ================================================== -->
+
+    <div class="admin-grid-two">
+
+
+        <section class="ui-panel">
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        Quick Actions
+                    </h2>
+
+                    <p>
+                        Common administration tasks
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="admin-actions-grid">
+
+                <a
+                    href="{{ url_for('new_staff') }}"
+                    class="admin-action-card"
+                >
+
+                    <div class="admin-action-icon">
+                        +
+                    </div>
+
+                    <strong>
+                        Add Staff
+                    </strong>
+
+                    <span>
+                        Create a new authorized staff account.
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('staff_access') }}"
+                    class="admin-action-card"
+                >
+
+                    <div class="admin-action-icon">
+                        S
+                    </div>
+
+                    <strong>
+                        Staff & Access
+                    </strong>
+
+                    <span>
+                        Manage staff access and account status.
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('audit_logs') }}"
+                    class="admin-action-card"
+                >
+
+                    <div class="admin-action-icon">
+                        A
+                    </div>
+
+                    <strong>
+                        Audit Logs
+                    </strong>
+
+                    <span>
+                        Review owner and staff system activity.
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('security_center') }}"
+                    class="admin-action-card"
+                >
+
+                    <div class="admin-action-icon">
+                        ✓
+                    </div>
+
+                    <strong>
+                        Security Center
+                    </strong>
+
+                    <span>
+                        Review login, session and backup security.
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="{{ url_for('change_password') }}"
+                    class="admin-action-card"
+                >
+
+                    <div class="admin-action-icon">
+                        P
+                    </div>
+
+                    <strong>
+                        Change Password
+                    </strong>
+
+                    <span>
+                        Update the current Owner account password.
+                    </span>
+
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- SECURITY -->
+
+        <section class="ui-panel">
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        Security Status
+                    </h2>
+
+                    <p>
+                        Current application protection status
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="{{ url_for('security_center') }}"
+                    class="btn btn-secondary"
+                >
+                    View Security
+                </a>
+
+            </div>
+
+
+            <div class="admin-status-list">
+
+
+                <div class="admin-status-row">
+
+                    <div>
+
+                        <strong>
+                            Security Headers
+                        </strong>
+
+                        <p>
+                            Browser protection headers
+                        </p>
+
+                    </div>
+
+                    <span class="admin-status-badge good">
+                        ACTIVE
+                    </span>
+
+                </div>
+
+
+                <div class="admin-status-row">
+
+                    <div>
+
+                        <strong>
+                            Login Rate Limiting
+                        </strong>
+
+                        <p>
+                            Brute-force login protection
+                        </p>
+
+                    </div>
+
+                    <span class="admin-status-badge good">
+                        ACTIVE
+                    </span>
+
+                </div>
+
+
+                <div class="admin-status-row">
+
+                    <div>
+
+                        <strong>
+                            Audit Logging
+                        </strong>
+
+                        <p>
+                            System activity tracking
+                        </p>
+
+                    </div>
+
+                    <span class="admin-status-badge good">
+                        ACTIVE
+                    </span>
+
+                </div>
+
+
+                <div class="admin-status-row">
+
+                    <div>
+
+                        <strong>
+                            HTTPS Mode
+                        </strong>
+
+                        <p>
+                            Secure transport configuration
+                        </p>
+
+                    </div>
+
+                    {% if security_summary.https_enabled %}
+
+                        <span class="admin-status-badge good">
+                            ENABLED
+                        </span>
+
+                    {% else %}
+
+                        <span class="admin-status-badge warning">
+                            DEVELOPMENT
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="admin-status-row">
+
+                    <div>
+
+                        <strong>
+                            HttpOnly Cookie
+                        </strong>
+
+                        <p>
+                            Session-cookie protection
+                        </p>
+
+                    </div>
+
+                    {% if security_summary.httponly_cookie %}
+
+                        <span class="admin-status-badge good">
+                            ENABLED
+                        </span>
+
+                    {% else %}
+
+                        <span class="admin-status-badge warning">
+                            DISABLED
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- =================================================
+         BACKUP
+    ================================================== -->
+
+    <section class="ui-panel">
+
+        <div class="ui-panel-header">
+
+            <div>
+
+                <h2>
+                    Database Backup
+                </h2>
+
+                <p>
+                    Latest database protection status
+                </p>
+
+            </div>
+
+            <a
+                href="{{ url_for('security_center') }}#backups"
+                class="btn btn-secondary"
+            >
+                Manage Backups
+            </a>
+
+        </div>
+
+
+        <div class="backup-summary">
+
+            {% if latest_backup %}
+
+                <div class="backup-summary-box">
+
+                    <strong>
+                        {{ latest_backup.name }}
+                    </strong>
+
+                    <span>
+                        Created:
+                        {{ latest_backup.modified_at }}
+                        ·
+                        Size:
+                        {{ latest_backup.size_mb }} MB
+                    </span>
+
+                </div>
+
+            {% else %}
+
+                <div class="backup-summary-box">
+
+                    <strong>
+                        No backup found
+                    </strong>
+
+                    <span>
+                        Open Security Center and create a backup.
+                    </span>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         RECENT ACTIVITY
+    ================================================== -->
+
+    <section class="ui-panel">
+
+        <div class="ui-panel-header">
+
+            <div>
+
+                <h2>
+                    Recent Administration Activity
+                </h2>
+
+                <p>
+                    Latest system and account activity
+                </p>
+
+            </div>
+
+            <a
+                href="{{ url_for('audit_logs') }}"
+                class="btn btn-secondary"
+            >
+                View All Logs
+            </a>
+
+        </div>
+
+
+        {% if recent_activity %}
+
+        <div class="admin-table-wrap">
+
+            <table class="admin-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                        <th>Module</th>
+                        <th>IP</th>
+                        <th>Status</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for item in recent_activity %}
+
+                    <tr>
+
+                        <td>
+
+                            <span class="admin-primary">
+                                {{ item.created_at[:10] }}
+                            </span>
+
+                            <span class="admin-secondary">
+                                {{ item.created_at[11:19] }}
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="admin-primary">
+                                {{ item.actor_full_name or "Unknown" }}
+                            </span>
+
+                            <span class="admin-secondary">
+                                @{{ item.actor_username or "unknown" }}
+                            </span>
+
+                        </td>
+
+
+                        <td>
+                            {{ item.actor_role or "—" }}
+                        </td>
+
+
+                        <td>
+                            {{ item.action or "—" }}
+                        </td>
+
+
+                        <td>
+                            {{ item.entity_type or "SYSTEM" }}
+                        </td>
+
+
+                        <td>
+                            {{ item.ip_address or "—" }}
+                        </td>
+
+
+                        <td>
+                            {{ item.status_code or "—" }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div
+            style="
+                padding:35px;
+                text-align:center;
+                color:var(--muted);
+                font-size:8px;
+            "
+        >
+            No recent administration activity.
+        </div>
+
+        {% endif %}
+
+    </section>
+
+
+</div>
+
+{% endblock %}

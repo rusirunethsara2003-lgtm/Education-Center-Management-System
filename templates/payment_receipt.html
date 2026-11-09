@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Payment Receipt - Sri Sumana Education Center
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+    <style>
+
+        /* =====================================================
+           PAGE
+        ====================================================== */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body.public-page {
+            margin: 0;
+            min-height: 100vh;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #f3f7f5 0%,
+                    #f8faf9 100%
+                );
+
+            color: #17211d;
+
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+        }
+
+
+        .receipt-shell {
+            width: 100%;
+            max-width: 900px;
+
+            margin: 0 auto;
+
+            padding:
+                32px
+                20px
+                60px;
+        }
+
+
+        /* =====================================================
+           ACTION BAR
+        ====================================================== */
+
+        .receipt-actions {
+            margin-bottom: 22px;
+
+            display: grid;
+
+            grid-template-columns:
+                minmax(0, 1.45fr)
+                minmax(0, 1fr)
+                minmax(0, 1fr);
+
+            gap: 10px;
+        }
+
+
+        .receipt-scan,
+        .receipt-quick,
+        .receipt-print {
+            min-height: 50px;
+
+            padding:
+                0
+                18px;
+
+            display: inline-flex;
+
+            align-items: center;
+            justify-content: center;
+
+            gap: 8px;
+
+            border-radius: 13px;
+
+            font-size: 14px;
+            font-weight: 750;
+
+            text-decoration: none;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.18s ease,
+                box-shadow 0.18s ease,
+                background 0.18s ease;
+        }
+
+
+        /* SCAN NEXT STUDENT */
+
+        .receipt-scan {
+            border:
+                1px solid
+                #4f46e5;
+
+            background:
+                #4f46e5;
+
+            color:
+                #ffffff;
+
+            box-shadow:
+                0
+                8px
+                22px
+                rgba(
+                    79,
+                    70,
+                    229,
+                    0.18
+                );
+        }
+
+
+        .receipt-scan:hover {
+            background:
+                #4338ca;
+
+            transform:
+                translateY(-1px);
+        }
+
+
+        /* QUICK ACCESS */
+
+        .receipt-quick {
+            border:
+                1px solid
+                #dbe5e0;
+
+            background:
+                #ffffff;
+
+            color:
+                #24332c;
+        }
+
+
+        .receipt-quick:hover {
+            background:
+                #f5f8f6;
+
+            transform:
+                translateY(-1px);
+        }
+
+
+        /* PRINT */
+
+        .receipt-print {
+            border:
+                none;
+
+            background:
+                #16c784;
+
+            color:
+                #062d20;
+
+            box-shadow:
+                0
+                8px
+                22px
+                rgba(
+                    22,
+                    199,
+                    132,
+                    0.20
+                );
+        }
+
+
+        .receipt-print:hover {
+            background:
+                #11b777;
+
+            transform:
+                translateY(-1px);
+        }
+
+
+        /* =====================================================
+           FLASH MESSAGE
+        ====================================================== */
+
+        .receipt-alert {
+            margin-bottom: 18px;
+
+            padding:
+                14px
+                16px;
+
+            border-radius: 13px;
+
+            border:
+                1px solid
+                #dbe5e0;
+
+            background:
+                #ffffff;
+
+            color:
+                #26342e;
+
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+
+        .receipt-alert.success {
+            border-color:
+                #b6ead4;
+
+            background:
+                #ecfbf4;
+
+            color:
+                #0c6d49;
+        }
+
+
+        .receipt-alert.error {
+            border-color:
+                #ffc8c8;
+
+            background:
+                #fff3f3;
+
+            color:
+                #a02c2c;
+        }
+
+
+        /* =====================================================
+           MAIN RECEIPT CARD
+        ====================================================== */
+
+        .receipt-card {
+            overflow: hidden;
+
+            background:
+                #ffffff;
+
+            border:
+                1px solid
+                #dfe8e3;
+
+            border-radius:
+                26px;
+
+            box-shadow:
+                0
+                24px
+                70px
+                rgba(
+                    23,
+                    33,
+                    29,
+                    0.10
+                );
+        }
+
+
+        /* =====================================================
+           HEADER
+        ====================================================== */
+
+        .receipt-header {
+            position: relative;
+
+            overflow: hidden;
+
+            padding:
+                34px
+                36px
+                30px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #10382d 0%,
+                    #174b3c 58%,
+                    #1a5945 100%
+                );
+
+            color:
+                #ffffff;
+
+            text-align:
+                center;
+        }
+
+
+        .receipt-header::before {
+            content: "";
+
+            position: absolute;
+
+            width:
+                220px;
+
+            height:
+                220px;
+
+            right:
+                -85px;
+
+            top:
+                -110px;
+
+            border-radius:
+                50%;
+
+            background:
+                rgba(
+                    52,
+                    211,
+                    153,
+                    0.13
+                );
+        }
+
+
+        .receipt-header::after {
+            content: "";
+
+            position: absolute;
+
+            width:
+                150px;
+
+            height:
+                150px;
+
+            left:
+                -60px;
+
+            bottom:
+                -90px;
+
+            border-radius:
+                50%;
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.05
+                );
+        }
+
+
+        .receipt-brand,
+        .receipt-header h1,
+        .receipt-header p {
+            position: relative;
+
+            z-index: 2;
+        }
+
+
+        .receipt-brand {
+            margin-bottom:
+                10px;
+
+            color:
+                #4be2aa;
+
+            font-size:
+                13px;
+
+            font-weight:
+                800;
+
+            letter-spacing:
+                0.16em;
+
+            text-transform:
+                uppercase;
+        }
+
+
+        .receipt-header h1 {
+            margin: 0;
+
+            font-size:
+                clamp(
+                    30px,
+                    5vw,
+                    44px
+                );
+
+            line-height:
+                1.05;
+
+            letter-spacing:
+                -0.035em;
+        }
+
+
+        .receipt-header p {
+            margin:
+                10px
+                0
+                0;
+
+            color:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.72
+                );
+
+            font-size:
+                15px;
+        }
+
+
+        /* =====================================================
+           RECEIPT NUMBER / STATUS
+        ====================================================== */
+
+        .receipt-reference {
+            padding:
+                25px
+                34px;
+
+            display:
+                flex;
+
+            justify-content:
+                space-between;
+
+            align-items:
+                center;
+
+            gap:
+                20px;
+
+            border-bottom:
+                1px solid
+                #e7edea;
+
+            background:
+                #fbfdfc;
+        }
+
+
+        .reference-label {
+            display: block;
+
+            margin-bottom:
+                6px;
+
+            color:
+                #7a8a82;
+
+            font-size:
+                12px;
+
+            font-weight:
+                700;
+
+            text-transform:
+                uppercase;
+
+            letter-spacing:
+                0.08em;
+        }
+
+
+        .reference-number {
+            display:
+                block;
+
+            color:
+                #11845d;
+
+            font-size:
+                clamp(
+                    20px,
+                    4vw,
+                    27px
+                );
+
+            font-weight:
+                850;
+
+            letter-spacing:
+                0.015em;
+
+            overflow-wrap:
+                anywhere;
+        }
+
+
+        .status-badge {
+            flex:
+                0 0 auto;
+
+            padding:
+                9px
+                13px;
+
+            border-radius:
+                999px;
+
+            font-size:
+                12px;
+
+            font-weight:
+                800;
+
+            letter-spacing:
+                0.05em;
+
+            text-transform:
+                uppercase;
+        }
+
+
+        .status-confirmed {
+            color:
+                #08704d;
+
+            background:
+                #ddf8ec;
+
+            border:
+                1px solid
+                #b7ecd8;
+        }
+
+
+        .status-void {
+            color:
+                #a42b2b;
+
+            background:
+                #fff0f0;
+
+            border:
+                1px solid
+                #ffc7c7;
+        }
+
+
+        .status-other {
+            color:
+                #81520b;
+
+            background:
+                #fff6dd;
+
+            border:
+                1px solid
+                #f7dda0;
+        }
+
+
+        /* =====================================================
+           CONTENT
+        ====================================================== */
+
+        .receipt-content {
+            padding:
+                30px
+                34px
+                34px;
+        }
+
+
+        .section-title {
+            margin:
+                0
+                0
+                16px;
+
+            color:
+                #213029;
+
+            font-size:
+                15px;
+
+            font-weight:
+                800;
+
+            letter-spacing:
+                -0.01em;
+        }
+
+
+        .details-grid {
+            display:
+                grid;
+
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(
+                        0,
+                        1fr
+                    )
+                );
+
+            gap:
+                12px;
+        }
+
+
+        .detail-item {
+            min-width:
+                0;
+
+            padding:
+                16px
+                17px;
+
+            border:
+                1px solid
+                #e6ece9;
+
+            border-radius:
+                15px;
+
+            background:
+                #fafcfb;
+        }
+
+
+        .detail-item span {
+            display:
+                block;
+
+            margin-bottom:
+                7px;
+
+            color:
+                #7e8c85;
+
+            font-size:
+                12px;
+
+            font-weight:
+                650;
+        }
+
+
+        .detail-item strong {
+            display:
+                block;
+
+            color:
+                #1a2721;
+
+            font-size:
+                15px;
+
+            font-weight:
+                750;
+
+            line-height:
+                1.35;
+
+            overflow-wrap:
+                anywhere;
+        }
+
+
+        /* =====================================================
+           AMOUNT RECEIVED
+        ====================================================== */
+
+        .amount-card {
+            margin-top:
+                24px;
+
+            padding:
+                24px
+                25px;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                space-between;
+
+            gap:
+                18px;
+
+            border-radius:
+                18px;
+
+            border:
+                1px solid
+                #c7efdc;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #eafaf3 0%,
+                    #f6fdf9 100%
+                );
+        }
+
+
+        .amount-card span {
+            color:
+                #527066;
+
+            font-size:
+                13px;
+
+            font-weight:
+                700;
+        }
+
+
+        .amount-card strong {
+            color:
+                #087a54;
+
+            font-size:
+                clamp(
+                    25px,
+                    5vw,
+                    35px
+                );
+
+            font-weight:
+                900;
+
+            letter-spacing:
+                -0.03em;
+
+            white-space:
+                nowrap;
+        }
+
+
+        /* =====================================================
+           FEE SUMMARY
+        ====================================================== */
+
+        .summary-section {
+            margin-top:
+                28px;
+        }
+
+
+        .summary-grid {
+            display:
+                grid;
+
+            grid-template-columns:
+                repeat(
+                    4,
+                    minmax(
+                        0,
+                        1fr
+                    )
+                );
+
+            overflow:
+                hidden;
+
+            border:
+                1px solid
+                #e5ece8;
+
+            border-radius:
+                17px;
+        }
+
+
+        .summary-item {
+            padding:
+                18px
+                16px;
+
+            background:
+                #ffffff;
+
+            border-right:
+                1px solid
+                #e5ece8;
+        }
+
+
+        .summary-item:last-child {
+            border-right:
+                none;
+        }
+
+
+        .summary-item span {
+            display:
+                block;
+
+            margin-bottom:
+                8px;
+
+            color:
+                #819088;
+
+            font-size:
+                11px;
+
+            font-weight:
+                700;
+        }
+
+
+        .summary-item strong {
+            display:
+                block;
+
+            color:
+                #23302a;
+
+            font-size:
+                15px;
+
+            font-weight:
+                800;
+
+            line-height:
+                1.35;
+        }
+
+
+        .summary-item strong.green {
+            color:
+                #07855a;
+        }
+
+
+        .summary-item strong.orange {
+            color:
+                #d36d12;
+        }
+
+
+        /* =====================================================
+           NOTES
+        ====================================================== */
+
+        .notes-box {
+            margin-top:
+                24px;
+
+            padding:
+                18px
+                19px;
+
+            border-radius:
+                15px;
+
+            border:
+                1px solid
+                #e5ebe8;
+
+            background:
+                #fafcfb;
+        }
+
+
+        .notes-box span {
+            display:
+                block;
+
+            margin-bottom:
+                7px;
+
+            color:
+                #7b8982;
+
+            font-size:
+                12px;
+
+            font-weight:
+                700;
+        }
+
+
+        .notes-box p {
+            margin:
+                0;
+
+            color:
+                #28352f;
+
+            font-size:
+                14px;
+
+            line-height:
+                1.6;
+
+            white-space:
+                pre-wrap;
+        }
+
+
+        /* =====================================================
+           VOID PAYMENT
+        ====================================================== */
+
+        .void-payment-box,
+        .voided-payment {
+            margin-top:
+                22px;
+
+            padding:
+                20px;
+
+            border-radius:
+                16px;
+        }
+
+
+        .void-payment-box {
+            border:
+                1px solid
+                #ffd1d1;
+
+            background:
+                #fff9f9;
+        }
+
+
+        .void-payment-box h3 {
+            margin:
+                0
+                0
+                7px;
+
+            color:
+                #9e2929;
+
+            font-size:
+                16px;
+        }
+
+
+        .void-payment-box p {
+            margin:
+                0
+                0
+                15px;
+
+            color:
+                #765858;
+
+            font-size:
+                13px;
+
+            line-height:
+                1.55;
+        }
+
+
+        .void-payment-form {
+            display:
+                flex;
+
+            gap:
+                10px;
+
+            align-items:
+                stretch;
+        }
+
+
+        .void-payment-form input {
+            width:
+                100%;
+
+            min-width:
+                0;
+
+            min-height:
+                46px;
+
+            padding:
+                0
+                14px;
+
+            border-radius:
+                11px;
+
+            border:
+                1px solid
+                #e7caca;
+
+            background:
+                #ffffff;
+
+            color:
+                #202823;
+
+            outline:
+                none;
+
+            font-size:
+                14px;
+        }
+
+
+        .void-payment-form input:focus {
+            border-color:
+                #de7777;
+
+            box-shadow:
+                0
+                0
+                0
+                3px
+                rgba(
+                    222,
+                    119,
+                    119,
+                    0.12
+                );
+        }
+
+
+        .void-btn {
+            flex:
+                0 0 auto;
+
+            min-height:
+                46px;
+
+            padding:
+                0
+                18px;
+
+            border:
+                none;
+
+            border-radius:
+                11px;
+
+            cursor:
+                pointer;
+
+            background:
+                #d94b4b;
+
+            color:
+                #ffffff;
+
+            font-size:
+                13px;
+
+            font-weight:
+                800;
+        }
+
+
+        .voided-payment {
+            border:
+                1px solid
+                #ffcaca;
+
+            background:
+                #fff3f3;
+
+            color:
+                #922c2c;
+        }
+
+
+        .voided-payment strong {
+            display:
+                block;
+
+            margin-bottom:
+                6px;
+
+            font-size:
+                14px;
+        }
+
+
+        .voided-payment p {
+            margin:
+                0;
+
+            font-size:
+                13px;
+
+            line-height:
+                1.55;
+        }
+
+
+        /* =====================================================
+           FOOTER
+        ====================================================== */
+
+        .receipt-footer {
+            padding:
+                22px
+                34px
+                27px;
+
+            text-align:
+                center;
+
+            border-top:
+                1px dashed
+                #d8e2dd;
+
+            background:
+                #fbfdfc;
+        }
+
+
+        .receipt-footer strong {
+            display:
+                block;
+
+            color:
+                #25342d;
+
+            font-size:
+                14px;
+        }
+
+
+        .receipt-footer p {
+            margin:
+                6px
+                0
+                0;
+
+            color:
+                #849189;
+
+            font-size:
+                12px;
+
+            line-height:
+                1.5;
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ====================================================== */
+
+        @media (
+            max-width:
+            700px
+        ) {
+
+            .receipt-shell {
+                padding:
+                    18px
+                    14px
+                    42px;
+            }
+
+
+            /* Main scan button on its own row */
+
+            .receipt-actions {
+                grid-template-columns:
+                    repeat(
+                        2,
+                        minmax(
+                            0,
+                            1fr
+                        )
+                    );
+
+                gap:
+                    9px;
+            }
+
+
+            .receipt-scan {
+                grid-column:
+                    1 / -1;
+
+                min-height:
+                    54px;
+
+                font-size:
+                    15px;
+            }
+
+
+            .receipt-quick,
+            .receipt-print {
+                width:
+                    100%;
+
+                min-height:
+                    47px;
+
+                padding:
+                    0
+                    10px;
+
+                font-size:
+                    12px;
+            }
+
+
+            .receipt-card {
+                border-radius:
+                    21px;
+            }
+
+
+            .receipt-header {
+                padding:
+                    29px
+                    20px
+                    25px;
+            }
+
+
+            .receipt-reference {
+                padding:
+                    20px;
+
+                align-items:
+                    flex-start;
+
+                flex-direction:
+                    column;
+            }
+
+
+            .receipt-content {
+                padding:
+                    22px
+                    18px
+                    25px;
+            }
+
+
+            .details-grid {
+                grid-template-columns:
+                    1fr;
+
+                gap:
+                    9px;
+            }
+
+
+            .detail-item {
+                display:
+                    flex;
+
+                align-items:
+                    center;
+
+                justify-content:
+                    space-between;
+
+                gap:
+                    15px;
+
+                padding:
+                    14px
+                    15px;
+            }
+
+
+            .detail-item span {
+                margin:
+                    0;
+
+                flex:
+                    0 0 auto;
+            }
+
+
+            .detail-item strong {
+                text-align:
+                    right;
+            }
+
+
+            .amount-card {
+                padding:
+                    20px
+                    18px;
+
+                align-items:
+                    flex-start;
+
+                flex-direction:
+                    column;
+
+                gap:
+                    8px;
+            }
+
+
+            .summary-grid {
+                grid-template-columns:
+                    repeat(
+                        2,
+                        minmax(
+                            0,
+                            1fr
+                        )
+                    );
+            }
+
+
+            .summary-item {
+                border-right:
+                    1px solid
+                    #e5ece8;
+
+                border-bottom:
+                    1px solid
+                    #e5ece8;
+            }
+
+
+            .summary-item:nth-child(2) {
+                border-right:
+                    none;
+            }
+
+
+            .summary-item:nth-child(3),
+            .summary-item:nth-child(4) {
+                border-bottom:
+                    none;
+            }
+
+
+            .summary-item:nth-child(4) {
+                border-right:
+                    none;
+            }
+
+
+            .void-payment-form {
+                flex-direction:
+                    column;
+            }
+
+
+            .void-btn {
+                width:
+                    100%;
+            }
+
+
+            .receipt-footer {
+                padding:
+                    20px
+                    18px
+                    23px;
+            }
+
+        }
+
+
+        @media (
+            max-width:
+            420px
+        ) {
+
+            .receipt-actions {
+                grid-template-columns:
+                    repeat(
+                        2,
+                        minmax(
+                            0,
+                            1fr
+                        )
+                    );
+            }
+
+
+            .receipt-scan {
+                grid-column:
+                    1 / -1;
+            }
+
+
+            .summary-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+
+            .summary-item,
+            .summary-item:nth-child(2),
+            .summary-item:nth-child(3),
+            .summary-item:nth-child(4) {
+                border-right:
+                    none;
+
+                border-bottom:
+                    1px solid
+                    #e5ece8;
+            }
+
+
+            .summary-item:last-child {
+                border-bottom:
+                    none;
+            }
+
+        }
+
+
+        /* =====================================================
+           PRINT
+        ====================================================== */
+
+        @media print {
+
+            @page {
+                size:
+                    A4;
+
+                margin:
+                    12mm;
+            }
+
+
+            body.public-page {
+                background:
+                    #ffffff !important;
+
+                color:
+                    #000000 !important;
+            }
+
+
+            /* Do not print navigation buttons */
+
+            .receipt-actions,
+            .void-payment-box,
+            .receipt-alert {
+                display:
+                    none !important;
+            }
+
+
+            .receipt-shell {
+                max-width:
+                    100% !important;
+
+                margin:
+                    0 !important;
+
+                padding:
+                    0 !important;
+            }
+
+
+            .receipt-card {
+                border-radius:
+                    0 !important;
+
+                box-shadow:
+                    none !important;
+
+                border:
+                    1px solid
+                    #cccccc !important;
+            }
+
+
+            .receipt-header {
+                background:
+                    #ffffff !important;
+
+                color:
+                    #000000 !important;
+
+                border-bottom:
+                    2px solid
+                    #111111;
+            }
+
+
+            .receipt-header::before,
+            .receipt-header::after {
+                display:
+                    none !important;
+            }
+
+
+            .receipt-brand,
+            .receipt-header p {
+                color:
+                    #444444 !important;
+            }
+
+
+            .reference-number,
+            .amount-card strong,
+            .summary-item strong.green {
+                color:
+                    #000000 !important;
+            }
+
+
+            .amount-card,
+            .receipt-reference,
+            .detail-item,
+            .receipt-footer {
+                background:
+                    #ffffff !important;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body class="public-page">
+
+<div class="receipt-shell">
+
+
+    <!-- =====================================================
+         ACTIONS
+    ====================================================== -->
+
+    <div class="receipt-actions">
+
+        <!-- MAIN ACTION:
+             Immediately return to QR scanner -->
+
+        <a
+            href="{{ url_for('scan_qr') }}"
+            class="receipt-scan"
+        >
+            <span>📷</span>
+            <span>Scan Next Student</span>
+        </a>
+
+
+        <!-- FRONT DESK -->
+
+        <a
+            href="{{ url_for('front_desk') }}"
+            class="receipt-quick"
+        >
+            <span>⚡</span>
+            <span>Quick Access</span>
+        </a>
+
+
+        <!-- PRINT -->
+
+        <button
+            type="button"
+            class="receipt-print"
+            onclick="window.print()"
+        >
+            Print Receipt
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         FLASH MESSAGES
+    ====================================================== -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
+        {% for category, message in messages %}
+
+            <div
+                class="receipt-alert {{ category }}"
+            >
+                {{ message }}
+            </div>
+
+        {% endfor %}
+
+    {% endwith %}
+
+
+    <!-- =====================================================
+         RECEIPT
+    ====================================================== -->
+
+    <article class="receipt-card">
+
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <header class="receipt-header">
+
+            <div class="receipt-brand">
+                Sri Sumana Education Center
+            </div>
+
+
+            <h1>
+                Payment Receipt
+            </h1>
+
+
+            <p>
+                Avissawella, Sri Lanka
+            </p>
+
+        </header>
+
+
+        <!-- =================================================
+             RECEIPT NUMBER / STATUS
+        ================================================== -->
+
+        <section class="receipt-reference">
+
+            <div>
+
+                <span class="reference-label">
+                    Receipt Number
+                </span>
+
+
+                <strong class="reference-number">
+                    {{ payment.receipt_no or '-' }}
+                </strong>
+
+            </div>
+
+
+            {% if payment.status == 'CONFIRMED' %}
+
+                <span
+                    class="
+                        status-badge
+                        status-confirmed
+                    "
+                >
+                    Confirmed
+                </span>
+
+
+            {% elif payment.status == 'VOID' %}
+
+                <span
+                    class="
+                        status-badge
+                        status-void
+                    "
+                >
+                    Void
+                </span>
+
+
+            {% else %}
+
+                <span
+                    class="
+                        status-badge
+                        status-other
+                    "
+                >
+                    {{ payment.status or 'Unknown' }}
+                </span>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- =================================================
+             CONTENT
+        ================================================== -->
+
+        <div class="receipt-content">
+
+
+            <!-- =============================================
+                 PAYMENT DETAILS
+            ============================================== -->
+
+            <section>
+
+                <h2 class="section-title">
+                    Payment Details
+                </h2>
+
+
+                <div class="details-grid">
+
+
+                    <div class="detail-item">
+
+                        <span>
+                            Student
+                        </span>
+
+                        <strong>
+                            {{ payment.full_name or '-' }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <span>
+                            Student ID
+                        </span>
+
+                        <strong>
+                            {{ payment.student_code or '-' }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <span>
+                            Class
+                        </span>
+
+                        <strong>
+                            {{
+                                payment.class_name
+                                or
+                                payment.class_code
+                                or
+                                '-'
+                            }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <span>
+                            Teacher
+                        </span>
+
+                        <strong>
+                            {{ payment.teacher_name or '-' }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <span>
+                            Fee Month
+                        </span>
+
+                        <strong>
+                            {{ payment.fee_month or '-' }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <span>
+                            Payment Date
+                        </span>
+
+                        <strong>
+                            {{ payment.payment_date or '-' }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <span>
+                            Payment Method
+                        </span>
+
+                        <strong>
+                            {{ payment.payment_method or '-' }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <span>
+                            Payment Record
+                        </span>
+
+                        <strong>
+                            {{ payment.status or '-' }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =============================================
+                 AMOUNT RECEIVED
+            ============================================== -->
+
+            <section class="amount-card">
+
+                <span>
+                    Amount Received
+                </span>
+
+
+                <strong>
+                    Rs.
+                    {{
+                        "{:,.2f}".format(
+                            payment.amount or 0
+                        )
+                    }}
+                </strong>
+
+            </section>
+
+
+            <!-- =============================================
+                 FEE SUMMARY
+            ============================================== -->
+
+            <section class="summary-section">
+
+                <h2 class="section-title">
+                    Fee Summary
+                </h2>
+
+
+                <div class="summary-grid">
+
+
+                    <!-- MONTHLY FEE -->
+
+                    <div class="summary-item">
+
+                        <span>
+                            Monthly Fee
+                        </span>
+
+                        <strong>
+                            Rs.
+                            {{
+                                "{:,.2f}".format(
+                                    payment.monthly_fee or 0
+                                )
+                            }}
+                        </strong>
+
+                    </div>
+
+
+                    <!-- TOTAL PAID -->
+
+                    <div class="summary-item">
+
+                        <span>
+                            Total Paid
+                        </span>
+
+                        <strong class="green">
+                            Rs.
+                            {{
+                                "{:,.2f}".format(
+                                    total_paid or 0
+                                )
+                            }}
+                        </strong>
+
+                    </div>
+
+
+                    <!-- BALANCE -->
+
+                    <div class="summary-item">
+
+                        <span>
+                            Balance
+                        </span>
+
+                        <strong
+                            class="
+                                {% if (balance or 0) > 0 %}
+                                    orange
+                                {% else %}
+                                    green
+                                {% endif %}
+                            "
+                        >
+                            Rs.
+                            {{
+                                "{:,.2f}".format(
+                                    balance or 0
+                                )
+                            }}
+                        </strong>
+
+                    </div>
+
+
+                    <!-- FEE STATUS -->
+
+                    <div class="summary-item">
+
+                        <span>
+                            Fee Status
+                        </span>
+
+                        <strong
+                            class="
+                                {% if fee_status == 'PAID' %}
+                                    green
+                                {% elif fee_status == 'PARTIAL' %}
+                                    orange
+                                {% endif %}
+                            "
+                        >
+                            {{ fee_status or '-' }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =============================================
+                 NOTES
+            ============================================== -->
+
+            {% if payment.notes %}
+
+                <section class="notes-box">
+
+                    <span>
+                        Notes
+                    </span>
+
+                    <p>
+                        {{ payment.notes }}
+                    </p>
+
+                </section>
+
+            {% endif %}
+
+
+            <!-- =============================================
+                 VOID PAYMENT
+            ============================================== -->
+
+            {% if payment.status == 'CONFIRMED' %}
+
+                <section class="void-payment-box">
+
+                    <h3>
+                        Void Payment
+                    </h3>
+
+
+                    <p>
+                        Financial records are not deleted.
+                        Voiding keeps the original payment
+                        in the audit history.
+                    </p>
+
+
+                    <form
+                        method="POST"
+
+                        action="{{
+                            url_for(
+                                'void_payment',
+                                payment_id=payment.id
+                            )
+                        }}"
+
+                        class="void-payment-form"
+
+                        onsubmit="
+                            return confirm(
+                                'Are you sure you want to void this payment?'
+                            );
+                        "
+                    >
+
+                        <input
+                            type="text"
+
+                            name="void_reason"
+
+                            placeholder="
+                                Reason for voiding payment...
+                            "
+
+                            minlength="3"
+                            maxlength="250"
+
+                            required
+
+                            autocomplete="off"
+                        >
+
+
+                        <button
+                            type="submit"
+                            class="void-btn"
+                        >
+                            Void Payment
+                        </button>
+
+                    </form>
+
+                </section>
+
+
+            {% elif payment.status == 'VOID' %}
+
+                <section class="voided-payment">
+
+                    <strong>
+                        VOID PAYMENT
+                    </strong>
+
+
+                    <p>
+                        {{
+                            payment.void_reason
+                            or
+                            'No void reason recorded.'
+                        }}
+                    </p>
+
+                </section>
+
+
+            {% elif payment.status != 'CONFIRMED' %}
+
+                <section class="voided-payment">
+
+                    <strong>
+                        {{
+                            payment.status
+                            or
+                            'UNKNOWN STATUS'
+                        }}
+                    </strong>
+
+
+                    {% if payment.void_reason %}
+
+                        <p>
+                            {{ payment.void_reason }}
+                        </p>
+
+                    {% endif %}
+
+                </section>
+
+            {% endif %}
+
+
+        </div>
+
+
+        <!-- =================================================
+             FOOTER
+        ================================================== -->
+
+        <footer class="receipt-footer">
+
+            <strong>
+                Thank you.
+            </strong>
+
+
+            <p>
+                This receipt was generated by the
+                Sri Sumana Education Center
+                Management System.
+            </p>
+
+        </footer>
+
+
+    </article>
+
+</div>
+
+
+</body>
+
+</html>

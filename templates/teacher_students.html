@@ -1,0 +1,48 @@
+{% extends "teacher_base.html" %}
+{% block title %}Students & Payments - Teacher Portal{% endblock %}
+{% block page_title %}Students & Payments{% endblock %}
+{% block content %}
+<div class="page-stack">
+    <div class="page-intro">
+        <div><h2>Students & Payment Status</h2><p>Search students only within your assigned classes.</p></div>
+        <div class="month-controls">
+            <a class="btn btn-secondary" href="{{ url_for('teacher_students', month=previous_month, q=search_query) }}">← Previous</a>
+            <span class="month-pill">{{ month_label }}</span>
+            <a class="btn btn-secondary" href="{{ url_for('teacher_students', month=next_month, q=search_query) }}">Next →</a>
+        </div>
+    </div>
+
+    <section class="ui-panel">
+        <div class="ui-panel-header"><div><h2>Students</h2><p>Student ID, contact and monthly payment position.</p></div></div>
+        <div class="panel-body">
+            <form class="search-form" method="GET" action="{{ url_for('teacher_students') }}">
+                <input type="hidden" name="month" value="{{ selected_month }}">
+                <input class="field" name="q" type="text" value="{{ search_query }}" placeholder="Student ID, name, student phone or parent phone">
+                <button class="btn btn-primary" type="submit">Search</button>
+                {% if search_query %}<a class="btn btn-secondary" href="{{ url_for('teacher_students', month=selected_month) }}">Clear</a>{% endif %}
+            </form>
+
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead><tr><th>Student</th><th>Phone</th><th>Class</th><th>Monthly Fee</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+                    <tbody>
+                    {% for item in student_payments %}
+                        <tr>
+                            <td><strong>{{ item.student_code }}</strong><br>{{ item.full_name }}<br><span class="muted">{{ item.grade }}{% if item.school %} · {{ item.school }}{% endif %}</span></td>
+                            <td>{{ item.phone }}{% if item.parent_phone %}<br><span class="muted">Parent: {{ item.parent_phone }}</span>{% endif %}</td>
+                            <td>{{ item.class_code }}<br><span class="muted">{{ item.class_name }}</span></td>
+                            <td>Rs. {{ "{:,.0f}".format(item.payment.fee) }}</td>
+                            <td class="text-green">Rs. {{ "{:,.0f}".format(item.payment.paid) }}</td>
+                            <td class="text-orange">Rs. {{ "{:,.0f}".format(item.payment.balance) }}</td>
+                            <td><span class="status-pill {{ 'FREE' if item.payment.status == 'FREE CARD' else item.payment.status }}">{{ item.payment.status }}</span></td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="7" class="empty-state">No matching students found in your classes.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

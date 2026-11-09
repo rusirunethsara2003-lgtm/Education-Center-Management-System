@@ -1,0 +1,50 @@
+{% extends "teacher_base.html" %}
+{% block title %}Class Finance - Teacher Portal{% endblock %}
+{% block page_title %}Class Finance{% endblock %}
+{% block content %}
+<div class="page-stack">
+    <div class="page-intro">
+        <div><h2>Class Finance</h2><p>Monthly payment position for your classes only.</p></div>
+        <div class="month-controls">
+            <a class="btn btn-secondary" href="{{ url_for('teacher_finance', month=previous_month) }}">← Previous</a>
+            <span class="month-pill">{{ month_label }}</span>
+            <a class="btn btn-secondary" href="{{ url_for('teacher_finance', month=next_month) }}">Next →</a>
+        </div>
+    </div>
+
+    <section class="finance-kpi-grid">
+        <div class="kpi-card"><div class="kpi-top"><span class="kpi-label">Expected</span><span class="kpi-icon">Rs</span></div><div class="kpi-value">Rs. {{ "{:,.0f}".format(summary.total_expected) }}</div><div class="kpi-note">After approved Free Cards</div></div>
+        <div class="kpi-card green"><div class="kpi-top"><span class="kpi-label">Collected</span><span class="kpi-icon">✓</span></div><div class="kpi-value">Rs. {{ "{:,.0f}".format(summary.total_collected) }}</div><div class="kpi-note">Confirmed payments</div></div>
+        <div class="kpi-card orange"><div class="kpi-top"><span class="kpi-label">Outstanding</span><span class="kpi-icon">!</span></div><div class="kpi-value">Rs. {{ "{:,.0f}".format(summary.total_outstanding) }}</div><div class="kpi-note">Remaining payable</div></div>
+        <div class="kpi-card blue"><div class="kpi-top"><span class="kpi-label">My Income</span><span class="kpi-icon">%</span></div><div class="kpi-value">Rs. {{ "{:,.0f}".format(summary.total_teacher_income) }}</div><div class="kpi-note">Confirmed payments × Teacher Share</div></div>
+    </section>
+
+    <section class="ui-panel">
+        <div class="ui-panel-header"><div><h2>Class Finance</h2><p>Paid, partial, unpaid, Free Cards and Teacher Share.</p></div></div>
+        <div class="panel-body table-wrap">
+            {% if summary.classes %}
+            <table class="data-table">
+                <thead><tr><th>Class</th><th>Students</th><th>Fee</th><th>Paid / Partial / Unpaid</th><th>Free Cards</th><th>Expected</th><th>Collected</th><th>Outstanding</th><th>My Share</th></tr></thead>
+                <tbody>
+                {% for item in summary.classes %}
+                    <tr>
+                        <td><strong><a href="{{ url_for('teacher_class_profile', class_code=item.class_code, tab='payments', month=selected_month) }}" style="text-decoration:none;">{{ item.class_code }} · {{ item.class_name }}</a></strong><br><span class="muted">{{ item.day }} · {{ item.start_display }}</span></td>
+                        <td>{{ item.student_count }}</td>
+                        <td>Rs. {{ "{:,.0f}".format(item.monthly_fee) }}</td>
+                        <td>{{ item.paid_count }} / {{ item.partial_count }} / {{ item.unpaid_count }}</td>
+                        <td>{{ item.free_card_count }}</td>
+                        <td>Rs. {{ "{:,.0f}".format(item.expected) }}</td>
+                        <td class="text-green">Rs. {{ "{:,.0f}".format(item.collected) }}</td>
+                        <td class="text-orange">Rs. {{ "{:,.0f}".format(item.outstanding) }}</td>
+                        <td class="text-blue"><strong>Rs. {{ "{:,.0f}".format(item.teacher_income) }}</strong><br><span class="muted">{{ "{:,.0f}".format(item.teacher_share_percent) }}%</span></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <div class="empty-state">No active classes assigned to this Teacher.</div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

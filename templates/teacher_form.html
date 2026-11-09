@@ -1,0 +1,827 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+
+    {% if mode == 'edit' %}
+        Edit Teacher
+    {% else %}
+        Add Teacher
+    {% endif %}
+
+    - Sri Sumana
+
+{% endblock %}
+
+
+{% block page_title %}
+
+    {% if mode == 'edit' %}
+        Edit Teacher
+    {% else %}
+        Add Teacher
+    {% endif %}
+
+{% endblock %}
+
+
+{% block page_subtitle %}
+
+    {% if mode == 'edit' and teacher %}
+        {{ teacher.teacher_code }} · {{ teacher.full_name }}
+    {% else %}
+        Create a new teacher profile
+    {% endif %}
+
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('teachers') }}"
+    class="btn btn-secondary"
+>
+    ← Teachers
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       FORM LAYOUT
+    ====================================================== */
+
+    .teacher-form-layout {
+        max-width: 920px;
+    }
+
+
+    .teacher-form-panel {
+        overflow: hidden;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+    }
+
+
+    .teacher-form-header {
+        padding: 15px 16px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 15px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .teacher-form-header h2 {
+        margin: 0;
+
+        font-size: 14px;
+        font-weight: 750;
+    }
+
+
+    .teacher-form-header p {
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .teacher-form-badge {
+        padding: 5px 8px;
+
+        border-radius: 999px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    /* =====================================================
+       FORM
+    ====================================================== */
+
+    .teacher-form-body {
+        padding: 16px;
+    }
+
+
+    .teacher-form-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap: 14px;
+    }
+
+
+    .form-group {
+        min-width: 0;
+    }
+
+
+    .form-group.full {
+        grid-column: 1 / -1;
+    }
+
+
+    .form-group label {
+        display: block;
+
+        margin-bottom: 6px;
+
+        color: #262626;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+
+    .required {
+        color: var(--red);
+    }
+
+
+    .form-control {
+        width: 100%;
+        min-height: 40px;
+
+        padding: 0 11px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: #262626;
+
+        outline: none;
+
+        font-size: 10px;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+
+    .form-control:focus {
+        border-color: var(--primary);
+
+        box-shadow:
+            0 0 0 3px
+            rgba(79, 70, 229, 0.08);
+    }
+
+
+    .form-help {
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+        line-height: 1.45;
+    }
+
+
+    /* =====================================================
+       TEACHER CODE
+    ====================================================== */
+
+    .teacher-code-box {
+        margin-top: 16px;
+        padding: 13px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 15px;
+
+        border: 1px solid var(--border);
+        border-radius: 9px;
+
+        background: #fafafa;
+    }
+
+
+    .teacher-code-box span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .teacher-code-box strong {
+        display: block;
+
+        margin-top: 4px;
+
+        color: var(--primary);
+
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+
+    .teacher-code-note {
+        max-width: 430px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+        line-height: 1.5;
+
+        text-align: right;
+    }
+
+
+    /* =====================================================
+       PROFILE PREVIEW
+    ====================================================== */
+
+    .teacher-preview {
+        margin-bottom: 12px;
+        padding: 13px 14px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 11px;
+
+        border: 1px solid var(--border);
+        border-radius: 11px;
+
+        background: #ffffff;
+    }
+
+
+    .teacher-preview-avatar {
+        width: 42px;
+        height: 42px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 42px;
+
+        border-radius: 10px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+
+    .teacher-preview-info {
+        min-width: 0;
+    }
+
+
+    .teacher-preview-info strong {
+        display: block;
+
+        font-size: 11px;
+    }
+
+
+    .teacher-preview-info span {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .teacher-preview-status {
+        margin-left: auto;
+
+        padding: 5px 8px;
+
+        border-radius: 999px;
+
+        background: var(--green-soft);
+
+        color: var(--green);
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    /* =====================================================
+       ACTIONS
+    ====================================================== */
+
+    .teacher-form-actions {
+        margin-top: 16px;
+        padding-top: 14px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 8px;
+
+        border-top: 1px solid var(--border);
+    }
+
+
+    .form-submit {
+        min-height: 38px;
+
+        padding: 0 15px;
+
+        border: 1px solid var(--primary);
+        border-radius: 8px;
+
+        background: var(--primary);
+
+        color: #ffffff;
+
+        font-size: 9px;
+        font-weight: 750;
+
+        cursor: pointer;
+    }
+
+
+    .form-submit:hover {
+        background: var(--primary-hover);
+    }
+
+
+    .form-cancel {
+        min-height: 38px;
+
+        padding: 0 15px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: #262626;
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+
+    .form-cancel:hover {
+        background: #f7f7f7;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 700px) {
+
+        .teacher-form-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .form-group.full {
+            grid-column: auto;
+        }
+
+
+        .teacher-code-box {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+
+        .teacher-code-note {
+            text-align: left;
+        }
+
+
+        .teacher-form-actions {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+
+        .form-submit,
+        .form-cancel {
+            width: 100%;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<div class="teacher-form-layout">
+
+
+    <!-- =================================================
+         EDIT PROFILE SUMMARY
+    ================================================== -->
+
+    {% if mode == 'edit' and teacher %}
+
+    <div class="teacher-preview">
+
+
+        <div class="teacher-preview-avatar">
+
+            {{
+                (
+                    teacher.full_name
+                    or
+                    'T'
+                )[:1]
+                | upper
+            }}
+
+        </div>
+
+
+        <div class="teacher-preview-info">
+
+            <strong>
+                {{ teacher.full_name }}
+            </strong>
+
+            <span>
+
+                {{ teacher.teacher_code }}
+
+                ·
+
+                {{ teacher.subject or 'No subject' }}
+
+            </span>
+
+        </div>
+
+
+        <span class="teacher-preview-status">
+            {{ teacher.status }}
+        </span>
+
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- =================================================
+         FORM PANEL
+    ================================================== -->
+
+    <section class="teacher-form-panel">
+
+
+        <div class="teacher-form-header">
+
+
+            <div>
+
+                <h2>
+
+                    {% if mode == 'edit' %}
+
+                        Teacher Information
+
+                    {% else %}
+
+                        New Teacher Information
+
+                    {% endif %}
+
+                </h2>
+
+
+                <p>
+
+                    {% if mode == 'edit' %}
+
+                        Update teacher personal and academic details.
+
+                    {% else %}
+
+                        Enter teacher information to create
+                        a new profile.
+
+                    {% endif %}
+
+                </p>
+
+            </div>
+
+
+            <span class="teacher-form-badge">
+
+                {% if mode == 'edit' %}
+                    EDIT PROFILE
+                {% else %}
+                    NEW TEACHER
+                {% endif %}
+
+            </span>
+
+
+        </div>
+
+
+        <form
+            method="POST"
+            class="teacher-form-body"
+        >
+
+
+            <div class="teacher-form-grid">
+
+
+                <!-- =========================================
+                     NAME
+                ========================================== -->
+
+                <div class="form-group">
+
+                    <label for="full_name">
+
+                        Teacher Name
+
+                        <span class="required">
+                            *
+                        </span>
+
+                    </label>
+
+
+                    <input
+                        id="full_name"
+                        class="form-control"
+                        type="text"
+                        name="full_name"
+
+                        value="{{
+                            teacher.full_name
+                            if teacher
+                            else ''
+                        }}"
+
+                        placeholder="Enter teacher full name"
+
+                        autocomplete="name"
+
+                        required
+                    >
+
+
+                    <span class="form-help">
+                        Name displayed throughout the system.
+                    </span>
+
+                </div>
+
+
+                <!-- =========================================
+                     SUBJECT
+                ========================================== -->
+
+                <div class="form-group">
+
+                    <label for="subject">
+                        Main Subject
+                    </label>
+
+
+                    <input
+                        id="subject"
+                        class="form-control"
+                        type="text"
+                        name="subject"
+
+                        value="{{
+                            teacher.subject
+                            if teacher
+                            else ''
+                        }}"
+
+                        placeholder="Example: Mathematics"
+                    >
+
+
+                    <span class="form-help">
+                        Main subject taught by this teacher.
+                    </span>
+
+                </div>
+
+
+                <!-- =========================================
+                     PHONE
+                ========================================== -->
+
+                <div class="form-group">
+
+                    <label for="phone">
+                        Phone Number
+                    </label>
+
+
+                    <input
+                        id="phone"
+                        class="form-control"
+                        type="tel"
+                        name="phone"
+
+                        value="{{
+                            teacher.phone
+                            if teacher
+                            else ''
+                        }}"
+
+                        placeholder="07XXXXXXXX"
+
+                        autocomplete="tel"
+                    >
+
+
+                    <span class="form-help">
+                        Teacher contact number.
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- =============================================
+                 TEACHER CODE
+            ============================================== -->
+
+            {% if mode == 'edit' and teacher %}
+
+            <div class="teacher-code-box">
+
+
+                <div>
+
+                    <span>
+                        Teacher Code
+                    </span>
+
+                    <strong>
+                        {{ teacher.teacher_code }}
+                    </strong>
+
+                </div>
+
+
+                <div class="teacher-code-note">
+
+                    Teacher code is a permanent system identifier
+                    and remains unchanged when this profile is edited.
+
+                </div>
+
+
+            </div>
+
+            {% else %}
+
+
+            <div class="teacher-code-box">
+
+
+                <div>
+
+                    <span>
+                        Teacher Code
+                    </span>
+
+                    <strong>
+                        Auto Generated
+                    </strong>
+
+                </div>
+
+
+                <div class="teacher-code-note">
+
+                    The system will automatically generate
+                    the next teacher code when this profile is saved.
+
+                </div>
+
+
+            </div>
+
+
+            {% endif %}
+
+
+            <!-- =============================================
+                 ACTIONS
+            ============================================== -->
+
+            <div class="teacher-form-actions">
+
+
+                <button
+                    type="submit"
+                    class="form-submit"
+                >
+
+                    {% if mode == 'edit' %}
+
+                        Save Changes
+
+                    {% else %}
+
+                        Create Teacher
+
+                    {% endif %}
+
+                </button>
+
+
+                <a
+                    href="{{ url_for('teachers') }}"
+                    class="form-cancel"
+                >
+                    Cancel
+                </a>
+
+
+                {% if mode == 'edit' and teacher %}
+
+                <a
+                    href="{{ url_for(
+                        'teacher_profile',
+                        teacher_id=teacher.id
+                    ) }}"
+                    class="form-cancel"
+                >
+                    Open Profile
+                </a>
+
+                {% endif %}
+
+
+            </div>
+
+
+        </form>
+
+
+    </section>
+
+
+</div>
+
+
+{% endblock %}

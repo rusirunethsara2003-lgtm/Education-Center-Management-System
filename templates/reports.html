@@ -1,0 +1,1559 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Owner Reports - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Owner Reports
+{% endblock %}
+
+
+{% block page_subtitle %}
+Monthly performance, finance, students and attendance analysis
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('export_reports_excel', month=selected_month) }}"
+    class="btn btn-secondary"
+>
+    Export Excel
+</a>
+
+<button
+    type="button"
+    class="btn btn-primary"
+    onclick="window.print()"
+>
+    Print Report
+</button>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    .report-tabs {
+        margin-bottom: 12px;
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+    .report-tab {
+        min-height: 35px;
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+    .report-tab:hover {
+        background: #f5f5f5;
+        color: var(--text);
+    }
+
+    .report-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 750;
+    }
+
+
+    .report-period {
+        margin-bottom: 12px;
+        padding: 12px 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+    .report-period-label {
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+    .report-period-title {
+        margin-top: 4px;
+
+        font-size: 13px;
+        font-weight: 750;
+    }
+
+    .report-period-actions {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .report-month-input {
+        min-height: 35px;
+        padding: 0 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        font-size: 9px;
+    }
+
+
+    .report-cards {
+        margin-bottom: 12px;
+
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+    .report-card {
+        min-height: 95px;
+        padding: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+    .report-card span {
+        display: block;
+
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+    .report-card strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 18px;
+        font-weight: 750;
+    }
+
+    .report-card small {
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .report-green {
+        color: var(--green);
+    }
+
+    .report-orange {
+        color: var(--orange);
+    }
+
+    .report-red {
+        color: var(--red);
+    }
+
+    .report-blue {
+        color: var(--blue);
+    }
+
+
+    .report-progress {
+        margin-bottom: 12px;
+        padding: 13px 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+    .report-progress-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .report-progress-head span {
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+    .report-progress-head strong {
+        font-size: 10px;
+    }
+
+    .report-progress-track {
+        height: 7px;
+
+        margin-top: 9px;
+
+        overflow: hidden;
+
+        border-radius: 999px;
+
+        background: #eeeeef;
+    }
+
+    .report-progress-fill {
+        height: 100%;
+
+        border-radius: 999px;
+
+        background: var(--primary);
+    }
+
+
+    .report-grid-two {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, 1fr);
+
+        gap: 12px;
+    }
+
+
+    .report-table-wrap {
+        overflow-x: auto;
+    }
+
+    .report-table {
+        width: 100%;
+        min-width: 900px;
+
+        border-collapse: collapse;
+    }
+
+    .report-table th {
+        padding: 10px 12px;
+
+        background: #fafafa;
+
+        border-bottom: 1px solid var(--border);
+
+        color: var(--muted);
+
+        text-align: left;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+    }
+
+    .report-table td {
+        padding: 11px 12px;
+
+        border-bottom: 1px solid var(--border);
+
+        font-size: 9px;
+        vertical-align: middle;
+    }
+
+    .report-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .report-primary {
+        display: block;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    .report-secondary {
+        display: block;
+
+        margin-top: 2px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .report-empty {
+        min-height: 180px;
+        padding: 30px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        text-align: center;
+    }
+
+    .report-empty strong {
+        font-size: 10px;
+    }
+
+    .report-empty p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+
+    .report-panel-gap {
+        margin-top: 12px;
+    }
+
+
+    @media (max-width: 1000px) {
+
+        .report-cards {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+        .report-grid-two {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .report-period {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .report-period-actions {
+            width: 100%;
+        }
+
+        .report-month-input {
+            flex: 1;
+        }
+
+        .report-cards {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media print {
+
+        .sidebar,
+        .topbar,
+        .report-tabs,
+        .report-period-actions {
+            display: none !important;
+        }
+
+        .app-main {
+            margin: 0 !important;
+        }
+
+        body {
+            background: white !important;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+{% set active_report_tab = request.args.get('tab', 'overview') %}
+
+
+{% include "reports_nav.html" %}
+
+
+<!-- =====================================================
+     PERIOD SELECTOR
+====================================================== -->
+
+<section class="report-period">
+
+    <div>
+
+        <div class="report-period-label">
+            Reporting Period
+        </div>
+
+        <div class="report-period-title">
+            {{ month_label }}
+        </div>
+
+    </div>
+
+
+    <div class="report-period-actions">
+
+        <a
+            href="{{ url_for(
+                'reports',
+                month=previous_month,
+                tab=active_report_tab
+            ) }}"
+            class="btn btn-secondary"
+        >
+            ←
+        </a>
+
+
+        <form
+            method="GET"
+            action="{{ url_for('reports') }}"
+            style="display:flex; gap:7px;"
+        >
+
+            <input
+                type="hidden"
+                name="tab"
+                value="{{ active_report_tab }}"
+            >
+
+            <input
+                type="month"
+                name="month"
+                value="{{ selected_month }}"
+                class="report-month-input"
+                required
+            >
+
+            <button
+                type="submit"
+                class="btn btn-secondary"
+            >
+                Apply
+            </button>
+
+        </form>
+
+
+        <a
+            href="{{ url_for(
+                'reports',
+                month=next_month,
+                tab=active_report_tab
+            ) }}"
+            class="btn btn-secondary"
+        >
+            →
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     OVERVIEW
+====================================================== -->
+
+{% if active_report_tab == 'overview' %}
+
+
+<div class="report-cards">
+
+    <div class="report-card">
+
+        <span>
+            Expected Revenue
+        </span>
+
+        <strong>
+            Rs. {{ "{:,.2f}".format(report.financial.expected or 0) }}
+        </strong>
+
+        <small>
+            After Free Card waivers
+        </small>
+
+    </div>
+
+
+    <div class="report-card">
+
+        <span>
+            Collected
+        </span>
+
+        <strong class="report-green">
+            Rs. {{ "{:,.2f}".format(report.financial.collected or 0) }}
+        </strong>
+
+        <small>
+            Confirmed collections
+        </small>
+
+    </div>
+
+
+    <div class="report-card">
+
+        <span>
+            Outstanding
+        </span>
+
+        <strong class="report-orange">
+            Rs. {{ "{:,.2f}".format(report.financial.outstanding or 0) }}
+        </strong>
+
+        <small>
+            Remaining student balances
+        </small>
+
+    </div>
+
+
+    <div class="report-card">
+
+        <span>
+            Collection Rate
+        </span>
+
+        <strong>
+            {{ report.financial.collection_rate or 0 }}%
+        </strong>
+
+        <small>
+            Monthly collection performance
+        </small>
+
+    </div>
+
+</div>
+
+
+<div class="report-progress">
+
+    <div class="report-progress-head">
+
+        <span>
+            Monthly Collection Performance
+        </span>
+
+        <strong>
+            {{ report.financial.collection_rate or 0 }}%
+        </strong>
+
+    </div>
+
+    <div class="report-progress-track">
+
+        <div
+            class="report-progress-fill"
+            style="
+                width:
+                {% if (report.financial.collection_rate or 0) > 100 %}
+                    100%
+                {% else %}
+                    {{ report.financial.collection_rate or 0 }}%
+                {% endif %}
+            "
+        ></div>
+
+    </div>
+
+</div>
+
+
+<div class="report-grid-two">
+
+
+    <section class="ui-panel">
+
+        <div class="ui-panel-header">
+
+            <div>
+
+                <h2>
+                    Student Movement
+                </h2>
+
+                <p>
+                    Student growth during {{ month_label }}
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="report-cards" style="padding:12px; margin:0; grid-template-columns:repeat(2, 1fr);">
+
+            <div class="report-card">
+
+                <span>
+                    Start Students
+                </span>
+
+                <strong>
+                    {{ report.students.start or 0 }}
+                </strong>
+
+            </div>
+
+            <div class="report-card">
+
+                <span>
+                    New Students
+                </span>
+
+                <strong class="report-green">
+                    {{ report.students.new or 0 }}
+                </strong>
+
+            </div>
+
+            <div class="report-card">
+
+                <span>
+                    Left Students
+                </span>
+
+                <strong class="report-red">
+                    {{ report.students.left or 0 }}
+                </strong>
+
+            </div>
+
+            <div class="report-card">
+
+                <span>
+                    End Students
+                </span>
+
+                <strong class="report-blue">
+                    {{ report.students.end or 0 }}
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="ui-panel">
+
+        <div class="ui-panel-header">
+
+            <div>
+
+                <h2>
+                    Attendance Snapshot
+                </h2>
+
+                <p>
+                    Attendance performance for {{ month_label }}
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="report-cards" style="padding:12px; margin:0; grid-template-columns:repeat(2, 1fr);">
+
+            <div class="report-card">
+
+                <span>
+                    Attendance Records
+                </span>
+
+                <strong>
+                    {{ report.attendance.records or 0 }}
+                </strong>
+
+            </div>
+
+            <div class="report-card">
+
+                <span>
+                    Class Days
+                </span>
+
+                <strong>
+                    {{ report.attendance.class_days or 0 }}
+                </strong>
+
+            </div>
+
+            <div class="report-card">
+
+                <span>
+                    Attendance Rate
+                </span>
+
+                <strong class="report-green">
+                    {{ report.attendance.rate or 0 }}%
+                </strong>
+
+            </div>
+
+            <div class="report-card">
+
+                <span>
+                    Approved Free Cards
+                </span>
+
+                <strong class="report-blue">
+                    {{ report.financial.free_card_count or 0 }}
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+</div>
+
+
+{% endif %}
+
+
+<!-- =====================================================
+     FINANCE
+====================================================== -->
+
+{% if active_report_tab == 'finance' %}
+
+
+<div class="report-cards">
+
+    <div class="report-card">
+
+        <span>
+            Expected Revenue
+        </span>
+
+        <strong>
+            Rs. {{ "{:,.2f}".format(report.financial.expected or 0) }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            Collected
+        </span>
+
+        <strong class="report-green">
+            Rs. {{ "{:,.2f}".format(report.financial.collected or 0) }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            Outstanding
+        </span>
+
+        <strong class="report-orange">
+            Rs. {{ "{:,.2f}".format(report.financial.outstanding or 0) }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            Revenue Waived
+        </span>
+
+        <strong class="report-blue">
+            Rs. {{ "{:,.2f}".format(report.financial.waived_amount or 0) }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            Teacher Income
+        </span>
+
+        <strong>
+            Rs. {{ "{:,.2f}".format(report.financial.teacher_income or 0) }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            Center Income
+        </span>
+
+        <strong class="report-green">
+            Rs. {{ "{:,.2f}".format(report.financial.center_income or 0) }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            Free Cards
+        </span>
+
+        <strong class="report-blue">
+            {{ report.financial.free_card_count or 0 }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            Collection Rate
+        </span>
+
+        <strong>
+            {{ report.financial.collection_rate or 0 }}%
+        </strong>
+
+    </div>
+
+</div>
+
+
+{% endif %}
+
+
+<!-- =====================================================
+     STUDENTS
+====================================================== -->
+
+{% if active_report_tab == 'students' %}
+
+
+<div class="report-cards">
+
+    <div class="report-card">
+
+        <span>
+            Start Students
+        </span>
+
+        <strong>
+            {{ report.students.start or 0 }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            New Students
+        </span>
+
+        <strong class="report-green">
+            {{ report.students.new or 0 }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            Left Students
+        </span>
+
+        <strong class="report-red">
+            {{ report.students.left or 0 }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            End Students
+        </span>
+
+        <strong class="report-blue">
+            {{ report.students.end or 0 }}
+        </strong>
+
+    </div>
+
+</div>
+
+
+<section class="ui-panel">
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Student Growth by Class
+            </h2>
+
+            <p>
+                Enrollment movement during {{ month_label }}
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="report-table-wrap">
+
+        <table class="report-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Class</th>
+                    <th>Teacher</th>
+                    <th>Start</th>
+                    <th>New</th>
+                    <th>Left</th>
+                    <th>End</th>
+                    <th>Growth</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for class_item in report.classes %}
+
+                <tr>
+
+                    <td>
+
+                        <span class="report-primary">
+                            {{ class_item.class_name }}
+                        </span>
+
+                        <span class="report-secondary">
+                            {{ class_item.class_code }}
+                        </span>
+
+                    </td>
+
+                    <td>
+                        {{ class_item.teacher_name }}
+                    </td>
+
+                    <td>
+                        {{ class_item.start_students }}
+                    </td>
+
+                    <td class="report-green">
+                        {{ class_item.new_students }}
+                    </td>
+
+                    <td class="report-red">
+                        {{ class_item.left_students }}
+                    </td>
+
+                    <td>
+                        {{ class_item.end_students }}
+                    </td>
+
+                    <td>
+
+                        {{ class_item.growth }}
+
+                        {% if class_item.growth_percent %}
+
+                            <span class="report-secondary">
+                                {{ class_item.growth_percent }}%
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+{% endif %}
+
+
+<!-- =====================================================
+     TEACHERS
+====================================================== -->
+
+{% if active_report_tab == 'teachers' %}
+
+
+<section class="ui-panel">
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Teacher Performance
+            </h2>
+
+            <p>
+                Revenue and student performance for {{ month_label }}
+            </p>
+
+        </div>
+
+    </div>
+
+
+    {% if report.teachers %}
+
+    <div class="report-table-wrap">
+
+        <table class="report-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Teacher</th>
+                    <th>Classes</th>
+                    <th>Students</th>
+                    <th>Expected</th>
+                    <th>Collected</th>
+                    <th>Outstanding</th>
+                    <th>Teacher Income</th>
+                    <th>Center Income</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for teacher in report.teachers %}
+
+                <tr>
+
+                    <td>
+
+                        <span class="report-primary">
+                            {{ teacher.teacher_name }}
+                        </span>
+
+                        <span class="report-secondary">
+                            {{ teacher.teacher_code }} · {{ teacher.subject }}
+                        </span>
+
+                    </td>
+
+                    <td>
+                        {{ teacher.classes }}
+                    </td>
+
+                    <td>
+                        {{ teacher.student_count }}
+                    </td>
+
+                    <td>
+                        Rs. {{ "{:,.2f}".format(teacher.expected or 0) }}
+                    </td>
+
+                    <td class="report-green">
+                        Rs. {{ "{:,.2f}".format(teacher.collected or 0) }}
+                    </td>
+
+                    <td class="report-orange">
+                        Rs. {{ "{:,.2f}".format(teacher.outstanding or 0) }}
+                    </td>
+
+                    <td>
+                        Rs. {{ "{:,.2f}".format(teacher.teacher_income or 0) }}
+                    </td>
+
+                    <td>
+                        Rs. {{ "{:,.2f}".format(teacher.center_income or 0) }}
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="report-empty">
+
+        <strong>
+            No teacher report data.
+        </strong>
+
+    </div>
+
+    {% endif %}
+
+</section>
+
+
+{% endif %}
+
+
+<!-- =====================================================
+     CLASSES
+====================================================== -->
+
+{% if active_report_tab == 'classes' %}
+
+
+<section class="ui-panel">
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Class Performance
+            </h2>
+
+            <p>
+                Finance and attendance by class
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="report-table-wrap">
+
+        <table class="report-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Class</th>
+                    <th>Teacher</th>
+                    <th>Students</th>
+                    <th>Expected</th>
+                    <th>Collected</th>
+                    <th>Outstanding</th>
+                    <th>Collection</th>
+                    <th>Attendance</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for class_item in report.classes %}
+
+                <tr>
+
+                    <td>
+
+                        <span class="report-primary">
+                            {{ class_item.class_name }}
+                        </span>
+
+                        <span class="report-secondary">
+                            {{ class_item.class_code }}
+                        </span>
+
+                    </td>
+
+                    <td>
+                        {{ class_item.teacher_name }}
+                    </td>
+
+                    <td>
+                        {{ class_item.end_students }}
+                    </td>
+
+                    <td>
+                        Rs. {{ "{:,.2f}".format(class_item.expected or 0) }}
+                    </td>
+
+                    <td class="report-green">
+                        Rs. {{ "{:,.2f}".format(class_item.collected or 0) }}
+                    </td>
+
+                    <td class="report-orange">
+                        Rs. {{ "{:,.2f}".format(class_item.outstanding or 0) }}
+                    </td>
+
+                    <td>
+                        {{ class_item.collection_rate or 0 }}%
+                    </td>
+
+                    <td>
+                        {{ class_item.attendance_rate or 0 }}%
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+{% endif %}
+
+
+<!-- =====================================================
+     ATTENDANCE
+====================================================== -->
+
+{% if active_report_tab == 'attendance' %}
+
+
+<div class="report-cards">
+
+    <div class="report-card">
+
+        <span>
+            Attendance Records
+        </span>
+
+        <strong>
+            {{ report.attendance.records or 0 }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            Class Days
+        </span>
+
+        <strong>
+            {{ report.attendance.class_days or 0 }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            Overall Attendance Rate
+        </span>
+
+        <strong class="report-green">
+            {{ report.attendance.rate or 0 }}%
+        </strong>
+
+    </div>
+
+</div>
+
+
+<section class="ui-panel">
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Attendance by Class
+            </h2>
+
+            <p>
+                Monthly attendance activity
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="report-table-wrap">
+
+        <table class="report-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Class</th>
+                    <th>Teacher</th>
+                    <th>Students</th>
+                    <th>Attendance Records</th>
+                    <th>Class Days</th>
+                    <th>Attendance Rate</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for class_item in report.classes %}
+
+                <tr>
+
+                    <td>
+
+                        <span class="report-primary">
+                            {{ class_item.class_name }}
+                        </span>
+
+                        <span class="report-secondary">
+                            {{ class_item.class_code }}
+                        </span>
+
+                    </td>
+
+                    <td>
+                        {{ class_item.teacher_name }}
+                    </td>
+
+                    <td>
+                        {{ class_item.end_students }}
+                    </td>
+
+                    <td>
+                        {{ class_item.attendance_records }}
+                    </td>
+
+                    <td>
+                        {{ class_item.class_days }}
+                    </td>
+
+                    <td class="report-green">
+                        {{ class_item.attendance_rate or 0 }}%
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+{% endif %}
+
+
+<!-- =====================================================
+     FREE CARDS
+====================================================== -->
+
+{% if active_report_tab == 'free_cards' %}
+
+
+<div class="report-cards">
+
+    <div class="report-card">
+
+        <span>
+            Approved Free Cards
+        </span>
+
+        <strong class="report-blue">
+            {{ report.financial.free_card_count or 0 }}
+        </strong>
+
+    </div>
+
+    <div class="report-card">
+
+        <span>
+            Revenue Waived
+        </span>
+
+        <strong class="report-blue">
+            Rs. {{ "{:,.2f}".format(report.financial.waived_amount or 0) }}
+        </strong>
+
+    </div>
+
+</div>
+
+
+<section class="ui-panel">
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Approved Free Cards
+            </h2>
+
+            <p>
+                Approved fee waivers for {{ month_label }}
+            </p>
+
+        </div>
+
+    </div>
+
+
+    {% if report.free_cards %}
+
+    <div class="report-table-wrap">
+
+        <table class="report-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Student</th>
+                    <th>Class</th>
+                    <th>Teacher</th>
+                    <th>Fee Month</th>
+                    <th>Waived Amount</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for card in report.free_cards %}
+
+                <tr>
+
+                    <td>
+
+                        <span class="report-primary">
+                            {{ card.student_name }}
+                        </span>
+
+                        <span class="report-secondary">
+                            {{ card.student_code }}
+                        </span>
+
+                    </td>
+
+                    <td>
+                        {{ card.class_name }}
+                    </td>
+
+                    <td>
+                        {{ card.teacher_name }}
+                    </td>
+
+                    <td>
+                        {{ card.fee_month }}
+                    </td>
+
+                    <td class="report-blue">
+                        Rs. {{ "{:,.2f}".format(card.waived_amount or 0) }}
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="report-empty">
+
+        <strong>
+            No approved Free Cards.
+        </strong>
+
+        <p>
+            No approved fee waivers exist for {{ month_label }}.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</section>
+
+
+{% endif %}
+
+
+{% endblock %}

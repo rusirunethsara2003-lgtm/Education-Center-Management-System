@@ -1,0 +1,2126 @@
+{% extends "base.html" %}
+
+
+{% set is_edit = mode == "edit" and class_item %}
+
+
+{% block title %}
+{% if is_edit %}
+Edit Class - Sri Sumana
+{% else %}
+Add New Class - Sri Sumana
+{% endif %}
+{% endblock %}
+
+
+{% block page_title %}
+{% if is_edit %}
+Edit Class
+{% else %}
+Add New Class
+{% endif %}
+{% endblock %}
+
+
+{% block page_subtitle %}
+{% if is_edit %}
+Update class details, teacher, schedule and fees
+{% else %}
+Create a new class and add it to the weekly timetable
+{% endif %}
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('class_management') }}"
+    class="btn btn-secondary"
+>
+    ← Classes
+</a>
+
+{% if is_edit %}
+
+<a
+    href="{{ url_for('class_profile', class_code=class_item.class_code) }}"
+    class="btn btn-primary"
+>
+    Open Profile
+</a>
+
+{% endif %}
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       PAGE
+    ====================================================== */
+
+    .class-form-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       CLASS TABS
+    ====================================================== */
+
+    .class-tabs {
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .class-tab {
+        min-height: 35px;
+
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+
+    .class-tab:hover {
+        background: #f5f5f5;
+        color: var(--text);
+    }
+
+
+    .class-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       LAYOUT
+    ====================================================== */
+
+    .class-form-layout {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1.35fr)
+            minmax(280px, 0.65fr);
+
+        gap: 12px;
+
+        align-items: start;
+    }
+
+
+    /* =====================================================
+       FORM PANEL
+    ====================================================== */
+
+    .class-form-body {
+        padding: 17px;
+    }
+
+
+    .class-form-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 14px;
+    }
+
+
+    .class-field {
+        min-width: 0;
+    }
+
+
+    .class-field.full {
+        grid-column: 1 / -1;
+    }
+
+
+    .class-field label {
+        display: block;
+
+        margin-bottom: 6px;
+
+        font-size: 8px;
+        font-weight: 750;
+    }
+
+
+    .required-mark {
+        color: var(--red);
+    }
+
+
+    .class-input,
+    .class-select {
+        width: 100%;
+
+        min-height: 42px;
+
+        padding: 0 11px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        outline: none;
+
+        font-size: 9px;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+
+    .class-input:focus,
+    .class-select:focus {
+        border-color: var(--primary);
+
+        box-shadow:
+            0 0 0 3px
+            rgba(79, 70, 229, 0.08);
+    }
+
+
+    .class-input::placeholder {
+        color: var(--muted-light);
+    }
+
+
+    .class-help {
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        line-height: 1.5;
+    }
+
+
+    /* =====================================================
+       SCHEDULE
+    ====================================================== */
+
+    .schedule-box {
+        grid-column: 1 / -1;
+
+        padding: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #fafafa;
+    }
+
+
+    .schedule-box-header {
+        margin-bottom: 12px;
+    }
+
+
+    .schedule-box-header strong {
+        display: block;
+
+        font-size: 9px;
+    }
+
+
+    .schedule-box-header span {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .schedule-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       FINANCE
+    ====================================================== */
+
+    .finance-box {
+        grid-column: 1 / -1;
+
+        padding: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #fafafa;
+    }
+
+
+    .finance-box-header {
+        margin-bottom: 12px;
+    }
+
+
+    .finance-box-header strong {
+        display: block;
+
+        font-size: 9px;
+    }
+
+
+    .finance-box-header span {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .finance-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       ACTIONS
+    ====================================================== */
+
+    .class-form-actions {
+        margin-top: 18px;
+
+        padding-top: 15px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 8px;
+
+        border-top: 1px solid var(--border);
+    }
+
+
+    /* =====================================================
+       PREVIEW
+    ====================================================== */
+
+    .preview-body {
+        padding: 14px;
+    }
+
+
+    .class-preview-card {
+        padding: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #fafafa;
+    }
+
+
+    .preview-top {
+        display: flex;
+        align-items: flex-start;
+
+        gap: 10px;
+    }
+
+
+    .preview-icon {
+        width: 42px;
+        height: 42px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 42px;
+
+        border-radius: 10px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 8px;
+        font-weight: 800;
+    }
+
+
+    .preview-heading {
+        min-width: 0;
+
+        flex: 1;
+    }
+
+
+    .preview-heading span {
+        display: block;
+
+        color: var(--primary);
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .preview-heading strong {
+        display: block;
+
+        margin-top: 4px;
+
+        font-size: 11px;
+        font-weight: 750;
+    }
+
+
+    .preview-heading small {
+        display: block;
+
+        margin-top: 4px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .preview-status {
+        min-height: 24px;
+
+        padding: 0 8px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        background: var(--green-soft);
+
+        color: var(--green);
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .preview-info-grid {
+        margin-top: 12px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 7px;
+    }
+
+
+    .preview-info {
+        min-height: 57px;
+
+        padding: 9px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+    }
+
+
+    .preview-info span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .preview-info strong {
+        display: block;
+
+        margin-top: 5px;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        line-height: 1.4;
+    }
+
+
+    /* =====================================================
+       INFO LIST
+    ====================================================== */
+
+    .class-info-list {
+        padding: 4px 14px;
+    }
+
+
+    .class-info-row {
+        padding: 12px 0;
+
+        display: flex;
+        align-items: flex-start;
+
+        gap: 10px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .class-info-row:last-child {
+        border-bottom: 0;
+    }
+
+
+    .class-info-icon {
+        width: 30px;
+        height: 30px;
+
+        flex: 0 0 30px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 8px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 8px;
+        font-weight: 800;
+    }
+
+
+    .class-info-copy strong {
+        display: block;
+
+        font-size: 8px;
+    }
+
+
+    .class-info-copy p {
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        line-height: 1.55;
+    }
+
+
+    /* =====================================================
+       WARNING
+    ====================================================== */
+
+    .class-warning {
+        margin-top: 12px;
+
+        padding: 12px;
+
+        border: 1px solid #fed7aa;
+        border-radius: 9px;
+
+        background: var(--orange-soft);
+    }
+
+
+    .class-warning strong {
+        display: block;
+
+        color: var(--orange);
+
+        font-size: 8px;
+    }
+
+
+    .class-warning p {
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        line-height: 1.55;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 950px) {
+
+        .class-form-layout {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 700px) {
+
+        .class-form-grid,
+        .schedule-grid,
+        .finance-grid,
+        .preview-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .class-field.full,
+        .schedule-box,
+        .finance-box {
+            grid-column: auto;
+        }
+
+
+        .class-form-actions {
+            align-items: stretch;
+
+            flex-direction: column;
+        }
+
+
+        .class-form-actions .btn {
+            width: 100%;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="class-form-page">
+
+
+    <!-- =================================================
+         CLASS NAVIGATION
+    ================================================== -->
+
+    <nav class="class-tabs">
+
+        <a
+            href="{{ url_for('class_management') }}"
+            class="class-tab active"
+        >
+            Class Management
+        </a>
+
+
+        <a
+            href="{{ url_for('timetable') }}"
+            class="class-tab"
+        >
+            Timetable
+        </a>
+
+
+        <a
+            href="{{ url_for('teachers') }}"
+            class="class-tab"
+        >
+            Teachers
+        </a>
+
+    </nav>
+
+
+    <div class="class-form-layout">
+
+
+        <!-- =================================================
+             FORM
+        ================================================== -->
+
+        <section class="ui-panel">
+
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+
+                        {% if is_edit %}
+                            Class Details
+                        {% else %}
+                            New Class Details
+                        {% endif %}
+
+                    </h2>
+
+
+                    <p>
+
+                        {% if is_edit %}
+                            Update the class configuration
+                        {% else %}
+                            Enter the information required to create the class
+                        {% endif %}
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form
+
+                method="POST"
+
+                {% if is_edit %}
+
+                    action="{{ url_for(
+                        'edit_class',
+                        class_id=class_item.id
+                    ) }}"
+
+                {% else %}
+
+                    action="{{ url_for('new_class') }}"
+
+                {% endif %}
+
+                class="class-form-body"
+
+                id="classForm"
+            >
+
+
+                <div class="class-form-grid">
+
+
+                    <!-- =====================================
+                         CLASS NAME
+                    ====================================== -->
+
+                    <div class="class-field">
+
+                        <label for="class_name">
+
+                            Class Name
+
+                            {% if is_edit %}
+                            <span class="required-mark">*</span>
+                            {% endif %}
+
+                        </label>
+
+
+                        <input
+                            type="text"
+                            id="class_name"
+                            name="class_name"
+                            class="class-input"
+
+                            value="{% if is_edit %}{{ class_item.class_name }}{% endif %}"
+
+                            placeholder="Example: Grade 11 ICT"
+
+                            {% if is_edit %}
+                                required
+                            {% endif %}
+                        >
+
+
+                        <span class="class-help">
+
+                            {% if is_edit %}
+
+                                Class name is required when editing.
+
+                            {% else %}
+
+                                Optional. If blank, the system creates
+                                the name from Grade + Subject.
+
+                            {% endif %}
+
+                        </span>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         GRADE
+                    ====================================== -->
+
+                    <div class="class-field">
+
+                        <label for="grade">
+
+                            Grade
+
+                            <span class="required-mark">
+                                *
+                            </span>
+
+                        </label>
+
+
+                        <select
+                            id="grade"
+                            name="grade"
+                            class="class-select"
+                            required
+                            onchange="updateClassPreview()"
+                        >
+
+                            <option value="">
+                                Select Grade
+                            </option>
+
+
+                            {% for number in range(1, 14) %}
+
+                            {% set grade_value = "Grade " ~ number %}
+
+                            <option
+                                value="{{ grade_value }}"
+
+                                {% if
+                                    is_edit
+                                    and
+                                    class_item.grade == grade_value
+                                %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ grade_value }}
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         SUBJECT
+                    ====================================== -->
+
+                    <div class="class-field">
+
+                        <label for="subject">
+
+                            Subject
+
+                            <span class="required-mark">
+                                *
+                            </span>
+
+                        </label>
+
+
+                        <input
+                            type="text"
+                            id="subject"
+                            name="subject"
+                            class="class-input"
+
+                            value="{% if is_edit %}{{ class_item.subject }}{% endif %}"
+
+                            placeholder="Example: ICT"
+
+                            required
+
+                            oninput="updateClassPreview()"
+                        >
+
+                    </div>
+
+
+                    <!-- =====================================
+                         TEACHER
+                    ====================================== -->
+
+                    <div class="class-field">
+
+                        <label for="teacher_id">
+
+                            Teacher
+
+                            <span class="required-mark">
+                                *
+                            </span>
+
+                        </label>
+
+
+                        <select
+                            id="teacher_id"
+                            name="teacher_id"
+                            class="class-select"
+
+                            required
+
+                            onchange="updateClassPreview()"
+                        >
+
+                            <option value="">
+                                Select Teacher
+                            </option>
+
+
+                            {% for teacher in teachers %}
+
+                            <option
+                                value="{{ teacher.id }}"
+
+                                data-name="{{ teacher.full_name }}"
+
+                                {% if
+                                    is_edit
+                                    and
+                                    teacher.id == class_item.teacher_id
+                                %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ teacher.full_name }}
+
+                                {% if teacher.subject %}
+                                    · {{ teacher.subject }}
+                                {% endif %}
+
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+
+                        <span class="class-help">
+                            Only active teachers are available.
+                        </span>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         SCHEDULE
+                    ====================================== -->
+
+                    <div class="schedule-box">
+
+
+                        <div class="schedule-box-header">
+
+                            <strong>
+                                Class Schedule
+                            </strong>
+
+                            <span>
+                                Choose the weekly day, time and room.
+                            </span>
+
+                        </div>
+
+
+                        <div class="schedule-grid">
+
+
+                            <!-- DAY -->
+
+                            <div class="class-field">
+
+                                <label for="day_of_week">
+
+                                    Day
+
+                                    <span class="required-mark">
+                                        *
+                                    </span>
+
+                                </label>
+
+
+                                <select
+                                    id="day_of_week"
+                                    name="day_of_week"
+                                    class="class-select"
+
+                                    required
+
+                                    onchange="updateClassPreview()"
+                                >
+
+                                    {% for day_value, day_name in days %}
+
+                                    <option
+                                        value="{{ day_value }}"
+
+                                        {% if
+                                            is_edit
+                                            and
+                                            class_item.day_of_week == day_value
+                                        %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        {{ day_name }}
+                                    </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+
+                            <!-- ROOM -->
+
+                            <div class="class-field">
+
+                                <label for="room">
+                                    Room
+                                </label>
+
+
+                                <input
+                                    type="text"
+                                    id="room"
+                                    name="room"
+                                    class="class-input"
+
+                                    value="{% if is_edit %}{{ class_item.room or '' }}{% endif %}"
+
+                                    placeholder="Example: Room 01"
+
+                                    oninput="updateClassPreview()"
+                                >
+
+
+                                <span class="class-help">
+                                    Optional if the class has no fixed room.
+                                </span>
+
+                            </div>
+
+
+                            <!-- START -->
+
+                            <div class="class-field">
+
+                                <label for="start_time">
+
+                                    Start Time
+
+                                    <span class="required-mark">
+                                        *
+                                    </span>
+
+                                </label>
+
+
+                                <input
+                                    type="time"
+                                    id="start_time"
+                                    name="start_time"
+                                    class="class-input"
+
+                                    value="{% if is_edit %}{{ class_item.start_time }}{% endif %}"
+
+                                    required
+
+                                    onchange="validateTimes(); updateClassPreview();"
+                                >
+
+                            </div>
+
+
+                            <!-- END -->
+
+                            <div class="class-field">
+
+                                <label for="end_time">
+
+                                    End Time
+
+                                    <span class="required-mark">
+                                        *
+                                    </span>
+
+                                </label>
+
+
+                                <input
+                                    type="time"
+                                    id="end_time"
+                                    name="end_time"
+                                    class="class-input"
+
+                                    value="{% if is_edit %}{{ class_item.end_time }}{% endif %}"
+
+                                    required
+
+                                    onchange="validateTimes(); updateClassPreview();"
+                                >
+
+
+                                <span
+                                    class="class-help"
+                                    id="timeError"
+                                >
+                                    End time must be after start time.
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         FINANCE
+                    ====================================== -->
+
+                    <div class="finance-box">
+
+
+                        <div class="finance-box-header">
+
+                            <strong>
+                                Fee & Teacher Share
+                            </strong>
+
+                            <span>
+                                Configure the monthly fee and income split.
+                            </span>
+
+                        </div>
+
+
+                        <div class="finance-grid">
+
+
+                            <!-- MONTHLY FEE -->
+
+                            <div class="class-field">
+
+                                <label for="monthly_fee">
+
+                                    Monthly Fee
+
+                                    <span class="required-mark">
+                                        *
+                                    </span>
+
+                                </label>
+
+
+                                <input
+                                    type="number"
+                                    id="monthly_fee"
+                                    name="monthly_fee"
+                                    class="class-input"
+
+                                    min="0"
+                                    step="0.01"
+
+                                    value="{% if is_edit %}{{ class_item.monthly_fee }}{% else %}2500{% endif %}"
+
+                                    required
+
+                                    oninput="updateClassPreview()"
+                                >
+
+
+                                <span class="class-help">
+                                    Amount in Sri Lankan Rupees.
+                                </span>
+
+                            </div>
+
+
+                            <!-- SHARE -->
+
+                            <div class="class-field">
+
+                                <label for="teacher_share_percent">
+
+                                    Teacher Share %
+
+                                    <span class="required-mark">
+                                        *
+                                    </span>
+
+                                </label>
+
+
+                                <input
+                                    type="number"
+                                    id="teacher_share_percent"
+                                    name="teacher_share_percent"
+                                    class="class-input"
+
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+
+                                    value="{% if is_edit %}{{ class_item.teacher_share_percent }}{% else %}70{% endif %}"
+
+                                    required
+
+                                    oninput="updateClassPreview()"
+                                >
+
+
+                                <span class="class-help">
+                                    Must be between 0% and 100%.
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- =========================================
+                     ACTIONS
+                ========================================== -->
+
+                <div class="class-form-actions">
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                        id="classSubmitButton"
+                    >
+
+                        {% if is_edit %}
+                            Save Changes
+                        {% else %}
+                            Create Class
+                        {% endif %}
+
+                    </button>
+
+
+                    <a
+                        href="{{ url_for('class_management') }}"
+                        class="btn btn-secondary"
+                    >
+                        Cancel
+                    </a>
+
+
+                </div>
+
+
+            </form>
+
+
+        </section>
+
+
+        <!-- =================================================
+             RIGHT SIDE
+        ================================================== -->
+
+        <div>
+
+
+            <!-- =============================================
+                 PREVIEW
+            ============================================== -->
+
+            <section class="ui-panel">
+
+
+                <div class="ui-panel-header">
+
+                    <div>
+
+                        <h2>
+                            Class Preview
+                        </h2>
+
+                        <p>
+                            Preview the current class configuration
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="preview-body">
+
+
+                    <div class="class-preview-card">
+
+
+                        <div class="preview-top">
+
+
+                            <div class="preview-icon">
+
+                                {% if is_edit %}
+                                    {{ class_item.class_code }}
+                                {% else %}
+                                    NEW
+                                {% endif %}
+
+                            </div>
+
+
+                            <div class="preview-heading">
+
+
+                                <span>
+
+                                    {% if is_edit %}
+                                        {{ class_item.class_code }}
+                                    {% else %}
+                                        New Class
+                                    {% endif %}
+
+                                </span>
+
+
+                                <strong id="previewName">
+
+                                    {% if is_edit %}
+                                        {{ class_item.class_name }}
+                                    {% else %}
+                                        New Class
+                                    {% endif %}
+
+                                </strong>
+
+
+                                <small id="previewTeacher">
+                                    Select a teacher
+                                </small>
+
+
+                            </div>
+
+
+                            <span class="preview-status">
+                                ACTIVE
+                            </span>
+
+
+                        </div>
+
+
+                        <div class="preview-info-grid">
+
+
+                            <div class="preview-info">
+
+                                <span>
+                                    Grade
+                                </span>
+
+                                <strong id="previewGrade">
+
+                                    {% if is_edit %}
+                                        {{ class_item.grade }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+
+                                </strong>
+
+                            </div>
+
+
+                            <div class="preview-info">
+
+                                <span>
+                                    Subject
+                                </span>
+
+                                <strong id="previewSubject">
+
+                                    {% if is_edit %}
+                                        {{ class_item.subject }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+
+                                </strong>
+
+                            </div>
+
+
+                            <div class="preview-info">
+
+                                <span>
+                                    Schedule
+                                </span>
+
+                                <strong id="previewSchedule">
+                                    —
+                                </strong>
+
+                            </div>
+
+
+                            <div class="preview-info">
+
+                                <span>
+                                    Room
+                                </span>
+
+                                <strong id="previewRoom">
+
+                                    {% if
+                                        is_edit
+                                        and
+                                        class_item.room
+                                    %}
+                                        {{ class_item.room }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+
+                                </strong>
+
+                            </div>
+
+
+                            <div class="preview-info">
+
+                                <span>
+                                    Monthly Fee
+                                </span>
+
+                                <strong id="previewFee">
+                                    Rs. 0
+                                </strong>
+
+                            </div>
+
+
+                            <div class="preview-info">
+
+                                <span>
+                                    Teacher Share
+                                </span>
+
+                                <strong id="previewShare">
+                                    0%
+                                </strong>
+
+                            </div>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </section>
+
+
+            <!-- =============================================
+                 CLASS RULES
+            ============================================== -->
+
+            <section
+                class="ui-panel"
+                style="margin-top:12px;"
+            >
+
+
+                <div class="ui-panel-header">
+
+                    <div>
+
+                        <h2>
+                            Class Setup
+                        </h2>
+
+                        <p>
+                            Important scheduling and finance rules
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="class-info-list">
+
+
+                    <div class="class-info-row">
+
+
+                        <div class="class-info-icon">
+                            01
+                        </div>
+
+
+                        <div class="class-info-copy">
+
+                            <strong>
+                                Schedule conflict protection
+                            </strong>
+
+                            <p>
+                                The system checks teacher and room
+                                conflicts before saving the class.
+                            </p>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="class-info-row">
+
+
+                        <div class="class-info-icon">
+                            02
+                        </div>
+
+
+                        <div class="class-info-copy">
+
+                            <strong>
+                                Active teacher required
+                            </strong>
+
+                            <p>
+                                Only active teachers can be assigned
+                                to a new or edited class.
+                            </p>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="class-info-row">
+
+
+                        <div class="class-info-icon">
+                            03
+                        </div>
+
+
+                        <div class="class-info-copy">
+
+                            <strong>
+                                Monthly fee
+                            </strong>
+
+                            <p>
+                                This fee is used by the finance module
+                                to calculate expected payments.
+                            </p>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="class-info-row">
+
+
+                        <div class="class-info-icon">
+                            04
+                        </div>
+
+
+                        <div class="class-info-copy">
+
+                            <strong>
+                                Teacher share
+                            </strong>
+
+                            <p>
+                                Confirmed class payments use this
+                                percentage when calculating teacher income.
+                            </p>
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </section>
+
+
+            <div class="class-warning">
+
+                <strong>
+                    Schedule validation
+                </strong>
+
+
+                <p>
+                    A class cannot overlap another active class
+                    assigned to the same teacher. Room conflicts
+                    are also checked when a room is provided.
+                </p>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+    /* =====================================================
+       TIME FORMAT
+    ====================================================== */
+
+    function formatTimeValue(value) {
+
+        if (!value) {
+            return "";
+        }
+
+
+        const parts =
+            value.split(":");
+
+
+        if (parts.length < 2) {
+            return value;
+        }
+
+
+        let hour =
+            parseInt(
+                parts[0],
+                10
+            );
+
+
+        const minute =
+            parts[1];
+
+
+        const suffix =
+            hour >= 12
+            ?
+            "PM"
+            :
+            "AM";
+
+
+        hour =
+            hour % 12;
+
+
+        if (hour === 0) {
+            hour = 12;
+        }
+
+
+        return (
+            String(hour).padStart(
+                2,
+                "0"
+            )
+            +
+            ":"
+            +
+            minute
+            +
+            " "
+            +
+            suffix
+        );
+
+    }
+
+
+    /* =====================================================
+       TIME VALIDATION
+    ====================================================== */
+
+    function validateTimes() {
+
+        const start =
+            document.getElementById(
+                "start_time"
+            );
+
+
+        const end =
+            document.getElementById(
+                "end_time"
+            );
+
+
+        const error =
+            document.getElementById(
+                "timeError"
+            );
+
+
+        const submit =
+            document.getElementById(
+                "classSubmitButton"
+            );
+
+
+        if (
+            !start.value
+            ||
+            !end.value
+        ) {
+
+            error.style.color =
+                "var(--muted)";
+
+            submit.disabled =
+                false;
+
+            return true;
+
+        }
+
+
+        if (
+            start.value
+            >=
+            end.value
+        ) {
+
+            error.textContent =
+                "End time must be after start time.";
+
+            error.style.color =
+                "var(--red)";
+
+            submit.disabled =
+                true;
+
+            return false;
+
+        }
+
+
+        error.textContent =
+            "Schedule time is valid.";
+
+        error.style.color =
+            "var(--green)";
+
+        submit.disabled =
+            false;
+
+        return true;
+
+    }
+
+
+    /* =====================================================
+       PREVIEW
+    ====================================================== */
+
+    function updateClassPreview() {
+
+        const className =
+            document.getElementById(
+                "class_name"
+            ).value.trim();
+
+
+        const gradeSelect =
+            document.getElementById(
+                "grade"
+            );
+
+
+        const grade =
+            gradeSelect.value;
+
+
+        const subject =
+            document.getElementById(
+                "subject"
+            ).value.trim();
+
+
+        const teacherSelect =
+            document.getElementById(
+                "teacher_id"
+            );
+
+
+        const selectedTeacher =
+            teacherSelect.options[
+                teacherSelect.selectedIndex
+            ];
+
+
+        const teacherName =
+            selectedTeacher
+            ?
+            (
+                selectedTeacher.dataset.name
+                ||
+                ""
+            )
+            :
+            "";
+
+
+        const daySelect =
+            document.getElementById(
+                "day_of_week"
+            );
+
+
+        const dayName =
+            daySelect.options[
+                daySelect.selectedIndex
+            ]
+            ?
+            daySelect.options[
+                daySelect.selectedIndex
+            ].text
+            :
+            "";
+
+
+        const start =
+            document.getElementById(
+                "start_time"
+            ).value;
+
+
+        const end =
+            document.getElementById(
+                "end_time"
+            ).value;
+
+
+        const room =
+            document.getElementById(
+                "room"
+            ).value.trim();
+
+
+        const fee =
+            parseFloat(
+                document.getElementById(
+                    "monthly_fee"
+                ).value
+                ||
+                "0"
+            );
+
+
+        const share =
+            parseFloat(
+                document.getElementById(
+                    "teacher_share_percent"
+                ).value
+                ||
+                "0"
+            );
+
+
+        const generatedName =
+            (
+                grade
+                &&
+                subject
+            )
+            ?
+            grade
+            +
+            " "
+            +
+            subject
+            :
+            "New Class";
+
+
+        document.getElementById(
+            "previewName"
+        ).textContent =
+            className
+            ||
+            generatedName;
+
+
+        document.getElementById(
+            "previewTeacher"
+        ).textContent =
+            teacherName
+            ||
+            "Select a teacher";
+
+
+        document.getElementById(
+            "previewGrade"
+        ).textContent =
+            grade
+            ||
+            "—";
+
+
+        document.getElementById(
+            "previewSubject"
+        ).textContent =
+            subject
+            ||
+            "—";
+
+
+        let scheduleText =
+            dayName
+            ||
+            "—";
+
+
+        if (
+            start
+            &&
+            end
+        ) {
+
+            scheduleText =
+                dayName
+                +
+                " · "
+                +
+                formatTimeValue(
+                    start
+                )
+                +
+                " – "
+                +
+                formatTimeValue(
+                    end
+                );
+
+        }
+
+
+        document.getElementById(
+            "previewSchedule"
+        ).textContent =
+            scheduleText;
+
+
+        document.getElementById(
+            "previewRoom"
+        ).textContent =
+            room
+            ||
+            "—";
+
+
+        document.getElementById(
+            "previewFee"
+        ).textContent =
+            "Rs. "
+            +
+            fee.toLocaleString(
+                undefined,
+                {
+                    maximumFractionDigits: 2
+                }
+            );
+
+
+        document.getElementById(
+            "previewShare"
+        ).textContent =
+            share
+            +
+            "%";
+
+    }
+
+
+    /* =====================================================
+       EVENTS
+    ====================================================== */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function() {
+
+            const ids = [
+
+                "class_name",
+                "grade",
+                "subject",
+                "teacher_id",
+                "day_of_week",
+                "start_time",
+                "end_time",
+                "room",
+                "monthly_fee",
+                "teacher_share_percent"
+
+            ];
+
+
+            ids.forEach(
+                function(id) {
+
+                    const element =
+                        document.getElementById(
+                            id
+                        );
+
+
+                    if (!element) {
+                        return;
+                    }
+
+
+                    element.addEventListener(
+                        "input",
+                        updateClassPreview
+                    );
+
+
+                    element.addEventListener(
+                        "change",
+                        updateClassPreview
+                    );
+
+                }
+            );
+
+
+            const form =
+                document.getElementById(
+                    "classForm"
+                );
+
+
+            if (form) {
+
+                form.addEventListener(
+                    "submit",
+                    function(event) {
+
+                        if (
+                            !validateTimes()
+                        ) {
+
+                            event.preventDefault();
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            validateTimes();
+            updateClassPreview();
+
+        }
+    );
+
+</script>
+
+{% endblock %}

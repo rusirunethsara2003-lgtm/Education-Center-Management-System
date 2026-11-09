@@ -1,0 +1,1357 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Student Management - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Student Management
+{% endblock %}
+
+
+{% block page_subtitle %}
+Manage students, class enrollments and QR access
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('pending_approvals') }}"
+    class="btn btn-secondary"
+>
+    Pending Approvals
+</a>
+
+<a
+    href="{{ url_for('register_student') }}"
+    class="btn btn-primary"
+>
+    + Register Student
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       PAGE
+    ====================================================== */
+
+    .students-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       STUDENT TABS
+    ====================================================== */
+
+    .student-tabs {
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .student-tab {
+        min-height: 35px;
+
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+
+    .student-tab:hover {
+        background: #f5f5f5;
+        color: var(--text);
+    }
+
+
+    .student-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       SUMMARY
+    ====================================================== */
+
+    .student-summary-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+
+    .student-summary-card {
+        min-height: 100px;
+
+        padding: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .student-summary-card span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .student-summary-card strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 20px;
+        font-weight: 750;
+    }
+
+
+    .student-summary-card small {
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .student-summary-card.green strong {
+        color: var(--green);
+    }
+
+
+    .student-summary-card.orange strong {
+        color: var(--orange);
+    }
+
+
+    .student-summary-card.blue strong {
+        color: var(--blue);
+    }
+
+
+    /* =====================================================
+       TOOLBAR
+    ====================================================== */
+
+    .student-toolbar {
+        padding: 12px 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .student-toolbar-copy strong {
+        display: block;
+
+        font-size: 10px;
+    }
+
+
+    .student-toolbar-copy span {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .student-search {
+        width: 280px;
+
+        min-height: 36px;
+
+        padding: 0 11px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        outline: none;
+
+        font-size: 8px;
+    }
+
+
+    .student-search:focus {
+        border-color: var(--primary);
+
+        box-shadow:
+            0 0 0 3px
+            rgba(79, 70, 229, 0.08);
+    }
+
+
+    /* =====================================================
+       STUDENT GRID
+    ====================================================== */
+
+    .student-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       STUDENT CARD
+    ====================================================== */
+
+    .student-card {
+        overflow: hidden;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+
+    .student-card:hover {
+        border-color: #d4d4d8;
+
+        box-shadow:
+            0 5px 20px
+            rgba(0, 0, 0, 0.04);
+    }
+
+
+    .student-card-header {
+        padding: 14px;
+
+        display: flex;
+        align-items: flex-start;
+
+        gap: 11px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .student-avatar {
+        width: 42px;
+        height: 42px;
+
+        flex: 0 0 42px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 11px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 13px;
+        font-weight: 800;
+
+        text-transform: uppercase;
+    }
+
+
+    .student-heading {
+        min-width: 0;
+
+        flex: 1;
+    }
+
+
+    .student-code {
+        display: block;
+
+        color: var(--primary);
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .student-heading h3 {
+        margin: 4px 0 0;
+
+        overflow: hidden;
+
+        font-size: 13px;
+        font-weight: 760;
+
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+
+    .student-heading p {
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+
+    /* =====================================================
+       STATUS
+    ====================================================== */
+
+    .student-status {
+        min-height: 25px;
+
+        padding: 0 8px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        font-size: 7px;
+        font-weight: 800;
+
+        flex: 0 0 auto;
+    }
+
+
+    .student-status.active {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .student-status.inactive {
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+
+    /* =====================================================
+       BODY
+    ====================================================== */
+
+    .student-card-body {
+        padding: 13px;
+    }
+
+
+    .student-info-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 8px;
+    }
+
+
+    .student-info-box {
+        min-height: 62px;
+
+        padding: 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #fafafa;
+    }
+
+
+    .student-info-box span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .student-info-box strong {
+        display: block;
+
+        margin-top: 5px;
+
+        overflow: hidden;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       CLASSES
+    ====================================================== */
+
+    .student-class-section {
+        margin-top: 10px;
+    }
+
+
+    .student-class-title {
+        margin-bottom: 7px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 8px;
+    }
+
+
+    .student-class-title strong {
+        font-size: 8px;
+    }
+
+
+    .student-class-title span {
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .student-class-list {
+        display: flex;
+        flex-wrap: wrap;
+
+        gap: 5px;
+    }
+
+
+    .student-class-chip {
+        padding: 6px 8px;
+
+        display: inline-flex;
+        align-items: center;
+
+        gap: 5px;
+
+        border: 1px solid #c7d2fe;
+        border-radius: 7px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 7px;
+        font-weight: 700;
+    }
+
+
+    .student-class-chip small {
+        color: #6366f1;
+
+        font-size: 6px;
+        font-weight: 600;
+    }
+
+
+    .student-no-class {
+        padding: 9px 10px;
+
+        border: 1px dashed var(--border-strong);
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    /* =====================================================
+       CARD ACTIONS
+    ====================================================== */
+
+    .student-card-actions {
+        padding: 12px 13px;
+
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, 1fr);
+
+        gap: 7px;
+
+        border-top: 1px solid var(--border);
+
+        background: #fafafa;
+    }
+
+
+    .student-action {
+        min-height: 34px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 8px;
+
+        text-decoration: none;
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+
+    .student-action.primary {
+        border: 1px solid var(--primary);
+
+        background: var(--primary);
+
+        color: #ffffff;
+    }
+
+
+    .student-action.primary:hover {
+        background: var(--primary-hover);
+    }
+
+
+    .student-action.secondary {
+        border: 1px solid var(--border);
+
+        background: #ffffff;
+
+        color: var(--text);
+    }
+
+
+    .student-action.secondary:hover {
+        background: #f5f5f5;
+    }
+
+
+    /* =====================================================
+       EMPTY STATE
+    ====================================================== */
+
+    .students-empty {
+        min-height: 320px;
+
+        padding: 40px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+
+        text-align: center;
+    }
+
+
+    .students-empty-icon {
+        width: 54px;
+        height: 54px;
+
+        margin-bottom: 12px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 13px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+
+    .students-empty strong {
+        font-size: 11px;
+    }
+
+
+    .students-empty p {
+        max-width: 340px;
+
+        margin: 6px 0 15px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+
+        line-height: 1.6;
+    }
+
+
+    /* =====================================================
+       SEARCH EMPTY
+    ====================================================== */
+
+    #studentSearchEmpty {
+        display: none;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 1000px) {
+
+        .student-summary-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+
+        .student-grid {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .student-summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .student-toolbar {
+            align-items: stretch;
+
+            flex-direction: column;
+        }
+
+
+        .student-search {
+            width: 100%;
+        }
+
+
+        .student-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .student-card-actions {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+{% set student_stats = namespace(
+    active=0,
+    inactive=0,
+    qr_active=0,
+    class_total=0
+) %}
+
+
+{% for student in students %}
+
+    {% if student.status == "ACTIVE" %}
+
+        {% set student_stats.active =
+            student_stats.active + 1
+        %}
+
+    {% else %}
+
+        {% set student_stats.inactive =
+            student_stats.inactive + 1
+        %}
+
+    {% endif %}
+
+
+    {% if student.qr_status == "ACTIVE" %}
+
+        {% set student_stats.qr_active =
+            student_stats.qr_active + 1
+        %}
+
+    {% endif %}
+
+
+    {% set student_stats.class_total =
+        student_stats.class_total
+        +
+        (student.active_class_count or 0)
+    %}
+
+{% endfor %}
+
+
+<div class="students-page">
+
+
+    <!-- =================================================
+         STUDENT NAVIGATION
+    ================================================== -->
+
+    <nav class="student-tabs">
+
+        <a
+            href="{{ url_for('students') }}"
+            class="student-tab active"
+        >
+            All Students
+        </a>
+
+
+        <a
+            href="{{ url_for('register_student') }}"
+            class="student-tab"
+        >
+            New Registration
+        </a>
+
+
+        <a
+            href="{{ url_for('pending_approvals') }}"
+            class="student-tab"
+        >
+            Pending Approvals
+        </a>
+
+    </nav>
+
+
+    <!-- =================================================
+         SUMMARY
+    ================================================== -->
+
+    <div class="student-summary-grid">
+
+
+        <div class="student-summary-card">
+
+            <span>
+                Total Students
+            </span>
+
+            <strong>
+                {{ students|length }}
+            </strong>
+
+            <small>
+                Student profiles in the system
+            </small>
+
+        </div>
+
+
+        <div class="student-summary-card green">
+
+            <span>
+                Active Students
+            </span>
+
+            <strong>
+                {{ student_stats.active }}
+            </strong>
+
+            <small>
+                Currently active student accounts
+            </small>
+
+        </div>
+
+
+        <div class="student-summary-card blue">
+
+            <span>
+                Active QR Passes
+            </span>
+
+            <strong>
+                {{ student_stats.qr_active }}
+            </strong>
+
+            <small>
+                Students with active QR access
+            </small>
+
+        </div>
+
+
+        <div class="student-summary-card orange">
+
+            <span>
+                Active Enrollments
+            </span>
+
+            <strong>
+                {{ student_stats.class_total }}
+            </strong>
+
+            <small>
+                Total active student-class enrollments
+            </small>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =================================================
+         TOOLBAR
+    ================================================== -->
+
+    <section class="student-toolbar">
+
+        <div class="student-toolbar-copy">
+
+            <strong>
+                Student Directory
+            </strong>
+
+            <span>
+                Search students by name, ID, phone, grade or class
+            </span>
+
+        </div>
+
+
+        <input
+            type="search"
+            id="studentSearch"
+            class="student-search"
+            placeholder="Search students..."
+            autocomplete="off"
+            oninput="filterStudents()"
+        >
+
+    </section>
+
+
+    <!-- =================================================
+         STUDENT CARDS
+    ================================================== -->
+
+    {% if students %}
+
+    <div
+        class="student-grid"
+        id="studentGrid"
+    >
+
+
+        {% for student in students %}
+
+
+        <article
+            class="student-card student-search-item"
+
+            data-search="
+                {{ student.student_code }}
+                {{ student.full_name }}
+                {{ student.phone }}
+                {{ student.parent_name }}
+                {{ student.parent_phone }}
+                {{ student.school }}
+                {{ student.grade }}
+                {{ student.status }}
+                {{ student.qr_status }}
+
+                {% for class_item in student.classes %}
+                    {{ class_item.class_code }}
+                    {{ class_item.subject }}
+                    {{ class_item.teacher }}
+                {% endfor %}
+            "
+        >
+
+
+            <!-- HEADER -->
+
+            <div class="student-card-header">
+
+
+                <div class="student-avatar">
+
+                    {{
+                        (
+                            student.full_name
+                            or
+                            "S"
+                        )[0]
+                        | upper
+                    }}
+
+                </div>
+
+
+                <div class="student-heading">
+
+                    <span class="student-code">
+                        {{ student.student_code }}
+                    </span>
+
+
+                    <h3>
+                        {{ student.full_name }}
+                    </h3>
+
+
+                    <p>
+
+                        {{ student.grade or "Grade not set" }}
+
+                        {% if student.school %}
+
+                            ·
+                            {{ student.school }}
+
+                        {% endif %}
+
+                    </p>
+
+                </div>
+
+
+                {% if student.status == "ACTIVE" %}
+
+                    <span class="student-status active">
+                        ACTIVE
+                    </span>
+
+                {% else %}
+
+                    <span class="student-status inactive">
+                        {{ student.status }}
+                    </span>
+
+                {% endif %}
+
+
+            </div>
+
+
+            <!-- BODY -->
+
+            <div class="student-card-body">
+
+
+                <div class="student-info-grid">
+
+
+                    <!-- PHONE -->
+
+                    <div class="student-info-box">
+
+                        <span>
+                            Student Phone
+                        </span>
+
+                        <strong>
+                            {{ student.phone or "—" }}
+                        </strong>
+
+                    </div>
+
+
+                    <!-- CLASSES -->
+
+                    <div class="student-info-box">
+
+                        <span>
+                            Active Classes
+                        </span>
+
+                        <strong>
+                            {{ student.active_class_count or 0 }}
+                        </strong>
+
+                    </div>
+
+
+                    <!-- PARENT -->
+
+                    <div class="student-info-box">
+
+                        <span>
+                            Parent / Guardian
+                        </span>
+
+                        <strong>
+                            {{ student.parent_name or "—" }}
+                        </strong>
+
+                    </div>
+
+
+                    <!-- QR -->
+
+                    <div class="student-info-box">
+
+                        <span>
+                            QR Status
+                        </span>
+
+                        <strong>
+
+                            {% if student.qr_status == "ACTIVE" %}
+
+                                <span style="color:var(--green);">
+                                    ACTIVE
+                                </span>
+
+                            {% elif student.qr_status %}
+
+                                <span style="color:var(--orange);">
+                                    {{ student.qr_status }}
+                                </span>
+
+                            {% else %}
+
+                                NOT CREATED
+
+                            {% endif %}
+
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- ACTIVE CLASSES -->
+
+                <div class="student-class-section">
+
+
+                    <div class="student-class-title">
+
+                        <strong>
+                            Current Classes
+                        </strong>
+
+                        <span>
+                            {{ student.classes|length }}
+                            class{% if student.classes|length != 1 %}es{% endif %}
+                        </span>
+
+                    </div>
+
+
+                    {% if student.classes %}
+
+                    <div class="student-class-list">
+
+
+                        {% for class_item in student.classes %}
+
+                        <span class="student-class-chip">
+
+                            {{ class_item.class_code }}
+
+                            ·
+
+                            {{ class_item.subject }}
+
+                            <small>
+                                {{ class_item.teacher }}
+                            </small>
+
+                        </span>
+
+                        {% endfor %}
+
+
+                    </div>
+
+
+                    {% else %}
+
+                    <div class="student-no-class">
+                        No active class enrollments.
+                    </div>
+
+                    {% endif %}
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ACTIONS -->
+
+            <div class="student-card-actions">
+
+
+                <a
+                    href="{{ url_for(
+                        'student_profile',
+                        student_id=student.id
+                    ) }}"
+                    class="student-action primary"
+                >
+                    Open Profile
+                </a>
+
+
+                <a
+                    href="{{ url_for(
+                        'student_qr_pass',
+                        student_id=student.id
+                    ) }}"
+                    class="student-action secondary"
+                >
+                    QR Pass
+                </a>
+
+
+            </div>
+
+
+        </article>
+
+
+        {% endfor %}
+
+
+    </div>
+
+
+    <!-- SEARCH EMPTY -->
+
+    <div
+        id="studentSearchEmpty"
+        class="students-empty"
+    >
+
+        <div class="students-empty-icon">
+            ?
+        </div>
+
+        <strong>
+            No matching students
+        </strong>
+
+        <p>
+            Try another student name, student ID,
+            phone number, grade or class.
+        </p>
+
+    </div>
+
+
+    {% else %}
+
+
+    <!-- NO STUDENTS -->
+
+    <div class="students-empty">
+
+        <div class="students-empty-icon">
+            S
+        </div>
+
+        <strong>
+            No students yet
+        </strong>
+
+        <p>
+            Approved student registrations will appear
+            here as active student profiles.
+        </p>
+
+
+        <a
+            href="{{ url_for('register_student') }}"
+            class="btn btn-primary"
+        >
+            + Register First Student
+        </a>
+
+    </div>
+
+
+    {% endif %}
+
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+    function filterStudents() {
+
+        const input =
+            document.getElementById(
+                "studentSearch"
+            );
+
+
+        const items =
+            document.querySelectorAll(
+                ".student-search-item"
+            );
+
+
+        const empty =
+            document.getElementById(
+                "studentSearchEmpty"
+            );
+
+
+        if (!input) {
+            return;
+        }
+
+
+        const query =
+            input.value
+                .trim()
+                .toLowerCase();
+
+
+        let visibleCount = 0;
+
+
+        items.forEach(
+            function(item) {
+
+                const searchable =
+                    (
+                        item.dataset.search
+                        ||
+                        ""
+                    )
+                    .toLowerCase();
+
+
+                const visible =
+                    searchable.includes(
+                        query
+                    );
+
+
+                item.style.display =
+                    visible
+                    ?
+                    ""
+                    :
+                    "none";
+
+
+                if (visible) {
+                    visibleCount++;
+                }
+
+            }
+        );
+
+
+        if (empty) {
+
+            empty.style.display =
+                visibleCount === 0
+                ?
+                "flex"
+                :
+                "none";
+
+        }
+
+    }
+
+</script>
+
+{% endblock %}

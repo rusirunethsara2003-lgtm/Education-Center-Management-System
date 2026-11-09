@@ -1,0 +1,54 @@
+{% set report_tab = request.args.get('tab', 'overview') %}
+
+<nav class="report-tabs">
+
+    <a
+        href="{{ url_for('reports', month=selected_month, tab='overview') }}"
+        class="report-tab {% if report_tab == 'overview' %}active{% endif %}"
+    >
+        Overview
+    </a>
+
+    <a
+        href="{{ url_for('reports', month=selected_month, tab='finance') }}"
+        class="report-tab {% if report_tab == 'finance' %}active{% endif %}"
+    >
+        Finance
+    </a>
+
+    <a
+        href="{{ url_for('reports', month=selected_month, tab='students') }}"
+        class="report-tab {% if report_tab == 'students' %}active{% endif %}"
+    >
+        Students
+    </a>
+
+    <a
+        href="{{ url_for('reports', month=selected_month, tab='teachers') }}"
+        class="report-tab {% if report_tab == 'teachers' %}active{% endif %}"
+    >
+        Teachers
+    </a>
+
+    <a
+        href="{{ url_for('reports', month=selected_month, tab='classes') }}"
+        class="report-tab {% if report_tab == 'classes' %}active{% endif %}"
+    >
+        Classes
+    </a>
+
+    <a
+        href="{{ url_for('reports', month=selected_month, tab='attendance') }}"
+        class="report-tab {% if report_tab == 'attendance' %}active{% endif %}"
+    >
+        Attendance
+    </a>
+
+    <a
+        href="{{ url_for('reports', month=selected_month, tab='free_cards') }}"
+        class="report-tab {% if report_tab == 'free_cards' %}active{% endif %}"
+    >
+        Free Cards
+    </a>
+
+</nav>

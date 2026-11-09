@@ -1,0 +1,999 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Class Attendance - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Class Attendance
+{% endblock %}
+
+
+{% block page_subtitle %}
+Review attendance by class and selected date
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('scan_qr') }}"
+    class="btn btn-secondary"
+>
+    Scan QR
+</a>
+
+<a
+    href="{{ url_for('attendance_list') }}"
+    class="btn btn-primary"
+>
+    Attendance History
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    .attendance-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       NAVIGATION
+    ====================================================== */
+
+    .attendance-tabs {
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .attendance-tab {
+        min-height: 35px;
+
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+
+    .attendance-tab:hover {
+        background: #f5f5f5;
+        color: var(--text);
+    }
+
+
+    .attendance-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       SUMMARY
+    ====================================================== */
+
+    .attendance-summary {
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+
+    .attendance-summary-card {
+        min-height: 100px;
+
+        padding: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .attendance-summary-card span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .attendance-summary-card strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 20px;
+        font-weight: 750;
+    }
+
+
+    .attendance-summary-card small {
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .attendance-summary-card.green strong {
+        color: var(--green);
+    }
+
+
+    .attendance-summary-card.orange strong {
+        color: var(--orange);
+    }
+
+
+    .attendance-summary-card.blue strong {
+        color: var(--blue);
+    }
+
+
+    /* =====================================================
+       FILTER
+    ====================================================== */
+
+    .attendance-filter {
+        padding: 12px 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .attendance-filter-copy strong {
+        display: block;
+
+        font-size: 10px;
+    }
+
+
+    .attendance-filter-copy span {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .attendance-filter-form {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+    }
+
+
+    .attendance-date {
+        min-height: 36px;
+
+        padding: 0 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        font-size: 8px;
+    }
+
+
+    /* =====================================================
+       CLASS GRID
+    ====================================================== */
+
+    .attendance-class-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 12px;
+    }
+
+
+    .attendance-class-card {
+        overflow: hidden;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+    }
+
+
+    .attendance-class-card.scheduled {
+        border-color: #c7d2fe;
+    }
+
+
+    .attendance-class-header {
+        padding: 14px;
+
+        display: flex;
+        align-items: flex-start;
+
+        gap: 11px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .attendance-class-icon {
+        width: 42px;
+        height: 42px;
+
+        flex: 0 0 42px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 10px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 8px;
+        font-weight: 800;
+    }
+
+
+    .attendance-class-heading {
+        min-width: 0;
+        flex: 1;
+    }
+
+
+    .attendance-class-code {
+        display: block;
+
+        color: var(--primary);
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .attendance-class-heading h3 {
+        margin: 4px 0 0;
+
+        font-size: 12px;
+        font-weight: 750;
+    }
+
+
+    .attendance-class-heading p {
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .scheduled-badge,
+    .other-day-badge {
+        min-height: 24px;
+
+        padding: 0 8px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .scheduled-badge {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .other-day-badge {
+        background: #f4f4f5;
+        color: var(--muted);
+    }
+
+
+    /* =====================================================
+       DETAILS
+    ====================================================== */
+
+    .attendance-class-body {
+        padding: 13px;
+    }
+
+
+    .attendance-detail-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+
+        gap: 8px;
+    }
+
+
+    .attendance-detail {
+        min-height: 60px;
+
+        padding: 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #fafafa;
+    }
+
+
+    .attendance-detail span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .attendance-detail strong {
+        display: block;
+
+        margin-top: 5px;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        line-height: 1.4;
+    }
+
+
+    /* =====================================================
+       ATTENDANCE STATS
+    ====================================================== */
+
+    .attendance-stat-grid {
+        margin-top: 9px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 7px;
+    }
+
+
+    .attendance-stat {
+        min-height: 62px;
+
+        padding: 9px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+    }
+
+
+    .attendance-stat span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .attendance-stat strong {
+        display: block;
+
+        margin-top: 5px;
+
+        font-size: 10px;
+        font-weight: 750;
+    }
+
+
+    .attendance-stat.present strong {
+        color: var(--green);
+    }
+
+
+    .attendance-stat.absent strong {
+        color: var(--orange);
+    }
+
+
+    .attendance-stat.rate strong {
+        color: var(--blue);
+    }
+
+
+    /* =====================================================
+       ACTION
+    ====================================================== */
+
+    .attendance-class-actions {
+        padding: 12px 13px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+
+        border-top: 1px solid var(--border);
+
+        background: #fafafa;
+    }
+
+
+    .attendance-class-actions .btn {
+        flex: 1;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 1000px) {
+
+        .attendance-summary {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+
+        .attendance-class-grid {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 700px) {
+
+        .attendance-summary {
+            grid-template-columns: 1fr;
+        }
+
+
+        .attendance-filter {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+
+        .attendance-filter-form {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+
+        .attendance-detail-grid,
+        .attendance-stat-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+
+        .attendance-date {
+            width: 100%;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="attendance-page">
+
+
+    <!-- =================================================
+         ATTENDANCE NAV
+    ================================================== -->
+
+    <nav class="attendance-tabs">
+
+        <a
+            href="/attendance/today"
+            class="attendance-tab"
+        >
+            Today
+        </a>
+
+
+        <a
+            href="{{ url_for('scan_qr') }}"
+            class="attendance-tab"
+        >
+            Scan QR
+        </a>
+
+
+        <a
+            href="{{ url_for('class_attendance') }}"
+            class="attendance-tab active"
+        >
+            Class Attendance
+        </a>
+
+
+        <a
+            href="{{ url_for('attendance_list') }}"
+            class="attendance-tab"
+        >
+            History
+        </a>
+
+    </nav>
+
+
+    <!-- =================================================
+         SUMMARY
+    ================================================== -->
+
+    <div class="attendance-summary">
+
+
+        <div class="attendance-summary-card">
+
+            <span>
+                Scheduled Classes
+            </span>
+
+            <strong>
+                {{ totals.scheduled_classes }}
+            </strong>
+
+            <small>
+                Classes scheduled for {{ selected_day }}
+            </small>
+
+        </div>
+
+
+        <div class="attendance-summary-card blue">
+
+            <span>
+                Expected Students
+            </span>
+
+            <strong>
+                {{ totals.students }}
+            </strong>
+
+            <small>
+                Active enrollments in scheduled classes
+            </small>
+
+        </div>
+
+
+        <div class="attendance-summary-card green">
+
+            <span>
+                Present
+            </span>
+
+            <strong>
+                {{ totals.present }}
+            </strong>
+
+            <small>
+                Attendance records for selected date
+            </small>
+
+        </div>
+
+
+        <div class="attendance-summary-card orange">
+
+            <span>
+                Attendance Rate
+            </span>
+
+            <strong>
+                {{ totals.rate }}%
+            </strong>
+
+            <small>
+                Present students versus expected
+            </small>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =================================================
+         DATE FILTER
+    ================================================== -->
+
+    <section class="attendance-filter">
+
+        <div class="attendance-filter-copy">
+
+            <strong>
+                {{ selected_day }} Attendance
+            </strong>
+
+            <span>
+                Selected date: {{ selected_date }}
+            </span>
+
+        </div>
+
+
+        <form
+            method="GET"
+            action="{{ url_for('class_attendance') }}"
+            class="attendance-filter-form"
+        >
+
+            <input
+                type="date"
+                name="date"
+                value="{{ selected_date }}"
+                class="attendance-date"
+            >
+
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                View Date
+            </button>
+
+
+            {% if selected_date != today %}
+
+            <a
+                href="{{ url_for('class_attendance') }}"
+                class="btn btn-secondary"
+            >
+                Today
+            </a>
+
+            {% endif %}
+
+        </form>
+
+    </section>
+
+
+    <!-- =================================================
+         CLASSES
+    ================================================== -->
+
+    {% if classes %}
+
+    <div class="attendance-class-grid">
+
+
+        {% for item in classes %}
+
+
+        <article
+            class="
+                attendance-class-card
+
+                {% if item.is_scheduled %}
+                    scheduled
+                {% endif %}
+            "
+        >
+
+
+            <div class="attendance-class-header">
+
+
+                <div class="attendance-class-icon">
+                    {{ item.class_code }}
+                </div>
+
+
+                <div class="attendance-class-heading">
+
+                    <span class="attendance-class-code">
+                        {{ item.class_code }}
+                    </span>
+
+
+                    <h3>
+                        {{ item.class_name }}
+                    </h3>
+
+
+                    <p>
+                        {{ item.grade }}
+                        ·
+                        {{ item.subject }}
+                        ·
+                        {{ item.teacher_name }}
+                    </p>
+
+                </div>
+
+
+                {% if item.is_scheduled %}
+
+                <span class="scheduled-badge">
+                    SCHEDULED
+                </span>
+
+                {% else %}
+
+                <span class="other-day-badge">
+                    {{ item.day_name }}
+                </span>
+
+                {% endif %}
+
+
+            </div>
+
+
+            <div class="attendance-class-body">
+
+
+                <div class="attendance-detail-grid">
+
+
+                    <div class="attendance-detail">
+
+                        <span>
+                            Day
+                        </span>
+
+                        <strong>
+                            {{ item.day_name }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="attendance-detail">
+
+                        <span>
+                            Time
+                        </span>
+
+                        <strong>
+                            {{ item.start_display }}
+                            –
+                            {{ item.end_display }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="attendance-detail">
+
+                        <span>
+                            Room
+                        </span>
+
+                        <strong>
+                            {{ item.room or "—" }}
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="attendance-stat-grid">
+
+
+                    <div class="attendance-stat">
+
+                        <span>
+                            Students
+                        </span>
+
+                        <strong>
+                            {{ item.enrolled_count }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="attendance-stat present">
+
+                        <span>
+                            Present
+                        </span>
+
+                        <strong>
+                            {{ item.present_count }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="attendance-stat absent">
+
+                        <span>
+                            Not Marked
+                        </span>
+
+                        <strong>
+                            {{ item.absent_count }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="attendance-stat rate">
+
+                        <span>
+                            Rate
+                        </span>
+
+                        <strong>
+                            {{ item.attendance_rate }}%
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+            <div class="attendance-class-actions">
+
+
+                <a
+                    href="{{ url_for(
+                        'class_profile',
+                        class_code=item.class_code,
+                        tab='attendance',
+                        month=selected_date[:7]
+                    ) }}"
+                    class="btn btn-primary"
+                >
+                    Open Attendance
+                </a>
+
+
+                <a
+                    href="{{ url_for(
+                        'class_profile',
+                        class_code=item.class_code
+                    ) }}"
+                    class="btn btn-secondary"
+                >
+                    Class Profile
+                </a>
+
+
+            </div>
+
+
+        </article>
+
+
+        {% endfor %}
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <section class="ui-panel">
+
+        <div
+            style="
+                min-height:260px;
+                padding:35px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                flex-direction:column;
+                text-align:center;
+            "
+        >
+
+            <strong>
+                No active classes
+            </strong>
+
+            <p
+                style="
+                    margin:6px 0 0;
+                    color:var(--muted);
+                    font-size:8px;
+                "
+            >
+                Active classes will appear here.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    {% endif %}
+
+
+</div>
+
+{% endblock %}

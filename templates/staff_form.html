@@ -1,0 +1,1859 @@
+{% extends "base.html" %}
+
+{% block title %}
+Add Staff Account - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Add Staff Account
+{% endblock %}
+
+
+{% block page_subtitle %}
+Create a secure staff login account for Sri Sumana Education Center
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('staff_access') }}"
+    class="btn btn-secondary"
+>
+    ← Staff & Access
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       PAGE
+    ====================================================== */
+
+    .staff-form-page {
+
+        display: flex;
+        flex-direction: column;
+
+        gap: 12px;
+
+    }
+
+
+    /* =====================================================
+       ADMIN TABS
+    ====================================================== */
+
+    .admin-tabs {
+
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+
+        border-radius: 10px;
+
+        background: #ffffff;
+
+    }
+
+
+    .admin-tab {
+
+        min-height: 35px;
+
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+
+    }
+
+
+    .admin-tab:hover {
+
+        background: #f5f5f5;
+
+        color: var(--text);
+
+    }
+
+
+    .admin-tab.active {
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-weight: 750;
+
+    }
+
+
+    /* =====================================================
+       GRID
+    ====================================================== */
+
+    .staff-form-grid {
+
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1.25fr)
+            minmax(280px, 0.75fr);
+
+        gap: 12px;
+
+        align-items: start;
+
+    }
+
+
+    /* =====================================================
+       FORM
+    ====================================================== */
+
+    .staff-form-body {
+
+        padding: 17px;
+
+    }
+
+
+    .staff-field {
+
+        margin-bottom: 15px;
+
+    }
+
+
+    .staff-field:last-of-type {
+
+        margin-bottom: 0;
+
+    }
+
+
+    .staff-field label {
+
+        display: block;
+
+        margin-bottom: 6px;
+
+        color: var(--text);
+
+        font-size: 8px;
+        font-weight: 750;
+
+    }
+
+
+    .required-mark {
+
+        color: var(--red);
+
+    }
+
+
+    .staff-input {
+
+        width: 100%;
+
+        min-height: 42px;
+
+        padding: 0 11px;
+
+        border: 1px solid var(--border);
+
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        outline: none;
+
+        font-size: 9px;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+
+    }
+
+
+    .staff-input:focus {
+
+        border-color: var(--primary);
+
+        box-shadow:
+            0 0 0 3px
+            rgba(79, 70, 229, 0.08);
+
+    }
+
+
+    .staff-input::placeholder {
+
+        color: var(--muted-light);
+
+    }
+
+
+    .staff-help {
+
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        line-height: 1.5;
+
+    }
+
+
+    /* =====================================================
+       PASSWORD FIELD
+    ====================================================== */
+
+    .staff-password-wrap {
+
+        position: relative;
+
+    }
+
+
+    .staff-password-wrap .staff-input {
+
+        padding-right: 58px;
+
+    }
+
+
+    .password-toggle {
+
+        position: absolute;
+
+        top: 50%;
+        right: 7px;
+
+        min-width: 42px;
+        min-height: 28px;
+
+        transform: translateY(-50%);
+
+        border: 0;
+
+        border-radius: 6px;
+
+        background: #f4f4f5;
+
+        color: var(--muted);
+
+        font-size: 7px;
+        font-weight: 700;
+
+        cursor: pointer;
+
+    }
+
+
+    .password-toggle:hover {
+
+        background: #eaeaec;
+
+        color: var(--text);
+
+    }
+
+
+    /* =====================================================
+       PASSWORD STRENGTH
+    ====================================================== */
+
+    .password-strength {
+
+        margin-top: 8px;
+
+    }
+
+
+    .strength-header {
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 10px;
+
+    }
+
+
+    .strength-header span {
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+    }
+
+
+    .strength-header strong {
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+    }
+
+
+    .strength-track {
+
+        height: 5px;
+
+        margin-top: 6px;
+
+        overflow: hidden;
+
+        border-radius: 999px;
+
+        background: #ececef;
+
+    }
+
+
+    .strength-fill {
+
+        width: 0;
+        height: 100%;
+
+        border-radius: inherit;
+
+        background: var(--red);
+
+        transition:
+            width 0.2s ease,
+            background 0.2s ease;
+
+    }
+
+
+    /* =====================================================
+       PASSWORD RULES
+    ====================================================== */
+
+    .password-rules {
+
+        margin-top: 10px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 7px;
+
+    }
+
+
+    .password-rule {
+
+        min-height: 34px;
+
+        padding: 7px 9px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+
+        border: 1px solid var(--border);
+
+        border-radius: 7px;
+
+        background: #fafafa;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+    }
+
+
+    .password-rule::before {
+
+        content: "○";
+
+        font-weight: 800;
+
+    }
+
+
+    .password-rule.valid {
+
+        border-color: #bbf7d0;
+
+        background: var(--green-soft);
+
+        color: var(--green);
+
+    }
+
+
+    .password-rule.valid::before {
+
+        content: "✓";
+
+    }
+
+
+    /* =====================================================
+       PASSWORD MATCH
+    ====================================================== */
+
+    .password-match {
+
+        display: block;
+
+        margin-top: 6px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+    }
+
+
+    .password-match.good {
+
+        color: var(--green);
+
+    }
+
+
+    .password-match.bad {
+
+        color: var(--red);
+
+    }
+
+
+    /* =====================================================
+       FORM ACTIONS
+    ====================================================== */
+
+    .staff-form-actions {
+
+        margin-top: 18px;
+
+        padding-top: 15px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 8px;
+
+        border-top: 1px solid var(--border);
+
+    }
+
+
+    /* =====================================================
+       ACCOUNT PREVIEW
+    ====================================================== */
+
+    .account-preview {
+
+        padding: 14px;
+
+    }
+
+
+    .preview-card {
+
+        padding: 13px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 10px;
+
+        border: 1px solid var(--border);
+
+        border-radius: 9px;
+
+        background: #fafafa;
+
+    }
+
+
+    .preview-avatar {
+
+        width: 40px;
+        height: 40px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 40px;
+
+        border-radius: 10px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 11px;
+        font-weight: 800;
+
+    }
+
+
+    .preview-info {
+
+        min-width: 0;
+
+        flex: 1;
+
+    }
+
+
+    .preview-info strong {
+
+        display: block;
+
+        font-size: 9px;
+
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+    }
+
+
+    .preview-info span {
+
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+    }
+
+
+    .preview-role {
+
+        min-height: 24px;
+
+        padding: 0 8px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 7px;
+        font-weight: 800;
+
+    }
+
+
+    /* =====================================================
+       ACCESS INFO
+    ====================================================== */
+
+    .access-info-list {
+
+        padding: 4px 14px;
+
+    }
+
+
+    .access-info-row {
+
+        min-height: 57px;
+
+        display: flex;
+        align-items: flex-start;
+
+        gap: 10px;
+
+        padding: 11px 0;
+
+        border-bottom: 1px solid var(--border);
+
+    }
+
+
+    .access-info-row:last-child {
+
+        border-bottom: 0;
+
+    }
+
+
+    .access-info-icon {
+
+        width: 30px;
+        height: 30px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 30px;
+
+        border-radius: 8px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 8px;
+        font-weight: 800;
+
+    }
+
+
+    .access-info-copy strong {
+
+        display: block;
+
+        font-size: 8px;
+
+    }
+
+
+    .access-info-copy p {
+
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        line-height: 1.55;
+
+    }
+
+
+    /* =====================================================
+       NOTICE
+    ====================================================== */
+
+    .staff-notice {
+
+        margin-top: 12px;
+
+        padding: 12px;
+
+        border: 1px solid #bfdbfe;
+
+        border-radius: 9px;
+
+        background: var(--blue-soft);
+
+    }
+
+
+    .staff-notice strong {
+
+        display: block;
+
+        color: var(--blue);
+
+        font-size: 8px;
+
+    }
+
+
+    .staff-notice p {
+
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        line-height: 1.55;
+
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 900px) {
+
+        .staff-form-grid {
+
+            grid-template-columns: 1fr;
+
+        }
+
+    }
+
+
+    @media (max-width: 600px) {
+
+        .password-rules {
+
+            grid-template-columns: 1fr;
+
+        }
+
+
+        .staff-form-actions {
+
+            align-items: stretch;
+
+            flex-direction: column;
+
+        }
+
+
+        .staff-form-actions .btn {
+
+            width: 100%;
+
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="staff-form-page">
+
+
+    <!-- =================================================
+         ADMIN NAVIGATION
+    ================================================== -->
+
+    <nav class="admin-tabs">
+
+        <a
+            href="{{ url_for('administration_overview') }}"
+            class="admin-tab"
+        >
+            Overview
+        </a>
+
+
+        <a
+            href="{{ url_for('staff_access') }}"
+            class="admin-tab active"
+        >
+            Staff & Access
+        </a>
+
+
+        <a
+            href="{{ url_for('audit_logs') }}"
+            class="admin-tab"
+        >
+            Audit Logs
+        </a>
+
+
+        <a
+            href="{{ url_for('security_center') }}"
+            class="admin-tab"
+        >
+            Security
+        </a>
+
+
+        <a
+            href="{{ url_for('change_password') }}"
+            class="admin-tab"
+        >
+            Change Password
+        </a>
+
+    </nav>
+
+
+    <div class="staff-form-grid">
+
+
+        <!-- =================================================
+             FORM
+        ================================================== -->
+
+        <section class="ui-panel">
+
+            <div class="ui-panel-header">
+
+                <div>
+
+                    <h2>
+                        Staff Account Details
+                    </h2>
+
+                    <p>
+                        Create login credentials for an authorized staff member
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form
+                method="POST"
+                action="{{ url_for('new_staff') }}"
+                class="staff-form-body"
+                id="staffAccountForm"
+                autocomplete="off"
+            >
+
+
+                <!-- FULL NAME -->
+
+                <div class="staff-field">
+
+                    <label for="full_name">
+
+                        Full Name
+
+                        <span class="required-mark">
+                            *
+                        </span>
+
+                    </label>
+
+
+                    <input
+                        type="text"
+                        id="full_name"
+                        name="full_name"
+                        class="staff-input"
+                        placeholder="Example: Kasun Perera"
+                        maxlength="120"
+                        autocomplete="name"
+                        required
+                    >
+
+
+                    <span class="staff-help">
+                        Enter the staff member's full name.
+                    </span>
+
+                </div>
+
+
+                <!-- USERNAME -->
+
+                <div class="staff-field">
+
+                    <label for="username">
+
+                        Username
+
+                        <span class="required-mark">
+                            *
+                        </span>
+
+                    </label>
+
+
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="staff-input"
+                        placeholder="Example: kasun.perera"
+                        maxlength="80"
+                        autocomplete="username"
+                        autocapitalize="none"
+                        spellcheck="false"
+                        required
+                    >
+
+
+                    <span class="staff-help">
+                        This username will be used when the staff member signs in.
+                    </span>
+
+                </div>
+
+
+                <!-- PASSWORD -->
+
+                <div class="staff-field">
+
+                    <label for="password">
+
+                        Password
+
+                        <span class="required-mark">
+                            *
+                        </span>
+
+                    </label>
+
+
+                    <div class="staff-password-wrap">
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="staff-input"
+                            autocomplete="new-password"
+                            minlength="10"
+                            required
+                        >
+
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            onclick="togglePassword('password', this)"
+                        >
+                            Show
+                        </button>
+
+                    </div>
+
+
+                    <div class="password-strength">
+
+                        <div class="strength-header">
+
+                            <span>
+                                Password strength
+                            </span>
+
+                            <strong id="strengthText">
+                                Not entered
+                            </strong>
+
+                        </div>
+
+
+                        <div class="strength-track">
+
+                            <div
+                                id="strengthFill"
+                                class="strength-fill"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="password-rules">
+
+                        <div
+                            class="password-rule"
+                            id="ruleLength"
+                        >
+                            At least 10 characters
+                        </div>
+
+
+                        <div
+                            class="password-rule"
+                            id="ruleUpper"
+                        >
+                            One uppercase letter
+                        </div>
+
+
+                        <div
+                            class="password-rule"
+                            id="ruleLower"
+                        >
+                            One lowercase letter
+                        </div>
+
+
+                        <div
+                            class="password-rule"
+                            id="ruleNumber"
+                        >
+                            One number
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- CONFIRM PASSWORD -->
+
+                <div class="staff-field">
+
+                    <label for="confirm_password">
+
+                        Confirm Password
+
+                        <span class="required-mark">
+                            *
+                        </span>
+
+                    </label>
+
+
+                    <div class="staff-password-wrap">
+
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            class="staff-input"
+                            autocomplete="new-password"
+                            minlength="10"
+                            required
+                        >
+
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            onclick="togglePassword('confirm_password', this)"
+                        >
+                            Show
+                        </button>
+
+                    </div>
+
+
+                    <span
+                        id="passwordMatch"
+                        class="password-match"
+                    >
+                        Enter the same password again.
+                    </span>
+
+                </div>
+
+
+                <!-- ACTIONS -->
+
+                <div class="staff-form-actions">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                        id="createStaffButton"
+                    >
+                        Create Staff Account
+                    </button>
+
+
+                    <a
+                        href="{{ url_for('staff_access') }}"
+                        class="btn btn-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </section>
+
+
+        <!-- =================================================
+             RIGHT SIDE
+        ================================================== -->
+
+        <div>
+
+
+            <!-- ACCOUNT PREVIEW -->
+
+            <section class="ui-panel">
+
+                <div class="ui-panel-header">
+
+                    <div>
+
+                        <h2>
+                            Account Preview
+                        </h2>
+
+                        <p>
+                            New account access level
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="account-preview">
+
+                    <div class="preview-card">
+
+                        <div
+                            class="preview-avatar"
+                            id="previewAvatar"
+                        >
+                            S
+                        </div>
+
+
+                        <div class="preview-info">
+
+                            <strong id="previewName">
+                                New Staff Member
+                            </strong>
+
+                            <span id="previewUsername">
+                                @username
+                            </span>
+
+                        </div>
+
+
+                        <span class="preview-role">
+                            STAFF
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ACCESS INFORMATION -->
+
+            <section
+                class="ui-panel"
+                style="margin-top:12px;"
+            >
+
+                <div class="ui-panel-header">
+
+                    <div>
+
+                        <h2>
+                            Account Access
+                        </h2>
+
+                        <p>
+                            What happens after account creation
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="access-info-list">
+
+
+                    <div class="access-info-row">
+
+                        <div class="access-info-icon">
+                            01
+                        </div>
+
+                        <div class="access-info-copy">
+
+                            <strong>
+                                Staff role
+                            </strong>
+
+                            <p>
+                                The account is created with STAFF permissions.
+                                Owner-only administration pages remain restricted.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="access-info-row">
+
+                        <div class="access-info-icon">
+                            02
+                        </div>
+
+                        <div class="access-info-copy">
+
+                            <strong>
+                                Active immediately
+                            </strong>
+
+                            <p>
+                                New staff accounts are created as ACTIVE
+                                and can sign in using the new credentials.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="access-info-row">
+
+                        <div class="access-info-icon">
+                            03
+                        </div>
+
+                        <div class="access-info-copy">
+
+                            <strong>
+                                Password protection
+                            </strong>
+
+                            <p>
+                                Passwords are securely hashed before
+                                being stored in the database.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="access-info-row">
+
+                        <div class="access-info-icon">
+                            04
+                        </div>
+
+                        <div class="access-info-copy">
+
+                            <strong>
+                                Owner controlled
+                            </strong>
+
+                            <p>
+                                The Owner can later deactivate the account
+                                or reset the staff password from Staff & Access.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <div class="staff-notice">
+
+                <strong>
+                    Keep staff credentials private
+                </strong>
+
+                <p>
+                    Do not send staff passwords through screenshots
+                    or unsecured messages. Each staff member should
+                    use their own account.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+    /* =====================================================
+       SHOW / HIDE PASSWORD
+    ====================================================== */
+
+    function togglePassword(
+        inputId,
+        button
+    ) {
+
+        const input =
+            document.getElementById(
+                inputId
+            );
+
+
+        if (!input) {
+            return;
+        }
+
+
+        if (
+            input.type
+            ===
+            "password"
+        ) {
+
+            input.type =
+                "text";
+
+            button.textContent =
+                "Hide";
+
+        }
+
+        else {
+
+            input.type =
+                "password";
+
+            button.textContent =
+                "Show";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       PASSWORD RULES
+    ====================================================== */
+
+    function getPasswordRules(
+        password
+    ) {
+
+        return {
+
+            length:
+                password.length
+                >=
+                10,
+
+            upper:
+                /[A-Z]/.test(
+                    password
+                ),
+
+            lower:
+                /[a-z]/.test(
+                    password
+                ),
+
+            number:
+                /[0-9]/.test(
+                    password
+                )
+
+        };
+
+    }
+
+
+    function updatePasswordStrength() {
+
+        const passwordInput =
+            document.getElementById(
+                "password"
+            );
+
+
+        const strengthFill =
+            document.getElementById(
+                "strengthFill"
+            );
+
+
+        const strengthText =
+            document.getElementById(
+                "strengthText"
+            );
+
+
+        if (
+            !passwordInput
+            ||
+            !strengthFill
+            ||
+            !strengthText
+        ) {
+
+            return;
+
+        }
+
+
+        const password =
+            passwordInput.value;
+
+
+        const rules =
+            getPasswordRules(
+                password
+            );
+
+
+        document
+            .getElementById(
+                "ruleLength"
+            )
+            .classList.toggle(
+                "valid",
+                rules.length
+            );
+
+
+        document
+            .getElementById(
+                "ruleUpper"
+            )
+            .classList.toggle(
+                "valid",
+                rules.upper
+            );
+
+
+        document
+            .getElementById(
+                "ruleLower"
+            )
+            .classList.toggle(
+                "valid",
+                rules.lower
+            );
+
+
+        document
+            .getElementById(
+                "ruleNumber"
+            )
+            .classList.toggle(
+                "valid",
+                rules.number
+            );
+
+
+        const score =
+
+            Number(
+                rules.length
+            )
+
+            +
+
+            Number(
+                rules.upper
+            )
+
+            +
+
+            Number(
+                rules.lower
+            )
+
+            +
+
+            Number(
+                rules.number
+            );
+
+
+        if (!password) {
+
+            strengthFill.style.width =
+                "0%";
+
+            strengthFill.style.background =
+                "var(--red)";
+
+            strengthText.textContent =
+                "Not entered";
+
+        }
+
+        else if (score <= 1) {
+
+            strengthFill.style.width =
+                "25%";
+
+            strengthFill.style.background =
+                "var(--red)";
+
+            strengthText.textContent =
+                "Weak";
+
+        }
+
+        else if (score === 2) {
+
+            strengthFill.style.width =
+                "50%";
+
+            strengthFill.style.background =
+                "var(--orange)";
+
+            strengthText.textContent =
+                "Fair";
+
+        }
+
+        else if (score === 3) {
+
+            strengthFill.style.width =
+                "75%";
+
+            strengthFill.style.background =
+                "var(--blue)";
+
+            strengthText.textContent =
+                "Good";
+
+        }
+
+        else {
+
+            strengthFill.style.width =
+                "100%";
+
+            strengthFill.style.background =
+                "var(--green)";
+
+            strengthText.textContent =
+                "Strong";
+
+        }
+
+
+        updatePasswordMatch();
+
+    }
+
+
+    /* =====================================================
+       PASSWORD MATCH
+    ====================================================== */
+
+    function updatePasswordMatch() {
+
+        const password =
+            document.getElementById(
+                "password"
+            );
+
+
+        const confirmPassword =
+            document.getElementById(
+                "confirm_password"
+            );
+
+
+        const message =
+            document.getElementById(
+                "passwordMatch"
+            );
+
+
+        const submit =
+            document.getElementById(
+                "createStaffButton"
+            );
+
+
+        if (
+            !password
+            ||
+            !confirmPassword
+            ||
+            !message
+            ||
+            !submit
+        ) {
+
+            return;
+
+        }
+
+
+        message.classList.remove(
+            "good",
+            "bad"
+        );
+
+
+        if (
+            !confirmPassword.value
+        ) {
+
+            message.textContent =
+                "Enter the same password again.";
+
+            submit.disabled =
+                false;
+
+            return;
+
+        }
+
+
+        if (
+            password.value
+            ===
+            confirmPassword.value
+        ) {
+
+            message.textContent =
+                "Passwords match.";
+
+            message.classList.add(
+                "good"
+            );
+
+            submit.disabled =
+                false;
+
+        }
+
+        else {
+
+            message.textContent =
+                "Passwords do not match.";
+
+            message.classList.add(
+                "bad"
+            );
+
+            submit.disabled =
+                true;
+
+        }
+
+    }
+
+
+    /* =====================================================
+       ACCOUNT PREVIEW
+    ====================================================== */
+
+    function updateAccountPreview() {
+
+        const nameInput =
+            document.getElementById(
+                "full_name"
+            );
+
+
+        const usernameInput =
+            document.getElementById(
+                "username"
+            );
+
+
+        const name =
+            nameInput.value.trim();
+
+
+        const username =
+            usernameInput.value
+                .trim()
+                .toLowerCase();
+
+
+        const previewName =
+            document.getElementById(
+                "previewName"
+            );
+
+
+        const previewUsername =
+            document.getElementById(
+                "previewUsername"
+            );
+
+
+        const previewAvatar =
+            document.getElementById(
+                "previewAvatar"
+            );
+
+
+        previewName.textContent =
+            name
+            ||
+            "New Staff Member";
+
+
+        previewUsername.textContent =
+            username
+            ?
+            "@"
+            +
+            username
+            :
+            "@username";
+
+
+        previewAvatar.textContent =
+            name
+            ?
+            name
+                .charAt(0)
+                .toUpperCase()
+            :
+            "S";
+
+    }
+
+
+    /* =====================================================
+       USERNAME NORMALIZATION
+    ====================================================== */
+
+    function normalizeUsername() {
+
+        const input =
+            document.getElementById(
+                "username"
+            );
+
+
+        input.value =
+            input.value
+                .toLowerCase()
+                .replace(
+                    /\s+/g,
+                    ""
+                );
+
+
+        updateAccountPreview();
+
+    }
+
+
+    /* =====================================================
+       LOAD EVENTS
+    ====================================================== */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function() {
+
+            const nameInput =
+                document.getElementById(
+                    "full_name"
+                );
+
+
+            const usernameInput =
+                document.getElementById(
+                    "username"
+                );
+
+
+            const passwordInput =
+                document.getElementById(
+                    "password"
+                );
+
+
+            const confirmPasswordInput =
+                document.getElementById(
+                    "confirm_password"
+                );
+
+
+            if (nameInput) {
+
+                nameInput.addEventListener(
+                    "input",
+                    updateAccountPreview
+                );
+
+            }
+
+
+            if (usernameInput) {
+
+                usernameInput.addEventListener(
+                    "input",
+                    normalizeUsername
+                );
+
+            }
+
+
+            if (passwordInput) {
+
+                passwordInput.addEventListener(
+                    "input",
+                    updatePasswordStrength
+                );
+
+            }
+
+
+            if (confirmPasswordInput) {
+
+                confirmPasswordInput.addEventListener(
+                    "input",
+                    updatePasswordMatch
+                );
+
+            }
+
+
+            updateAccountPreview();
+            updatePasswordStrength();
+
+        }
+    );
+
+</script>
+
+{% endblock %}

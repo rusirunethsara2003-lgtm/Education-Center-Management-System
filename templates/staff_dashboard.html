@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand"><h1>Sri Sumana</h1><p>Staff Portal</p></div>
+        <nav>
+            <a class="active" href="{{ url_for('staff_dashboard') }}">Overview</a>
+            <a href="{{ url_for('register_student') }}">Student Registration</a>
+            <a href="{{ url_for('pending_approvals') }}">Pending Approvals</a>
+            <a href="{{ url_for('students') }}">Students</a>
+            <a href="{{ url_for('timetable') }}">Timetable</a>
+            <a href="{{ url_for('scan_qr') }}">Scan QR</a>
+            <a href="{{ url_for('attendance_list') }}">Attendance</a>
+            <a href="{{ url_for('payments') }}">Payments</a>
+            <a href="{{ url_for('new_payment') }}">Record Payment</a>
+            <a href="{{ url_for('change_password') }}">Change Password</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <h2>Staff Dashboard</h2>
+                <p>{{ current_user.full_name }} · {{ current_user.username }}</p>
+            </div>
+            <span class="badge">Staff</span>
+        </header>
+
+        <section class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}
+            {% endwith %}
+
+            <div class="cards">
+                <div class="card"><span>Active Students</span><strong>{{ active_students }}</strong><small>Current active students</small></div>
+                <div class="card"><span>Pending Approvals</span><strong>{{ pending_count }}</strong><small>Need review</small></div>
+                <div class="card"><span>Today's Attendance</span><strong>{{ attendance_count }}</strong><small>QR records today</small></div>
+                <div class="card"><span>This Month Collection</span><strong>Rs. {{ "{:,.2f}".format(collection) }}</strong><small>Confirmed payments</small></div>
+            </div>
+
+            <div class="panel" style="margin-top:18px;">
+                <h3>Operational Access</h3>
+                <div class="action-list">
+                    <a class="action-row action-link" href="{{ url_for('scan_qr') }}"><span>QR Attendance Scanner</span><span class="action-button">Open</span></a>
+                    <a class="action-row action-link" href="{{ url_for('new_payment') }}"><span>Record Student Payment</span><span class="action-button">Open</span></a>
+                    <a class="action-row action-link" href="{{ url_for('pending_approvals') }}"><span>Student Approvals</span><span class="action-button">Open</span></a>
+                    <a class="action-row action-link" href="{{ url_for('students') }}"><span>Student Records</span><span class="action-button">Open</span></a>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

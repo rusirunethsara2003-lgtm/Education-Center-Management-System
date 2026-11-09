@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <title>Student Registration - Sri Sumana</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        :root {
+            --bg: #f4f5f7;
+            --surface: #ffffff;
+            --text: #171717;
+            --muted: #737373;
+            --border: #e5e7eb;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-soft: #eef2ff;
+            --green: #16a34a;
+            --green-soft: #ecfdf3;
+            --red: #dc2626;
+            --red-soft: #fef2f2;
+        }
+
+        html, body { margin: 0; min-height: 100%; }
+
+        body {
+            min-height: 100vh;
+            padding: 28px 16px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .page {
+            width: min(920px, 100%);
+            margin: 0 auto;
+        }
+
+        .brand {
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .brand strong {
+            display: block;
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 850;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .brand span {
+            display: block;
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .card {
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: var(--surface);
+            box-shadow: 0 12px 36px rgba(15, 23, 42, .06);
+        }
+
+        .head {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .head h1 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: -.02em;
+        }
+
+        .head p {
+            margin: 7px auto 0;
+            max-width: 620px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .body { padding: 22px; }
+
+        .alert {
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            background: var(--red-soft);
+            color: #991b1b;
+            font-size: 11px;
+            line-height: 1.55;
+        }
+
+        .section {
+            margin-bottom: 18px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            background: #ffffff;
+        }
+
+        .section:last-child { margin-bottom: 0; }
+
+        .section-title {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .step {
+            width: 31px;
+            height: 31px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 31px;
+            border-radius: 9px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 900;
+        }
+
+        .section-title h2 {
+            margin: 1px 0 0;
+            font-size: 14px;
+        }
+
+        .section-title p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 9px;
+            line-height: 1.45;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .field.full { grid-column: 1 / -1; }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 9px;
+            font-weight: 750;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            background: #ffffff;
+            color: var(--text);
+            outline: none;
+            font-size: 11px;
+        }
+
+        input,
+        select {
+            min-height: 44px;
+            padding: 0 12px;
+        }
+
+        textarea {
+            min-height: 92px;
+            padding: 11px 12px;
+            resize: vertical;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #a5b4fc;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, .08);
+        }
+
+        .help {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 8px;
+            line-height: 1.5;
+        }
+
+        .class-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 9px;
+        }
+
+        .class-option { position: relative; }
+
+        .class-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .class-card {
+            min-height: 96px;
+            padding: 12px;
+            display: block;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #fafafa;
+            cursor: pointer;
+            transition: .15s ease;
+        }
+
+        .class-card:hover {
+            border-color: #c7d2fe;
+            background: #fafbff;
+        }
+
+        .class-option input:checked + .class-card {
+            border-color: var(--primary);
+            background: var(--primary-soft);
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+
+        .class-card strong {
+            display: block;
+            font-size: 11px;
+        }
+
+        .class-card span {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 9px;
+            line-height: 1.4;
+        }
+
+        .class-card .fee {
+            margin-top: 8px;
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .otp-note {
+            margin-top: 14px;
+            padding: 12px;
+            border: 1px solid #c7d2fe;
+            border-radius: 10px;
+            background: var(--primary-soft);
+            color: #3730a3;
+            font-size: 9px;
+            line-height: 1.55;
+        }
+
+        .actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 9px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            min-height: 44px;
+            padding: 0 17px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9px;
+            font-size: 10px;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: var(--text);
+        }
+
+        .btn-primary {
+            border: 1px solid var(--primary);
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .privacy {
+            margin-top: 14px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 9px;
+            line-height: 1.5;
+        }
+
+        .hidden-grade { display: none; }
+
+        @media (max-width: 680px) {
+            body { padding: 12px; }
+            .body { padding: 14px; }
+            .grid, .class-list { grid-template-columns: 1fr; }
+            .actions { flex-direction: column-reverse; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+
+{% set selected_classes = form.getlist('classes') if form.getlist is defined else [] %}
+
+<div class="page">
+
+    <div class="brand">
+        <strong>Sri Sumana Education Center</strong>
+        <span>Avissawella</span>
+    </div>
+
+    <main class="card">
+
+        <header class="head">
+            <h1>Student Registration</h1>
+            <p>
+                Complete the form below. Your phone number will be verified by SMS before the registration is submitted for approval.
+            </p>
+        </header>
+
+        <div class="body">
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('public_register_student') }}" enctype="multipart/form-data" autocomplete="on">
+
+                <section class="section">
+                    <div class="section-title">
+                        <span class="step">01</span>
+                        <div>
+                            <h2>Student Details</h2>
+                            <p>Enter the student's and guardian's information.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid">
+
+                        <div class="field">
+                            <label for="full_name">Student Full Name *</label>
+                            <input id="full_name" name="full_name" type="text" maxlength="120" required value="{{ form.get('full_name', '') }}">
+                        </div>
+
+                        <div class="field">
+                            <label for="phone">Student Phone *</label>
+                            <input id="phone" name="phone" type="tel" maxlength="30" required placeholder="07XXXXXXXX" value="{{ form.get('phone', '') }}">
+                        </div>
+
+                        <div class="field">
+                            <label for="parent_name">Parent / Guardian Name *</label>
+                            <input id="parent_name" name="parent_name" type="text" maxlength="120" required value="{{ form.get('parent_name', '') }}">
+                        </div>
+
+                        <div class="field">
+                            <label for="parent_phone">Parent / Guardian Phone *</label>
+                            <input id="parent_phone" name="parent_phone" type="tel" maxlength="30" required placeholder="07XXXXXXXX" value="{{ form.get('parent_phone', '') }}">
+                            <div class="help">The SMS verification code is sent to the configured registration phone number.</div>
+                        </div>
+
+                        <div class="field">
+                            <label for="school">School</label>
+                            <input id="school" name="school" type="text" maxlength="150" value="{{ form.get('school', '') }}">
+                        </div>
+
+                        <div class="field">
+                            <label for="grade">Grade *</label>
+                            <select id="grade" name="grade" required>
+                                <option value="">Select grade</option>
+                                {% for grade_value in ['Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12','Grade 13'] %}
+                                    <option value="{{ grade_value }}" {% if form.get('grade') == grade_value %}selected{% endif %}>{{ grade_value }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="field full">
+                            <label for="address">Address</label>
+                            <textarea id="address" name="address" maxlength="500">{{ form.get('address', '') }}</textarea>
+                        </div>
+
+                        <div class="field full">
+                            <label for="student_photo">Student Photo *</label>
+                            <input id="student_photo" name="student_photo" type="file" accept="image/jpeg,image/png,image/webp" required>
+                            <div class="help">Use a clear student face photo. JPG, PNG or WEBP.</div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <section class="section">
+                    <div class="section-title">
+                        <span class="step">02</span>
+                        <div>
+                            <h2>Select Classes</h2>
+                            <p>Select one or more classes that match the student's grade.</p>
+                        </div>
+                    </div>
+
+                    <div id="class-list" class="class-list">
+                        {% for class_item in classes %}
+                            <div class="class-option" data-grade="{{ class_item.grade }}">
+                                <input
+                                    id="class_{{ loop.index }}"
+                                    name="classes"
+                                    type="checkbox"
+                                    value="{{ class_item.id }}"
+                                    {% if class_item.id in selected_classes %}checked{% endif %}
+                                >
+                                <label class="class-card" for="class_{{ loop.index }}">
+                                    <strong>{{ class_item.id }} · {{ class_item.subject }}</strong>
+                                    <span>{{ class_item.teacher }}</span>
+                                    <span>{{ class_item.schedule }}</span>
+                                    <span class="fee">Rs. {{ "{:,.0f}".format(class_item.fee) }} / month</span>
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div id="no-classes" class="otp-note" style="display:none;">
+                        No active classes are available for the selected grade.
+                    </div>
+                </section>
+
+                <div class="otp-note">
+                    <strong>SMS Verification:</strong>
+                    After you continue, a 6-digit OTP will be sent. The registration enters Pending Approvals only after the OTP is verified.
+                </div>
+
+                <div class="actions">
+                    <a class="btn btn-secondary" href="{{ url_for('public_home') }}">Back to Website</a>
+                    <button class="btn btn-primary" type="submit">Continue to SMS Verification</button>
+                </div>
+
+            </form>
+
+            <div class="privacy">
+                Student registration is separate from the Owner/Staff and Teacher dashboards.
+            </div>
+
+        </div>
+
+    </main>
+</div>
+
+<script>
+    (function () {
+        const grade = document.getElementById("grade");
+        const options = Array.from(document.querySelectorAll(".class-option"));
+        const noClasses = document.getElementById("no-classes");
+
+        function filterClasses() {
+            const selectedGrade = grade.value;
+            let visible = 0;
+
+            options.forEach(function (option) {
+                const show = Boolean(selectedGrade) && option.dataset.grade === selectedGrade;
+                option.classList.toggle("hidden-grade", !show);
+
+                if (show) {
+                    visible += 1;
+                } else {
+                    const checkbox = option.querySelector('input[type="checkbox"]');
+                    if (checkbox) checkbox.checked = false;
+                }
+            });
+
+            noClasses.style.display = selectedGrade && visible === 0 ? "block" : "none";
+        }
+
+        grade.addEventListener("change", filterClasses);
+        filterClasses();
+    })();
+</script>
+
+</body>
+</html>

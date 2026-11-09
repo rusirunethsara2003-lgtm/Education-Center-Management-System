@@ -1,0 +1,1208 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Registration Review - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Registration Review
+{% endblock %}
+
+
+{% block page_subtitle %}
+Review student information and selected classes before approval
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('pending_approvals') }}"
+    class="btn btn-secondary"
+>
+    ← Pending Approvals
+</a>
+
+<a
+    href="{{ url_for('students') }}"
+    class="btn btn-secondary"
+>
+    All Students
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    .review-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    .student-tabs {
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #ffffff;
+    }
+
+
+    .student-tab {
+        min-height: 35px;
+        padding: 0 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border-radius: 7px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 9px;
+        font-weight: 650;
+        white-space: nowrap;
+    }
+
+
+    .student-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 750;
+    }
+
+
+    .review-header-card {
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+
+    .review-student {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+
+    .review-avatar {
+        width: 54px;
+        height: 54px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 54px;
+        border-radius: 13px;
+        background: var(--primary);
+        color: #ffffff;
+        font-size: 17px;
+        font-weight: 850;
+        overflow: hidden;
+    }
+
+
+    .review-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+
+    .review-student-copy {
+        min-width: 0;
+    }
+
+
+    .review-reference {
+        color: var(--primary);
+        font-size: 7px;
+        font-weight: 850;
+    }
+
+
+    .review-student-copy h2 {
+        margin: 4px 0 0;
+        font-size: 18px;
+        font-weight: 780;
+    }
+
+
+    .review-student-copy p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+
+    .status-pill {
+        min-height: 31px;
+        padding: 0 10px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        font-size: 8px;
+        font-weight: 850;
+        white-space: nowrap;
+    }
+
+
+    .status-pill.pending {
+        background: var(--orange-soft);
+        color: var(--orange);
+    }
+
+
+    .status-pill.approved {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .status-pill.rejected {
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+
+    .review-layout {
+        display: grid;
+        grid-template-columns:
+            minmax(0, 1.25fr)
+            minmax(290px, .75fr);
+        gap: 12px;
+        align-items: start;
+    }
+
+
+    .info-body {
+        padding: 14px;
+    }
+
+
+    .info-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+
+    .info-item {
+        min-height: 76px;
+        padding: 11px;
+        border: 1px solid var(--border) !important;
+        border-radius: 9px;
+        background: #ffffff !important;
+        color: var(--text) !important;
+    }
+
+
+    .info-item.full {
+        grid-column: 1 / -1;
+    }
+
+
+    .info-item span {
+        display: block;
+        color: var(--muted) !important;
+        font-size: 7px;
+    }
+
+
+    .info-item strong {
+        display: block;
+        margin-top: 6px;
+        color: var(--text) !important;
+        font-size: 10px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+    }
+
+
+    .classes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+
+    .class-card {
+        padding: 12px;
+        border: 1px solid var(--border) !important;
+        border-radius: 9px;
+        background: #ffffff !important;
+        color: var(--text) !important;
+    }
+
+
+    .class-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+
+    .class-code {
+        min-height: 27px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 7px;
+        font-weight: 850;
+    }
+
+
+    .class-card h4 {
+        margin: 8px 0 0;
+        font-size: 10px;
+    }
+
+
+    .class-card p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+
+    .review-side {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    .action-body {
+        padding: 14px;
+    }
+
+
+    .review-warning {
+        padding: 11px;
+        border: 1px solid #fed7aa;
+        border-radius: 9px;
+        background: var(--orange-soft);
+    }
+
+
+    .review-warning strong {
+        display: block;
+        color: var(--orange);
+        font-size: 8px;
+    }
+
+
+    .review-warning p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 7px;
+        line-height: 1.55;
+    }
+
+
+    .approve-form {
+        margin-top: 12px;
+    }
+
+
+    .approve-btn {
+        width: 100%;
+        min-height: 48px;
+        border: 1px solid var(--green);
+        border-radius: 10px;
+        background: var(--green);
+        color: #ffffff;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 850;
+    }
+
+
+    .approve-btn:hover {
+        filter: brightness(.96);
+    }
+
+
+    .reject-section {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+    }
+
+
+    .reject-section label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 8px;
+        font-weight: 750;
+    }
+
+
+    .reject-reason {
+        width: 100%;
+        min-height: 90px;
+        padding: 10px;
+        resize: vertical;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #ffffff;
+        color: var(--text);
+        outline: none;
+        font-size: 9px;
+        line-height: 1.5;
+    }
+
+
+    .reject-reason:focus {
+        border-color: var(--red);
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, .07);
+    }
+
+
+    .reject-btn {
+        width: 100%;
+        min-height: 44px;
+        margin-top: 8px;
+        border: 1px solid #fecaca;
+        border-radius: 9px;
+        background: var(--red-soft);
+        color: var(--red);
+        cursor: pointer;
+        font-size: 9px;
+        font-weight: 800;
+    }
+
+
+    .review-complete {
+        padding: 14px;
+        border: 1px solid var(--border) !important;
+        border-radius: 10px;
+        background: #ffffff !important;
+        color: var(--text) !important;
+    }
+
+
+    .review-complete h3 {
+        margin: 0;
+        font-size: 11px;
+    }
+
+
+    .review-complete p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 8px;
+        line-height: 1.55;
+    }
+
+
+    .review-complete-grid {
+        margin-top: 11px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 7px;
+    }
+
+
+    .review-complete-item {
+        padding: 9px;
+        border: 1px solid var(--border) !important;
+        border-radius: 8px;
+        background: #ffffff !important;
+        color: var(--text) !important;
+    }
+
+
+    .review-complete-item span {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .review-complete-item strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 9px;
+        overflow-wrap: anywhere;
+    }
+
+
+    .approved-actions {
+        margin-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+
+    .wide-link {
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #ffffff;
+        color: var(--text);
+        text-decoration: none;
+        font-size: 8px;
+        font-weight: 750;
+    }
+
+
+    .wide-link.primary {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #ffffff;
+    }
+
+
+    /* =====================================================
+       LIGHT THEME SAFETY OVERRIDES
+       Prevent legacy dark styles from bleeding into this page.
+    ====================================================== */
+
+    .review-page .ui-panel,
+    .review-page .ui-panel-header,
+    .review-page .info-body,
+    .review-page .action-body,
+    .review-page .review-header-card,
+    .review-page .info-item,
+    .review-page .class-card,
+    .review-page .review-complete,
+    .review-page .review-complete-item {
+        background: #ffffff !important;
+        color: var(--text) !important;
+    }
+
+    .review-page .info-item span,
+    .review-page .class-card p,
+    .review-page .review-complete p,
+    .review-page .review-complete-item span {
+        color: var(--muted) !important;
+    }
+
+    .review-page .info-item strong,
+    .review-page .class-card h4,
+    .review-page .review-complete h3,
+    .review-page .review-complete-item strong {
+        color: var(--text) !important;
+    }
+
+    .review-page .review-warning {
+        background: var(--orange-soft) !important;
+        border-color: #fed7aa !important;
+    }
+
+    .review-page .reject-reason {
+        background: #ffffff !important;
+        color: var(--text) !important;
+    }
+
+
+    @media (max-width: 900px) {
+
+        .review-layout {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .review-header-card {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .info-item.full {
+            grid-column: auto;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="review-page">
+
+
+    <nav class="student-tabs">
+
+        <a
+            href="{{ url_for('students') }}"
+            class="student-tab"
+        >
+            All Students
+        </a>
+
+        <a
+            href="{{ url_for('register_student') }}"
+            class="student-tab"
+        >
+            New Registration
+        </a>
+
+        <a
+            href="{{ url_for('pending_approvals') }}"
+            class="student-tab active"
+        >
+            Pending Approvals
+        </a>
+
+    </nav>
+
+
+    <section class="review-header-card">
+
+        <div class="review-student">
+
+            <div class="review-avatar">
+
+                {% if registration.photo_filename %}
+
+                    <img
+                        src="{{ url_for('student_photo_file', filename=registration.photo_filename) }}"
+                        alt="{{ registration.full_name }}"
+                    >
+
+                {% else %}
+
+                    {{ (registration.full_name or 'S')[:2] | upper }}
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="review-student-copy">
+
+                <span class="review-reference">
+                    {{ registration.registration_ref }}
+                </span>
+
+                <h2>
+                    {{ registration.full_name }}
+                </h2>
+
+                <p>
+                    {{ registration.grade }}
+                    {% if registration.school %}
+                        · {{ registration.school }}
+                    {% endif %}
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <span
+            class="
+                status-pill
+                {% if registration.status == 'APPROVED' %}
+                    approved
+                {% elif registration.status == 'REJECTED' %}
+                    rejected
+                {% else %}
+                    pending
+                {% endif %}
+            "
+        >
+            {{ registration.status }}
+        </span>
+
+    </section>
+
+
+    <div class="review-layout">
+
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+
+
+            <section class="ui-panel">
+
+                <div class="ui-panel-header">
+
+                    <div>
+
+                        <h2>
+                            Student Information
+                        </h2>
+
+                        <p>
+                            Registration details submitted by the student or guardian
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="info-body">
+
+                    <div class="info-grid">
+
+
+                        <div class="info-item">
+
+                            <span>Full Name</span>
+
+                            <strong>
+                                {{ registration.full_name }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span>Student Phone</span>
+
+                            <strong>
+                                {{ registration.phone }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span>Parent / Guardian</span>
+
+                            <strong>
+                                {{ registration.parent_name }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span>Parent / Guardian Phone</span>
+
+                            <strong>
+                                {{ registration.parent_phone }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span>Grade</span>
+
+                            <strong>
+                                {{ registration.grade }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span>School</span>
+
+                            <strong>
+                                {{ registration.school or '—' }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item full">
+
+                            <span>Address</span>
+
+                            <strong>
+                                {{ registration.address or '—' }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span>Submitted</span>
+
+                            <strong>
+                                {{ registration.created_at or '—' }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span>Registration Reference</span>
+
+                            <strong>
+                                {{ registration.registration_ref }}
+                            </strong>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section class="ui-panel">
+
+                <div class="ui-panel-header">
+
+                    <div>
+
+                        <h2>
+                            Selected Classes
+                        </h2>
+
+                        <p>
+                            Classes requested during registration
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="info-body">
+
+                    {% if registration.classes %}
+
+                    <div class="classes-list">
+
+                        {% for class_item in registration.classes %}
+
+                        <div class="class-card">
+
+                            <div class="class-card-top">
+
+                                <span class="class-code">
+                                    {{ class_item.id }}
+                                </span>
+
+                            </div>
+
+                            <h4>
+                                {{ class_item.subject }}
+                            </h4>
+
+                            <p>
+                                Teacher:
+                                {{ class_item.teacher }}
+                            </p>
+
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="review-complete">
+
+                        <h3>
+                            No selected classes
+                        </h3>
+
+                        <p>
+                            This registration does not contain an active class selection.
+                        </p>
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+            </section>
+
+
+        </div>
+
+
+        <aside class="review-side">
+
+
+            {% if registration.status == 'PENDING' %}
+
+            <section class="ui-panel">
+
+                <div class="ui-panel-header">
+
+                    <div>
+
+                        <h2>
+                            Review Decision
+                        </h2>
+
+                        <p>
+                            Approve or reject this registration
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="action-body">
+
+                    <div class="review-warning">
+
+                        <strong>
+                            Before approving
+                        </strong>
+
+                        <p>
+                            Confirm the student's details and selected classes.
+                            Approval creates the active student record, student ID,
+                            secure QR token and class enrollments.
+                        </p>
+
+                    </div>
+
+
+                    <form
+                        method="POST"
+                        action="{{ url_for('approve_registration', registration_id=registration.id) }}"
+                        class="approve-form"
+                        onsubmit="return confirmApproval();"
+                    >
+
+                        <button
+                            type="submit"
+                            class="approve-btn"
+                        >
+                            ✓ Approve Registration
+                        </button>
+
+                    </form>
+
+
+                    <div class="reject-section">
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('reject_registration', registration_id=registration.id) }}"
+                            onsubmit="return confirmRejection();"
+                        >
+
+                            <label for="rejection_reason">
+                                Rejection Reason
+                            </label>
+
+                            <textarea
+                                id="rejection_reason"
+                                name="rejection_reason"
+                                class="reject-reason"
+                                placeholder="Enter the reason for rejecting this registration..."
+                                required
+                            ></textarea>
+
+                            <button
+                                type="submit"
+                                class="reject-btn"
+                            >
+                                Reject Registration
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            {% else %}
+
+            <section class="ui-panel">
+
+                <div class="ui-panel-header">
+
+                    <div>
+
+                        <h2>
+                            Review Complete
+                        </h2>
+
+                        <p>
+                            This registration has already been reviewed
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="action-body">
+
+                    <div class="review-complete">
+
+                        <h3>
+                            {{ registration.status }}
+                        </h3>
+
+                        <p>
+                            No further approval or rejection action is available.
+                        </p>
+
+
+                        <div class="review-complete-grid">
+
+
+                            <div class="review-complete-item">
+
+                                <span>Reviewed At</span>
+
+                                <strong>
+                                    {{ registration.reviewed_at or '—' }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="review-complete-item">
+
+                                <span>Review Note</span>
+
+                                <strong>
+                                    {{ registration.review_note or '—' }}
+                                </strong>
+
+                            </div>
+
+
+                            {% if registration.status == 'APPROVED' %}
+
+                            <div class="review-complete-item">
+
+                                <span>Student ID</span>
+
+                                <strong>
+                                    {{ registration.student_code or '—' }}
+                                </strong>
+
+                            </div>
+
+                            {% endif %}
+
+
+                            {% if registration.status == 'REJECTED' %}
+
+                            <div class="review-complete-item">
+
+                                <span>Rejection Reason</span>
+
+                                <strong>
+                                    {{ registration.rejection_reason or '—' }}
+                                </strong>
+
+                            </div>
+
+                            {% endif %}
+
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="approved-actions">
+
+                        <a
+                            href="{{ url_for('pending_approvals') }}"
+                            class="wide-link primary"
+                        >
+                            Back to Approvals
+                        </a>
+
+                        <a
+                            href="{{ url_for('students') }}"
+                            class="wide-link"
+                        >
+                            All Students
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            {% endif %}
+
+
+            <section class="ui-panel">
+
+                <div class="ui-panel-header">
+
+                    <div>
+
+                        <h2>
+                            Review Summary
+                        </h2>
+
+                        <p>
+                            Registration snapshot
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="action-body">
+
+                    <div class="review-complete-grid">
+
+
+                        <div class="review-complete-item">
+
+                            <span>Student</span>
+
+                            <strong>
+                                {{ registration.full_name }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="review-complete-item">
+
+                            <span>Grade</span>
+
+                            <strong>
+                                {{ registration.grade }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="review-complete-item">
+
+                            <span>Selected Classes</span>
+
+                            <strong>
+                                {{ registration.classes | length }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="review-complete-item">
+
+                            <span>Current Status</span>
+
+                            <strong>
+                                {{ registration.status }}
+                            </strong>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+        </aside>
+
+
+    </div>
+
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+    function confirmApproval() {
+
+        return window.confirm(
+            "Approve this student registration?\n\n"
+            +
+            "This will create the active student record, "
+            +
+            "student ID, QR pass and class enrollments."
+        );
+
+    }
+
+
+    function confirmRejection() {
+
+        const reason =
+            document.getElementById(
+                "rejection_reason"
+            ).value.trim();
+
+
+        if (
+            !reason
+        ) {
+
+            alert(
+                "Please enter a rejection reason."
+            );
+
+            return false;
+
+        }
+
+
+        return window.confirm(
+            "Reject this student registration?"
+        );
+
+    }
+
+</script>
+
+{% endblock %}

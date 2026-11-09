@@ -1,0 +1,1532 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Attendance - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Attendance
+{% endblock %}
+
+
+{% block page_subtitle %}
+
+    {% if active_tab == 'today' %}
+
+        Today's attendance and scheduled classes
+
+    {% elif active_tab == 'class' %}
+
+        Review attendance by class and month
+
+    {% else %}
+
+        Student attendance history
+
+    {% endif %}
+
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('scan_qr') }}"
+    class="btn btn-primary"
+>
+    Scan QR
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       TABS
+    ====================================================== */
+
+    .attendance-tabs {
+        margin-bottom: 12px;
+
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .attendance-tab {
+        min-height: 35px;
+
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+
+    .attendance-tab:hover {
+        background: #f5f5f5;
+
+        color: #262626;
+    }
+
+
+    .attendance-tab.active {
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       SUMMARY
+    ====================================================== */
+
+    .attendance-summary {
+        margin-bottom: 12px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(0, 1fr)
+            );
+
+        gap: 10px;
+    }
+
+
+    .attendance-stat {
+        min-height: 88px;
+
+        padding: 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .attendance-stat span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .attendance-stat strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 18px;
+        font-weight: 750;
+    }
+
+
+    .blue {
+        color: var(--blue);
+    }
+
+
+    .green {
+        color: var(--green);
+    }
+
+
+    /* =====================================================
+       FILTER
+    ====================================================== */
+
+    .attendance-filter {
+        margin-bottom: 12px;
+
+        padding: 12px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            )
+            auto;
+
+        gap: 8px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .attendance-filter.two {
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, 1fr)
+            auto;
+    }
+
+
+    .filter-field label {
+        display: block;
+
+        margin-bottom: 5px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+        font-weight: 700;
+    }
+
+
+    .filter-control {
+        width: 100%;
+        min-height: 36px;
+
+        padding: 0 9px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: #262626;
+
+        font-size: 9px;
+
+        outline: none;
+    }
+
+
+    .filter-control:focus {
+        border-color: var(--primary);
+    }
+
+
+    .filter-action {
+        display: flex;
+        align-items: flex-end;
+    }
+
+
+    /* =====================================================
+       TABLE
+    ====================================================== */
+
+    .table-wrap {
+        overflow-x: auto;
+    }
+
+
+    .attendance-table {
+        width: 100%;
+
+        min-width: 820px;
+
+        border-collapse: collapse;
+    }
+
+
+    .attendance-table th {
+        padding: 10px 12px;
+
+        background: #fafafa;
+
+        border-bottom: 1px solid var(--border);
+
+        color: var(--muted);
+
+        text-align: left;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+    }
+
+
+    .attendance-table td {
+        padding: 12px;
+
+        border-bottom: 1px solid var(--border);
+
+        font-size: 9px;
+
+        vertical-align: middle;
+    }
+
+
+    .attendance-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+
+    .table-primary {
+        display: block;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+
+    .table-secondary {
+        display: block;
+
+        margin-top: 2px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .status-badge {
+        display: inline-flex;
+
+        padding: 4px 7px;
+
+        border-radius: 999px;
+
+        background: var(--green-soft);
+
+        color: var(--green);
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .status-badge.upcoming {
+        background: var(--blue-soft);
+
+        color: var(--blue);
+    }
+
+
+    .status-badge.finished {
+        background: #f4f4f5;
+
+        color: #525252;
+    }
+
+
+    .status-badge.in-progress {
+        background: var(--green-soft);
+
+        color: var(--green);
+    }
+
+
+    /* =====================================================
+       EMPTY
+    ====================================================== */
+
+    .attendance-empty {
+        min-height: 190px;
+
+        padding: 30px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        text-align: center;
+    }
+
+
+    .attendance-empty strong {
+        font-size: 10px;
+    }
+
+
+    .attendance-empty p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .section-space {
+        margin-top: 12px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 900px) {
+
+        .attendance-summary {
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+        }
+
+
+        .attendance-filter,
+        .attendance-filter.two {
+            grid-template-columns: 1fr 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 600px) {
+
+        .attendance-summary,
+        .attendance-filter,
+        .attendance-filter.two {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+{% include "attendance_nav.html" %}
+
+
+<!-- =====================================================
+     TODAY
+====================================================== -->
+
+{% if active_tab == 'today' %}
+
+
+<div class="attendance-summary">
+
+
+    <div class="attendance-stat">
+
+        <span>
+            Attendance Records
+        </span>
+
+        <strong>
+            {{ stats.records }}
+        </strong>
+
+    </div>
+
+
+    <div class="attendance-stat">
+
+        <span>
+            Students Present
+        </span>
+
+        <strong class="green">
+            {{ stats.students }}
+        </strong>
+
+    </div>
+
+
+    <div class="attendance-stat">
+
+        <span>
+            Scheduled Classes
+        </span>
+
+        <strong class="blue">
+            {{ stats.scheduled_classes }}
+        </strong>
+
+    </div>
+
+
+    <div class="attendance-stat">
+
+        <span>
+            Latest Check-In
+        </span>
+
+        <strong>
+            {{ stats.latest_check_in }}
+        </strong>
+
+    </div>
+
+
+</div>
+
+
+<section class="ui-panel">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Today's Classes
+            </h2>
+
+            <p>
+                {{ today_label }}
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for('timetable') }}"
+            class="ui-panel-link"
+        >
+            Timetable →
+        </a>
+
+    </div>
+
+
+    {% if today_classes %}
+
+
+    <div class="table-wrap">
+
+
+        <table class="attendance-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Class
+                    </th>
+
+                    <th>
+                        Teacher
+                    </th>
+
+                    <th>
+                        Time
+                    </th>
+
+                    <th>
+                        Students
+                    </th>
+
+                    <th>
+                        Present
+                    </th>
+
+                    <th>
+                        Rate
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for class in today_classes %}
+
+
+                <tr>
+
+                    <td>
+
+                        <span class="table-primary">
+                            {{ class.class_name }}
+                        </span>
+
+                        <span class="table-secondary">
+                            {{ class.class_code }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        {{ class.teacher_name }}
+                    </td>
+
+
+                    <td>
+
+                        {{ class.start_display }}
+
+                        –
+
+                        {{ class.end_display }}
+
+                    </td>
+
+
+                    <td>
+                        {{ class.enrolled_count }}
+                    </td>
+
+
+                    <td>
+                        {{ class.present_count }}
+                    </td>
+
+
+                    <td>
+                        {{ class.attendance_rate }}%
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="
+                                status-badge
+                                {{
+                                    class.status_label
+                                    |lower
+                                    |replace(' ', '-')
+                                }}
+                            "
+                        >
+                            {{ class.status_label }}
+                        </span>
+
+                    </td>
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <div class="attendance-empty">
+
+        <strong>
+            No classes scheduled today.
+        </strong>
+
+        <p>
+            Today's timetable has no active classes.
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+<section class="ui-panel section-space">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Today's Check-Ins
+            </h2>
+
+            <p>
+                Latest QR attendance records
+            </p>
+
+        </div>
+
+    </div>
+
+
+    {% if records %}
+
+
+    <div class="table-wrap">
+
+
+        <table class="attendance-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Time
+                    </th>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Class
+                    </th>
+
+                    <th>
+                        Teacher
+                    </th>
+
+                    <th>
+                        Source
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for record in records %}
+
+
+                <tr>
+
+                    <td>
+                        {{ record.check_in_time }}
+                    </td>
+
+
+                    <td>
+
+                        <span class="table-primary">
+
+                            {{ record.student_code }}
+
+                            ·
+
+                            {{ record.full_name }}
+
+                        </span>
+
+                        <span class="table-secondary">
+                            Grade {{ record.grade }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        {{ record.class_name or record.class_code }}
+
+                    </td>
+
+
+                    <td>
+                        {{ record.teacher_name or '—' }}
+                    </td>
+
+
+                    <td>
+                        {{ record.source }}
+                    </td>
+
+
+                    <td>
+
+                        <span class="status-badge">
+                            {{ record.status }}
+                        </span>
+
+                    </td>
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <div class="attendance-empty">
+
+        <strong>
+            No attendance marked today.
+        </strong>
+
+        <p>
+            Scan a student QR to create the first record.
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+<!-- =====================================================
+     CLASS ATTENDANCE
+====================================================== -->
+
+{% elif active_tab == 'class' %}
+
+
+<form
+    method="GET"
+    action="{{ url_for('class_attendance') }}"
+    class="attendance-filter two"
+>
+
+
+    <div class="filter-field">
+
+        <label>
+            Class
+        </label>
+
+
+        <select
+            name="class_code"
+            class="filter-control"
+            required
+        >
+
+            {% for class in classes %}
+
+            <option
+                value="{{ class.class_code }}"
+
+                {% if
+                    class.class_code
+                    ==
+                    selected_class
+                %}
+                    selected
+                {% endif %}
+            >
+
+                {{ class.class_code }}
+
+                ·
+
+                {{ class.class_name }}
+
+                ·
+
+                {{ class.teacher_name }}
+
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+
+    <div class="filter-field">
+
+        <label>
+            Month
+        </label>
+
+        <input
+            type="month"
+            name="month"
+            value="{{ selected_month }}"
+            class="filter-control"
+            required
+        >
+
+    </div>
+
+
+    <div class="filter-action">
+
+        <button
+            type="submit"
+            class="btn btn-primary"
+        >
+            Apply
+        </button>
+
+    </div>
+
+
+</form>
+
+
+<div class="attendance-summary">
+
+
+    <div class="attendance-stat">
+
+        <span>
+            Enrolled Students
+        </span>
+
+        <strong>
+            {{ stats.enrolled }}
+        </strong>
+
+    </div>
+
+
+    <div class="attendance-stat">
+
+        <span>
+            Attendance Records
+        </span>
+
+        <strong>
+            {{ stats.records }}
+        </strong>
+
+    </div>
+
+
+    <div class="attendance-stat">
+
+        <span>
+            Recorded Class Days
+        </span>
+
+        <strong class="blue">
+            {{ stats.class_days }}
+        </strong>
+
+    </div>
+
+
+    <div class="attendance-stat">
+
+        <span>
+            Attendance Rate
+        </span>
+
+        <strong class="green">
+            {{ stats.rate }}%
+        </strong>
+
+    </div>
+
+
+</div>
+
+
+<section class="ui-panel">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+
+                {% if selected_class_item %}
+
+                    {{ selected_class_item.class_name }}
+
+                {% else %}
+
+                    Class Attendance
+
+                {% endif %}
+
+            </h2>
+
+            <p>
+                {{ month_label }}
+            </p>
+
+        </div>
+
+
+        {% if selected_class_item %}
+
+        <a
+            href="{{ url_for(
+                'class_profile',
+                class_code=selected_class,
+                tab='attendance',
+                month=selected_month
+            ) }}"
+            class="ui-panel-link"
+        >
+            Class Profile →
+        </a>
+
+        {% endif %}
+
+    </div>
+
+
+    {% if records %}
+
+
+    <div class="table-wrap">
+
+
+        <table class="attendance-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Date
+                    </th>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Check-In
+                    </th>
+
+                    <th>
+                        Source
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for record in records %}
+
+
+                <tr>
+
+                    <td>
+                        {{ record.attendance_date }}
+                    </td>
+
+
+                    <td>
+
+                        <a
+                            href="{{ url_for(
+                                'student_profile',
+                                student_id=record.student_id,
+                                tab='attendance'
+                            ) }}"
+                            style="
+                                color:inherit;
+                                text-decoration:none;
+                            "
+                        >
+
+                            <span class="table-primary">
+
+                                {{ record.student_code }}
+
+                                ·
+
+                                {{ record.full_name }}
+
+                            </span>
+
+                            <span class="table-secondary">
+                                Grade {{ record.grade }}
+                            </span>
+
+                        </a>
+
+                    </td>
+
+
+                    <td>
+                        {{ record.check_in_time }}
+                    </td>
+
+
+                    <td>
+                        {{ record.source }}
+                    </td>
+
+
+                    <td>
+
+                        <span class="status-badge">
+                            {{ record.status }}
+                        </span>
+
+                    </td>
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <div class="attendance-empty">
+
+        <strong>
+            No attendance records found.
+        </strong>
+
+        <p>
+            No attendance has been recorded for this class
+            during {{ month_label }}.
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+<!-- =====================================================
+     HISTORY
+====================================================== -->
+
+{% elif active_tab == 'history' %}
+
+
+<form
+    method="GET"
+    action="{{ url_for('attendance_list') }}"
+    class="attendance-filter"
+>
+
+
+    <div class="filter-field">
+
+        <label>
+            Search Student
+        </label>
+
+        <input
+            type="text"
+            name="search"
+            value="{{ search }}"
+            class="filter-control"
+            placeholder="Name or student ID"
+        >
+
+    </div>
+
+
+    <div class="filter-field">
+
+        <label>
+            Class
+        </label>
+
+        <select
+            name="class_code"
+            class="filter-control"
+        >
+
+            <option value="">
+                All Classes
+            </option>
+
+
+            {% for class in classes %}
+
+            <option
+                value="{{ class.class_code }}"
+
+                {% if
+                    class.class_code
+                    ==
+                    class_filter
+                %}
+                    selected
+                {% endif %}
+            >
+
+                {{ class.class_code }}
+
+                ·
+
+                {{ class.class_name }}
+
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+
+    <div class="filter-field">
+
+        <label>
+            Date
+        </label>
+
+        <input
+            type="date"
+            name="date"
+            value="{{ date_filter }}"
+            class="filter-control"
+        >
+
+    </div>
+
+
+    <div class="filter-action">
+
+        <button
+            type="submit"
+            class="btn btn-primary"
+        >
+            Apply
+        </button>
+
+    </div>
+
+
+</form>
+
+
+<div class="attendance-summary">
+
+
+    <div class="attendance-stat">
+
+        <span>
+            Matching Records
+        </span>
+
+        <strong>
+            {{ stats.records }}
+        </strong>
+
+    </div>
+
+
+    <div class="attendance-stat">
+
+        <span>
+            Students
+        </span>
+
+        <strong class="green">
+            {{ stats.students }}
+        </strong>
+
+    </div>
+
+
+    <div class="attendance-stat">
+
+        <span>
+            Classes
+        </span>
+
+        <strong class="blue">
+            {{ stats.classes }}
+        </strong>
+
+    </div>
+
+
+    <div class="attendance-stat">
+
+        <span>
+            Attendance Dates
+        </span>
+
+        <strong>
+            {{ stats.dates }}
+        </strong>
+
+    </div>
+
+
+</div>
+
+
+<section class="ui-panel">
+
+
+    <div class="ui-panel-header">
+
+        <div>
+
+            <h2>
+                Attendance History
+            </h2>
+
+            <p>
+                Latest 500 matching records
+            </p>
+
+        </div>
+
+    </div>
+
+
+    {% if records %}
+
+
+    <div class="table-wrap">
+
+
+        <table class="attendance-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Date / Time
+                    </th>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Class
+                    </th>
+
+                    <th>
+                        Teacher
+                    </th>
+
+                    <th>
+                        Source
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for record in records %}
+
+
+                <tr>
+
+
+                    <td>
+
+                        <span class="table-primary">
+                            {{ record.attendance_date }}
+                        </span>
+
+                        <span class="table-secondary">
+                            {{ record.check_in_time }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <a
+                            href="{{ url_for(
+                                'student_profile',
+                                student_id=record.student_id,
+                                tab='attendance'
+                            ) }}"
+                            style="
+                                color:inherit;
+                                text-decoration:none;
+                            "
+                        >
+
+                            <span class="table-primary">
+
+                                {{ record.student_code }}
+
+                                ·
+
+                                {{ record.full_name }}
+
+                            </span>
+
+                            <span class="table-secondary">
+                                Grade {{ record.grade }}
+                            </span>
+
+                        </a>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="table-primary">
+
+                            {{ record.class_name or record.class_code }}
+
+                        </span>
+
+                        <span class="table-secondary">
+                            {{ record.class_code }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        {{ record.teacher_name or '—' }}
+                    </td>
+
+
+                    <td>
+                        {{ record.source }}
+                    </td>
+
+
+                    <td>
+
+                        <span class="status-badge">
+                            {{ record.status }}
+                        </span>
+
+                    </td>
+
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+    {% else %}
+
+
+    <div class="attendance-empty">
+
+        <strong>
+            No attendance records found.
+        </strong>
+
+        <p>
+            Change the filters or scan a student QR.
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+{% endif %}
+
+
+{% endblock %}

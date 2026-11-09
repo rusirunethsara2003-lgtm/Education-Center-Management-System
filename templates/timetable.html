@@ -1,0 +1,1063 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Weekly Timetable - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Weekly Timetable
+{% endblock %}
+
+
+{% block page_subtitle %}
+Monday to Sunday active class schedule
+{% endblock %}
+
+
+{% block page_actions %}
+
+{% if current_user and current_user.role == 'OWNER' %}
+
+<a
+    href="{{ url_for('class_management') }}"
+    class="btn btn-secondary"
+>
+    Class Management
+</a>
+
+<a
+    href="{{ url_for('new_class') }}"
+    class="btn btn-primary"
+>
+    + Add Class
+</a>
+
+{% endif %}
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       PAGE
+    ====================================================== */
+
+    .timetable-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       CLASS NAVIGATION
+    ====================================================== */
+
+    .class-tabs {
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .class-tab {
+        min-height: 35px;
+
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+
+    .class-tab:hover {
+        background: #f5f5f5;
+
+        color: var(--text);
+    }
+
+
+    .class-tab.active {
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       SUMMARY
+    ====================================================== */
+
+    .timetable-summary {
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+
+    .timetable-summary-card {
+        min-height: 96px;
+
+        padding: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .timetable-summary-card span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .timetable-summary-card strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 20px;
+        font-weight: 750;
+    }
+
+
+    .timetable-summary-card small {
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .timetable-summary-card.green strong {
+        color: var(--green);
+    }
+
+
+    .timetable-summary-card.blue strong {
+        color: var(--blue);
+    }
+
+
+    .timetable-summary-card.orange strong {
+        color: var(--orange);
+    }
+
+
+    /* =====================================================
+       TOOLBAR
+    ====================================================== */
+
+    .timetable-toolbar {
+        padding: 12px 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .timetable-toolbar-copy strong {
+        display: block;
+
+        font-size: 10px;
+    }
+
+
+    .timetable-toolbar-copy span {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .today-chip {
+        min-height: 28px;
+
+        padding: 0 10px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        background: var(--green-soft);
+
+        color: var(--green);
+
+        font-size: 7px;
+        font-weight: 800;
+
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       WEEK GRID
+    ====================================================== */
+
+    .week-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 12px;
+
+        align-items: start;
+    }
+
+
+    /* =====================================================
+       DAY CARD
+    ====================================================== */
+
+    .day-card {
+        overflow: hidden;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+    }
+
+
+    .day-card.today {
+        border-color: #86efac;
+
+        box-shadow:
+            0 0 0 2px
+            rgba(22, 163, 74, 0.04);
+    }
+
+
+    .day-header {
+        min-height: 58px;
+
+        padding: 13px 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 10px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .day-header-left {
+        min-width: 0;
+    }
+
+
+    .day-header h2 {
+        margin: 0;
+
+        font-size: 13px;
+        font-weight: 760;
+    }
+
+
+    .day-header p {
+        margin: 3px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .day-today {
+        min-height: 24px;
+
+        padding: 0 8px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        background: var(--green-soft);
+
+        color: var(--green);
+
+        font-size: 7px;
+        font-weight: 800;
+
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       CLASS LIST
+    ====================================================== */
+
+    .day-class-list {
+        padding: 11px;
+
+        display: flex;
+        flex-direction: column;
+
+        gap: 8px;
+    }
+
+
+    .schedule-class {
+        padding: 11px 12px;
+
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            auto;
+
+        gap: 12px;
+
+        align-items: center;
+
+        border: 1px solid var(--border);
+        border-radius: 9px;
+
+        background: #fafafa;
+
+        text-decoration: none;
+
+        transition:
+            border-color 0.15s ease,
+            background 0.15s ease;
+    }
+
+
+    .schedule-class:hover {
+        border-color: #c7d2fe;
+
+        background: var(--primary-soft);
+    }
+
+
+    .schedule-main {
+        min-width: 0;
+    }
+
+
+    .schedule-top {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+
+        flex-wrap: wrap;
+    }
+
+
+    .schedule-code {
+        min-height: 22px;
+
+        padding: 0 7px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 6px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .schedule-status {
+        min-height: 22px;
+
+        padding: 0 7px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        font-size: 6px;
+        font-weight: 800;
+    }
+
+
+    .schedule-status.current,
+    .schedule-status.now,
+    .schedule-status.ongoing {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .schedule-status.upcoming {
+        background: var(--blue-soft);
+        color: var(--blue);
+    }
+
+
+    .schedule-status.completed,
+    .schedule-status.finished {
+        background: #f4f4f5;
+        color: #71717a;
+    }
+
+
+    .schedule-main h3 {
+        margin: 8px 0 0;
+
+        overflow: hidden;
+
+        font-size: 10px;
+        font-weight: 750;
+
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+
+    .schedule-meta {
+        margin-top: 5px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 5px;
+
+        flex-wrap: wrap;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .schedule-meta-separator {
+        color: var(--muted-light);
+    }
+
+
+    /* =====================================================
+       TIME
+    ====================================================== */
+
+    .schedule-time {
+        min-width: 90px;
+
+        text-align: right;
+    }
+
+
+    .schedule-time strong {
+        display: block;
+
+        color: var(--primary);
+
+        font-size: 9px;
+        font-weight: 800;
+
+        white-space: nowrap;
+    }
+
+
+    .schedule-time span {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       EMPTY DAY
+    ====================================================== */
+
+    .day-empty {
+        min-height: 105px;
+
+        padding: 24px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        color: var(--muted);
+
+        text-align: center;
+    }
+
+
+    .day-empty-icon {
+        width: 34px;
+        height: 34px;
+
+        margin-bottom: 7px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 8px;
+
+        background: #f4f4f5;
+
+        color: var(--muted);
+
+        font-size: 9px;
+        font-weight: 800;
+    }
+
+
+    .day-empty strong {
+        color: var(--text);
+
+        font-size: 8px;
+    }
+
+
+    .day-empty span {
+        margin-top: 4px;
+
+        font-size: 7px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 1000px) {
+
+        .timetable-summary {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+
+        .week-grid {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .timetable-summary {
+            grid-template-columns: 1fr;
+        }
+
+
+        .timetable-toolbar {
+            align-items: flex-start;
+
+            flex-direction: column;
+        }
+
+
+        .schedule-class {
+            grid-template-columns: 1fr;
+        }
+
+
+        .schedule-time {
+            min-width: 0;
+
+            text-align: left;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+{% set timetable_stats = namespace(
+    total_classes=0,
+    today_classes=0,
+    active_days=0,
+    empty_days=0
+) %}
+
+
+{% for day, items in schedule.items() %}
+
+    {% set timetable_stats.total_classes =
+        timetable_stats.total_classes
+        +
+        (items|length)
+    %}
+
+
+    {% if items|length > 0 %}
+
+        {% set timetable_stats.active_days =
+            timetable_stats.active_days + 1
+        %}
+
+    {% else %}
+
+        {% set timetable_stats.empty_days =
+            timetable_stats.empty_days + 1
+        %}
+
+    {% endif %}
+
+
+    {% if day == current_day %}
+
+        {% set timetable_stats.today_classes =
+            items|length
+        %}
+
+    {% endif %}
+
+{% endfor %}
+
+
+<div class="timetable-page">
+
+
+    <!-- =================================================
+         CLASS NAVIGATION
+    ================================================== -->
+
+    <nav class="class-tabs">
+
+
+        {% if current_user and current_user.role == 'OWNER' %}
+
+        <a
+            href="{{ url_for('class_management') }}"
+            class="class-tab"
+        >
+            Class Management
+        </a>
+
+        {% endif %}
+
+
+        <a
+            href="{{ url_for('timetable') }}"
+            class="class-tab active"
+        >
+            Timetable
+        </a>
+
+
+        {% if current_user and current_user.role == 'OWNER' %}
+
+        <a
+            href="{{ url_for('teachers') }}"
+            class="class-tab"
+        >
+            Teachers
+        </a>
+
+        {% endif %}
+
+    </nav>
+
+
+    <!-- =================================================
+         SUMMARY
+    ================================================== -->
+
+    <div class="timetable-summary">
+
+
+        <div class="timetable-summary-card">
+
+            <span>
+                Weekly Classes
+            </span>
+
+            <strong>
+                {{ timetable_stats.total_classes }}
+            </strong>
+
+            <small>
+                Active class sessions this week
+            </small>
+
+        </div>
+
+
+        <div class="timetable-summary-card green">
+
+            <span>
+                Today's Classes
+            </span>
+
+            <strong>
+                {{ timetable_stats.today_classes }}
+            </strong>
+
+            <small>
+                Classes scheduled for {{ current_day }}
+            </small>
+
+        </div>
+
+
+        <div class="timetable-summary-card blue">
+
+            <span>
+                Teaching Days
+            </span>
+
+            <strong>
+                {{ timetable_stats.active_days }}
+            </strong>
+
+            <small>
+                Days with at least one active class
+            </small>
+
+        </div>
+
+
+        <div class="timetable-summary-card orange">
+
+            <span>
+                Free Days
+            </span>
+
+            <strong>
+                {{ timetable_stats.empty_days }}
+            </strong>
+
+            <small>
+                Days with no active classes
+            </small>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =================================================
+         TOOLBAR
+    ================================================== -->
+
+    <section class="timetable-toolbar">
+
+        <div class="timetable-toolbar-copy">
+
+            <strong>
+                Weekly Schedule
+            </strong>
+
+            <span>
+                Active classes ordered by day and starting time
+            </span>
+
+        </div>
+
+
+        <span class="today-chip">
+            TODAY · {{ current_day }}
+        </span>
+
+    </section>
+
+
+    <!-- =================================================
+         WEEK
+    ================================================== -->
+
+    <div class="week-grid">
+
+
+        {% for day, items in schedule.items() %}
+
+
+        <section
+            class="
+                day-card
+
+                {% if day == current_day %}
+                    today
+                {% endif %}
+            "
+        >
+
+
+            <!-- DAY HEADER -->
+
+            <div class="day-header">
+
+
+                <div class="day-header-left">
+
+                    <h2>
+                        {{ day }}
+                    </h2>
+
+                    <p>
+
+                        {% if items %}
+
+                            {{ items|length }}
+
+                            class{% if items|length != 1 %}es{% endif %}
+
+                            scheduled
+
+                        {% else %}
+
+                            No scheduled classes
+
+                        {% endif %}
+
+                    </p>
+
+                </div>
+
+
+                {% if day == current_day %}
+
+                    <span class="day-today">
+                        TODAY
+                    </span>
+
+                {% endif %}
+
+
+            </div>
+
+
+            <!-- CLASSES -->
+
+            {% if items %}
+
+
+            <div class="day-class-list">
+
+
+                {% for item in items %}
+
+
+                <a
+                    href="{{ url_for(
+                        'class_profile',
+                        class_code=item.class_code
+                    ) }}"
+                    class="schedule-class"
+                >
+
+
+                    <!-- DETAILS -->
+
+                    <div class="schedule-main">
+
+
+                        <div class="schedule-top">
+
+
+                            <span class="schedule-code">
+                                {{ item.class_code }}
+                            </span>
+
+
+                            {% if item.status_label %}
+
+                            <span
+                                class="
+                                    schedule-status
+                                    {{ item.status_label|lower|replace(' ', '-') }}
+                                "
+                            >
+                                {{ item.status_label }}
+                            </span>
+
+                            {% endif %}
+
+
+                        </div>
+
+
+                        <h3>
+
+                            {{ item.class_name }}
+
+                        </h3>
+
+
+                        <div class="schedule-meta">
+
+
+                            <span>
+                                {{ item.grade }}
+                            </span>
+
+
+                            <span class="schedule-meta-separator">
+                                ·
+                            </span>
+
+
+                            <span>
+                                {{ item.subject }}
+                            </span>
+
+
+                            <span class="schedule-meta-separator">
+                                ·
+                            </span>
+
+
+                            <span>
+                                {{ item.teacher_name }}
+                            </span>
+
+
+                            {% if item.room %}
+
+                                <span class="schedule-meta-separator">
+                                    ·
+                                </span>
+
+
+                                <span>
+                                    {{ item.room }}
+                                </span>
+
+                            {% endif %}
+
+
+                        </div>
+
+
+                    </div>
+
+
+                    <!-- TIME -->
+
+                    <div class="schedule-time">
+
+                        <strong>
+                            {{ item.start_display }}
+                        </strong>
+
+                        <span>
+                            to {{ item.end_display }}
+                        </span>
+
+                    </div>
+
+
+                </a>
+
+
+                {% endfor %}
+
+
+            </div>
+
+
+            {% else %}
+
+
+            <div class="day-empty">
+
+
+                <div class="day-empty-icon">
+                    ◷
+                </div>
+
+
+                <strong>
+                    No classes
+                </strong>
+
+
+                <span>
+                    No active classes scheduled for {{ day }}.
+                </span>
+
+
+            </div>
+
+
+            {% endif %}
+
+
+        </section>
+
+
+        {% endfor %}
+
+
+    </div>
+
+
+</div>
+
+{% endblock %}

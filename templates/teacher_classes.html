@@ -1,0 +1,68 @@
+{% extends "teacher_base.html" %}
+{% block title %}My Classes - Teacher Portal{% endblock %}
+{% block page_title %}My Classes{% endblock %}
+{% block content %}
+<div class="page-stack">
+    <div class="page-intro">
+        <div>
+            <h2>My Classes</h2>
+            <p>Open a class profile to manage students, attendance and payment status.</p>
+        </div>
+        <a class="btn btn-secondary" href="{{ url_for('teacher_attendance') }}">Attendance History →</a>
+    </div>
+
+    <section class="ui-panel">
+        <div class="ui-panel-header">
+            <div>
+                <h2>Assigned Active Classes</h2>
+                <p>{{ summary.classes|length }} class(es) assigned to you</p>
+            </div>
+        </div>
+        <div class="panel-body">
+            {% if summary.classes %}
+                <div class="class-card-grid">
+                    {% for class_item in summary.classes %}
+                        <article class="class-card">
+                            <div class="class-card-top">
+                                <div>
+                                    <h3>{{ class_item.class_code }} · {{ class_item.class_name }}</h3>
+                                    <p>
+                                        {{ class_item.subject }} · Grade {{ class_item.grade }}<br>
+                                        {{ class_item.day }} · {{ class_item.start_display }} - {{ class_item.end_display }}
+                                        {% if class_item.room %} · {{ class_item.room }}{% endif %}
+                                    </p>
+                                </div>
+                                <span class="schedule-badge {% if class_item.day == today_day_name %}today{% endif %}">
+                                    {% if class_item.day == today_day_name %}TODAY{% else %}{{ class_item.day|upper }}{% endif %}
+                                </span>
+                            </div>
+
+                            <div class="class-card-stats">
+                                <div class="class-card-stat">
+                                    <span>Students</span>
+                                    <strong>{{ class_item.student_count }}</strong>
+                                </div>
+                                <div class="class-card-stat">
+                                    <span>Monthly Fee</span>
+                                    <strong>Rs. {{ "{:,.0f}".format(class_item.monthly_fee) }}</strong>
+                                </div>
+                                <div class="class-card-stat">
+                                    <span>Collected</span>
+                                    <strong class="text-green">Rs. {{ "{:,.0f}".format(class_item.collected) }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="class-card-actions">
+                                <span class="muted">{{ class_item.paid_count }} paid · {{ class_item.partial_count }} partial · {{ class_item.unpaid_count }} unpaid</span>
+                                <a class="btn btn-primary" href="{{ url_for('teacher_class_profile', class_code=class_item.class_code, month=selected_month) }}">Open Class →</a>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">No active classes are assigned to this Teacher account.</div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

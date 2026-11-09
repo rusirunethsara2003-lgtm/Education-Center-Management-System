@@ -1,0 +1,27 @@
+{% extends "teacher_base.html" %}
+{% block title %}Attendance - Teacher Portal{% endblock %}
+{% block page_title %}Attendance{% endblock %}
+{% block content %}
+<div class="page-stack">
+    <div class="page-intro">
+        <div><h2>Attendance</h2><p>Recent attendance records from your assigned classes only.</p></div>
+        <a class="btn btn-secondary" href="{{ url_for('teacher_classes') }}">Today's Classes →</a>
+    </div>
+
+    <section class="ui-panel">
+        <div class="ui-panel-header"><div><h2>Recent Attendance</h2><p>Your assigned classes only</p></div></div>
+        <div class="panel-body table-wrap">
+            <table class="data-table">
+                <thead><tr><th>Date</th><th>Time</th><th>Student</th><th>Class</th></tr></thead>
+                <tbody>
+                {% for row in recent_attendance %}
+                    <tr><td>{{ row.attendance_date }}</td><td>{{ row.check_in_time }}</td><td>{{ row.student_code }} · {{ row.full_name }}</td><td>{{ row.class_code }} · {{ row.class_name }}</td></tr>
+                {% else %}
+                    <tr><td colspan="4" class="empty-state">No attendance records found.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

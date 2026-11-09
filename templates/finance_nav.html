@@ -1,0 +1,99 @@
+{# =========================================================
+   FINANCE NAVIGATION
+   Sri Sumana Education Center
+========================================================= #}
+
+<nav class="finance-tabs">
+
+
+    <!-- OVERVIEW -->
+
+    <a
+        href="/finance{% if selected_month is defined and selected_month %}?month={{ selected_month }}{% endif %}"
+        class="
+            finance-tab
+
+            {% if request.path == '/finance' %}
+                active
+            {% endif %}
+        "
+    >
+        Overview
+    </a>
+
+
+    <!-- PAYMENTS -->
+
+    <a
+        href="/payments{% if selected_month is defined and selected_month %}?month={{ selected_month }}{% endif %}"
+        class="
+            finance-tab
+
+            {% if
+                request.path == '/payments'
+                or
+                request.path == '/payments/new'
+            %}
+                active
+            {% endif %}
+        "
+    >
+        Payments
+    </a>
+
+
+    <!-- OUTSTANDING -->
+
+    <a
+        href="/finance/outstanding{% if selected_month is defined and selected_month %}?month={{ selected_month }}{% endif %}"
+        class="
+            finance-tab
+
+            {% if request.path == '/finance/outstanding' %}
+                active
+            {% endif %}
+        "
+    >
+        Outstanding
+    </a>
+
+
+    <!-- FREE CARDS -->
+
+    <a
+        href="/free-cards{% if selected_month is defined and selected_month %}?month={{ selected_month }}{% endif %}"
+        class="
+            finance-tab
+
+            {% if
+                request.path.startswith('/free-cards')
+            %}
+                active
+            {% endif %}
+        "
+    >
+        Free Cards
+    </a>
+
+
+    <!-- PAYMENT HISTORY -->
+
+    <a
+        href="/finance/history{% if selected_month is defined and selected_month %}?month={{ selected_month }}{% endif %}"
+        class="
+            finance-tab
+
+            {% if
+                request.path == '/finance/history'
+                or
+                request.path.startswith('/payments/')
+            %}
+                active
+            {% endif %}
+        "
+    >
+        Payment History
+    </a>
+
+
+</nav>

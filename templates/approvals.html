@@ -1,0 +1,1079 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Pending Approvals - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Pending Student Approvals
+{% endblock %}
+
+
+{% block page_subtitle %}
+Review new student registrations before creating active student accounts
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('register_student') }}"
+    class="btn btn-secondary"
+>
+    + New Registration
+</a>
+
+<a
+    href="{{ url_for('students') }}"
+    class="btn btn-primary"
+>
+    All Students
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    .approval-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    .student-tabs {
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #ffffff;
+    }
+
+
+    .student-tab {
+        min-height: 35px;
+        padding: 0 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border-radius: 7px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 9px;
+        font-weight: 650;
+        white-space: nowrap;
+    }
+
+
+    .student-tab:hover {
+        background: #f5f5f5;
+        color: var(--text);
+    }
+
+
+    .student-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 750;
+    }
+
+
+    .approval-stats {
+        display: grid;
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+
+    .approval-stat {
+        min-height: 96px;
+        padding: 13px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #ffffff;
+    }
+
+
+    .approval-stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .approval-stat strong {
+        display: block;
+        margin-top: 7px;
+        font-size: 20px;
+        font-weight: 780;
+    }
+
+
+    .approval-stat small {
+        display: block;
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 7px;
+        line-height: 1.4;
+    }
+
+
+    .approval-stat.pending strong {
+        color: var(--orange);
+    }
+
+
+    .approval-stat.approved strong {
+        color: var(--green);
+    }
+
+
+    .approval-stat.rejected strong {
+        color: var(--red);
+    }
+
+
+    .approval-stat.reviews strong {
+        color: var(--primary);
+    }
+
+
+    .queue-bar {
+        padding: 11px 13px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #ffffff;
+    }
+
+
+    .queue-copy h3 {
+        margin: 0;
+        font-size: 11px;
+    }
+
+
+    .queue-copy p {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .queue-search {
+        width: min(290px, 100%);
+        min-height: 36px;
+        padding: 0 11px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--text);
+        outline: none;
+        font-size: 8px;
+    }
+
+
+    .queue-search:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, .08);
+    }
+
+
+    .approval-table-wrap {
+        overflow-x: auto;
+    }
+
+
+    .approval-table {
+        width: 100%;
+        min-width: 980px;
+        border-collapse: collapse;
+    }
+
+
+    .approval-table th,
+    .approval-table td {
+        padding: 11px 12px;
+        text-align: left;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .approval-table th {
+        background: #fafafa;
+        color: var(--muted);
+        font-size: 7px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+
+    .approval-table td {
+        font-size: 8px;
+    }
+
+
+    .approval-table tbody tr:hover {
+        background: #fcfcfd;
+    }
+
+
+    .student-cell {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 170px;
+    }
+
+
+    .student-avatar {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 36px;
+        border-radius: 9px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 10px;
+        font-weight: 850;
+    }
+
+
+    .student-main strong {
+        display: block;
+        font-size: 9px;
+    }
+
+
+    .student-main span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .reference-pill,
+    .class-pill,
+    .status-pill {
+        min-height: 26px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        white-space: nowrap;
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .reference-pill {
+        background: #f4f4f5;
+        color: var(--text);
+    }
+
+
+    .class-pill {
+        margin: 2px 3px 2px 0;
+        border: 1px solid #c7d2fe;
+        background: var(--primary-soft);
+        color: var(--primary);
+    }
+
+
+    .status-pill.pending {
+        background: var(--orange-soft);
+        color: var(--orange);
+    }
+
+
+    .status-pill.approved {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .status-pill.rejected {
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+
+    .review-btn {
+        min-height: 32px;
+        padding: 0 11px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--primary);
+        border-radius: 8px;
+        background: var(--primary);
+        color: #ffffff;
+        text-decoration: none;
+        font-size: 8px;
+        font-weight: 800;
+    }
+
+
+    .review-btn:hover {
+        background: var(--primary-hover);
+    }
+
+
+    .empty-state {
+        min-height: 220px;
+        padding: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+
+    .empty-icon {
+        width: 54px;
+        height: 54px;
+        margin: 0 auto 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: var(--green-soft);
+        color: var(--green);
+        font-size: 17px;
+        font-weight: 800;
+    }
+
+
+    .empty-state h3 {
+        margin: 0;
+        font-size: 11px;
+    }
+
+
+    .empty-state p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .recent-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+
+    .recent-row {
+        padding: 12px 14px;
+        display: grid;
+        grid-template-columns:
+            minmax(180px, 1.4fr)
+            minmax(130px, .8fr)
+            minmax(130px, .7fr)
+            minmax(120px, .7fr)
+            auto
+            auto;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .recent-row:last-child {
+        border-bottom: 0;
+    }
+
+
+    .recent-meta strong {
+        display: block;
+        font-size: 8px;
+    }
+
+
+    .recent-meta span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+
+    .view-btn {
+        min-height: 31px;
+        padding: 0 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--text);
+        text-decoration: none;
+        font-size: 8px;
+        font-weight: 750;
+    }
+
+
+    .view-btn:hover {
+        background: #fafafa;
+    }
+
+
+    @media (max-width: 980px) {
+
+        .approval-stats {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+
+        .recent-row {
+            grid-template-columns:
+                minmax(170px, 1fr)
+                minmax(120px, .7fr)
+                auto
+                auto;
+        }
+
+
+        .recent-row .recent-extra {
+            display: none;
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .approval-stats {
+            grid-template-columns: 1fr;
+        }
+
+
+        .queue-bar {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+
+        .queue-search {
+            width: 100%;
+        }
+
+
+        .recent-row {
+            grid-template-columns:
+                minmax(0, 1fr)
+                auto;
+        }
+
+
+        .recent-row .recent-hide-mobile {
+            display: none;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+{% set approved_recent = recent | selectattr('status', 'equalto', 'APPROVED') | list %}
+{% set rejected_recent = recent | selectattr('status', 'equalto', 'REJECTED') | list %}
+
+
+<div class="approval-page">
+
+
+    <nav class="student-tabs">
+
+        <a
+            href="{{ url_for('students') }}"
+            class="student-tab"
+        >
+            All Students
+        </a>
+
+        <a
+            href="{{ url_for('register_student') }}"
+            class="student-tab"
+        >
+            New Registration
+        </a>
+
+        <a
+            href="{{ url_for('pending_approvals') }}"
+            class="student-tab active"
+        >
+            Pending Approvals
+        </a>
+
+    </nav>
+
+
+    <section class="approval-stats">
+
+        <div class="approval-stat pending">
+
+            <span>Pending Approvals</span>
+
+            <strong>
+                {{ pending | length }}
+            </strong>
+
+            <small>
+                Registrations waiting for review
+            </small>
+
+        </div>
+
+
+        <div class="approval-stat approved">
+
+            <span>Recently Approved</span>
+
+            <strong>
+                {{ approved_recent | length }}
+            </strong>
+
+            <small>
+                Approved within recent activity shown
+            </small>
+
+        </div>
+
+
+        <div class="approval-stat rejected">
+
+            <span>Recently Rejected</span>
+
+            <strong>
+                {{ rejected_recent | length }}
+            </strong>
+
+            <small>
+                Rejected within recent activity shown
+            </small>
+
+        </div>
+
+
+        <div class="approval-stat reviews">
+
+            <span>Recent Reviews</span>
+
+            <strong>
+                {{ recent | length }}
+            </strong>
+
+            <small>
+                Latest reviewed registrations displayed
+            </small>
+
+        </div>
+
+    </section>
+
+
+    <section class="queue-bar">
+
+        <div class="queue-copy">
+
+            <h3>
+                Registration Review Queue
+            </h3>
+
+            <p>
+                Review student information and selected classes before approval
+            </p>
+
+        </div>
+
+
+        <input
+            type="search"
+            id="approvalSearch"
+            class="queue-search"
+            placeholder="Search student, reference, grade..."
+        >
+
+    </section>
+
+
+    <section class="ui-panel">
+
+        <div class="ui-panel-header">
+
+            <div>
+
+                <h2>
+                    Pending Registrations
+                </h2>
+
+                <p>
+                    {{ pending | length }}
+                    registration{% if pending | length != 1 %}s{% endif %}
+                    waiting for review
+                </p>
+
+            </div>
+
+
+            <a
+                href="{{ url_for('register_student') }}"
+                class="btn btn-secondary"
+            >
+                + New Registration
+            </a>
+
+        </div>
+
+
+        {% if pending %}
+
+        <div class="approval-table-wrap">
+
+            <table class="approval-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Student</th>
+                        <th>Reference</th>
+                        <th>Grade / School</th>
+                        <th>Parent</th>
+                        <th>Selected Classes</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="pendingApprovalRows">
+
+                    {% for item in pending %}
+
+                    <tr
+                        data-search="
+                            {{ item.full_name }}
+                            {{ item.registration_ref }}
+                            {{ item.grade }}
+                            {{ item.school or '' }}
+                            {{ item.parent_name }}
+                        "
+                    >
+
+                        <td>
+
+                            <div class="student-cell">
+
+                                <div class="student-avatar">
+                                    {{ (item.full_name or 'S')[:1] | upper }}
+                                </div>
+
+
+                                <div class="student-main">
+
+                                    <strong>
+                                        {{ item.full_name }}
+                                    </strong>
+
+                                    <span>
+                                        {{ item.phone }}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="reference-pill">
+                                {{ item.registration_ref }}
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <strong>
+                                {{ item.grade }}
+                            </strong>
+
+                            <div style="margin-top:3px;color:var(--muted);font-size:7px;">
+                                {{ item.school or '—' }}
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <strong>
+                                {{ item.parent_name }}
+                            </strong>
+
+                            <div style="margin-top:3px;color:var(--muted);font-size:7px;">
+                                {{ item.parent_phone }}
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            {% if item.classes %}
+
+                                {% for class_item in item.classes %}
+
+                                <span class="class-pill">
+                                    {{ class_item.id }}
+                                    ·
+                                    {{ class_item.subject }}
+                                </span>
+
+                                {% endfor %}
+
+                            {% else %}
+
+                                <span style="color:var(--muted);">
+                                    No class
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            <strong>
+                                {{ item.created_at[:10] if item.created_at else '—' }}
+                            </strong>
+
+                            <div style="margin-top:3px;color:var(--muted);font-size:7px;">
+                                {{ item.created_at[11:19] if item.created_at and item.created_at|length >= 19 else '' }}
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="status-pill pending">
+                                ● PENDING
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <a
+                                href="{{ url_for('approval_detail', registration_id=item.id) }}"
+                                class="review-btn"
+                            >
+                                Review
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-state">
+
+            <div>
+
+                <div class="empty-icon">
+                    ✓
+                </div>
+
+                <h3>
+                    No pending registrations
+                </h3>
+
+                <p>
+                    All submitted student registrations have been reviewed.
+                </p>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <section class="ui-panel">
+
+        <div class="ui-panel-header">
+
+            <div>
+
+                <h2>
+                    Recently Reviewed
+                </h2>
+
+                <p>
+                    Latest approved and rejected student registrations
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if recent %}
+
+        <div class="recent-list">
+
+            {% for item in recent %}
+
+            <div class="recent-row">
+
+                <div class="student-cell">
+
+                    <div class="student-avatar">
+                        {{ (item.full_name or 'S')[:1] | upper }}
+                    </div>
+
+                    <div class="student-main">
+
+                        <strong>
+                            {{ item.full_name }}
+                        </strong>
+
+                        <span>
+                            {{ item.registration_ref }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="recent-meta recent-hide-mobile">
+
+                    <strong>
+                        {{ item.grade }}
+                    </strong>
+
+                    <span>
+                        {{ item.school or '—' }}
+                    </span>
+
+                </div>
+
+
+                <div class="recent-meta recent-extra">
+
+                    <strong>
+                        {{ item.classes | length }}
+                        class{% if item.classes | length != 1 %}es{% endif %}
+                    </strong>
+
+                    <span>
+                        {% if item.classes %}
+                            {{ item.classes[0].subject }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
+
+                </div>
+
+
+                <div class="recent-meta recent-extra">
+
+                    <strong>
+                        {{ item.reviewed_at[:10] if item.reviewed_at else '—' }}
+                    </strong>
+
+                    <span>
+                        {{ item.reviewed_at[11:19] if item.reviewed_at and item.reviewed_at|length >= 19 else '' }}
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <span
+                        class="
+                            status-pill
+                            {{ 'approved' if item.status == 'APPROVED' else 'rejected' }}
+                        "
+                    >
+                        ● {{ item.status }}
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <a
+                        href="{{ url_for('approval_detail', registration_id=item.id) }}"
+                        class="view-btn"
+                    >
+                        View
+                    </a>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-state">
+
+            <div>
+
+                <div class="empty-icon">
+                    ◴
+                </div>
+
+                <h3>
+                    No reviewed registrations yet
+                </h3>
+
+                <p>
+                    Approved or rejected registrations will appear here after the first review.
+                </p>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function() {
+
+            const search =
+                document.getElementById(
+                    "approvalSearch"
+                );
+
+
+            const rows =
+                Array.from(
+                    document.querySelectorAll(
+                        "#pendingApprovalRows tr"
+                    )
+                );
+
+
+            if (
+                !search
+                ||
+                rows.length === 0
+            ) {
+
+                return;
+
+            }
+
+
+            search.addEventListener(
+                "input",
+                function() {
+
+                    const query =
+                        search.value
+                            .trim()
+                            .toLowerCase();
+
+
+                    rows.forEach(
+                        function(row) {
+
+                            const value =
+                                (
+                                    row.dataset.search
+                                    ||
+                                    ""
+                                )
+                                .toLowerCase();
+
+
+                            row.style.display =
+                                (
+                                    !query
+                                    ||
+                                    value.includes(
+                                        query
+                                    )
+                                )
+                                ?
+                                ""
+                                :
+                                "none";
+
+                        }
+                    );
+
+                }
+            );
+
+        }
+    );
+
+</script>
+
+{% endblock %}

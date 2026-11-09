@@ -1,0 +1,618 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ teacher.full_name }} - Teacher Profile
+{% endblock %}
+
+{% block page_title %}
+Teacher Profile
+{% endblock %}
+
+{% block page_subtitle %}
+{{ teacher.teacher_code }} · {{ teacher.full_name }}
+{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('teachers') }}" class="btn btn-secondary">← Teachers</a>
+<a href="{{ url_for('teacher_portal_account', teacher_id=teacher.id) }}" class="btn btn-secondary">Teacher Login Account</a>
+<a href="{{ url_for('edit_teacher', teacher_id=teacher.id) }}" class="btn btn-primary">Edit Teacher</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .teacher-hero {
+        margin-bottom: 12px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .teacher-identity {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        min-width: 0;
+    }
+
+    .teacher-avatar {
+        width: 54px;
+        height: 54px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 54px;
+        border-radius: 50%;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+    .teacher-code {
+        color: var(--primary);
+        font-size: 9px;
+        font-weight: 750;
+    }
+
+    .teacher-name h2 {
+        margin: 4px 0 0;
+        font-size: 19px;
+        letter-spacing: -0.02em;
+    }
+
+    .teacher-name p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 9px;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        padding: 5px 8px;
+        border-radius: 999px;
+        background: #f4f4f5;
+        color: #525252;
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+    .status-badge.active,
+    .status-badge.confirmed,
+    .status-badge.positive {
+        color: var(--green);
+        background: var(--green-soft);
+    }
+
+    .status-badge.inactive,
+    .status-badge.void,
+    .status-badge.negative {
+        color: var(--red);
+        background: var(--red-soft);
+    }
+
+    .teacher-toolbar {
+        margin-bottom: 12px;
+        padding: 8px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .teacher-tabs {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        overflow-x: auto;
+    }
+
+    .teacher-tab {
+        min-height: 34px;
+        padding: 0 11px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border-radius: 7px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 9px;
+        font-weight: 650;
+        white-space: nowrap;
+    }
+
+    .teacher-tab:hover {
+        background: #f5f5f5;
+        color: #262626;
+    }
+
+    .teacher-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 750;
+    }
+
+    .month-control {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 0 0 auto;
+    }
+
+    .month-control a,
+    .month-control span {
+        min-height: 32px;
+        padding: 0 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: #fff;
+        color: #404040;
+        text-decoration: none;
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+    .summary-grid {
+        margin-bottom: 12px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .summary-card {
+        min-height: 90px;
+        padding: 13px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .summary-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+    .summary-card strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 18px;
+        font-weight: 750;
+    }
+
+    .green { color: var(--green); }
+    .orange { color: var(--orange); }
+    .blue { color: var(--blue); }
+
+    .profile-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, .7fr);
+        gap: 12px;
+    }
+
+    .detail-grid {
+        padding: 14px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .detail-item {
+        min-height: 64px;
+        padding: 11px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fafafa;
+    }
+
+    .detail-item span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+    }
+
+    .detail-item strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 10px;
+    }
+
+    .finance-list { padding: 14px; }
+
+    .finance-row {
+        padding: 10px 0;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .finance-row:last-child { border-bottom: 0; }
+    .finance-row span { color: var(--muted); font-size: 8px; }
+    .finance-row strong { font-size: 10px; }
+
+    .table-wrap { overflow-x: auto; }
+
+    .data-table {
+        width: 100%;
+        min-width: 860px;
+        border-collapse: collapse;
+    }
+
+    .data-table th {
+        padding: 10px 12px;
+        background: #fafafa;
+        border-bottom: 1px solid var(--border);
+        color: var(--muted);
+        text-align: left;
+        font-size: 8px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .data-table td {
+        padding: 12px;
+        border-bottom: 1px solid var(--border);
+        color: #262626;
+        font-size: 9px;
+        vertical-align: middle;
+    }
+
+    .data-table tbody tr:last-child td { border-bottom: 0; }
+
+    .table-primary {
+        display: block;
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    .table-secondary {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .text-link {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .growth-wrap { padding: 15px; }
+
+    .growth-bars {
+        height: 180px;
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        padding-top: 10px;
+    }
+
+    .growth-item {
+        flex: 1;
+        min-width: 45px;
+        text-align: center;
+    }
+
+    .growth-track {
+        height: 130px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0 7px;
+    }
+
+    .growth-bar {
+        width: 100%;
+        max-width: 40px;
+        min-height: 3px;
+        border-radius: 5px 5px 2px 2px;
+        background: var(--primary);
+    }
+
+    .growth-item strong {
+        display: block;
+        margin-top: 7px;
+        font-size: 9px;
+    }
+
+    .growth-item span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 7px;
+    }
+
+    .empty-state {
+        min-height: 190px;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .empty-state strong { font-size: 10px; }
+    .empty-state p { margin: 5px 0 0; color: var(--muted); font-size: 8px; }
+
+    .activity-row {
+        padding: 12px 14px;
+        display: grid;
+        grid-template-columns: 150px minmax(0, 1fr) 150px;
+        gap: 12px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .activity-row:last-child { border-bottom: 0; }
+    .activity-time { color: var(--muted); font-size: 8px; }
+    .activity-main strong { display: block; font-size: 9px; }
+    .activity-main span { display: block; margin-top: 3px; color: var(--muted); font-size: 7px; }
+    .activity-user { text-align: right; font-size: 8px; }
+
+    @media (max-width: 1000px) {
+        .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .profile-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 650px) {
+        .teacher-hero { align-items: flex-start; flex-direction: column; }
+        .teacher-toolbar { align-items: flex-start; flex-direction: column; }
+        .summary-grid, .detail-grid { grid-template-columns: 1fr; }
+        .activity-row { grid-template-columns: 1fr; }
+        .activity-user { text-align: left; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="teacher-hero">
+    <div class="teacher-identity">
+        <div class="teacher-avatar">{{ (teacher.full_name or 'T')[:2]|upper }}</div>
+        <div class="teacher-name">
+            <div class="teacher-code">{{ teacher.teacher_code }}</div>
+            <h2>{{ teacher.full_name }}</h2>
+            <p>{{ teacher.subject }}{% if teacher.phone %} · {{ teacher.phone }}{% endif %}</p>
+        </div>
+    </div>
+
+    <span class="status-badge {{ teacher.status|lower }}">{{ teacher.status }}</span>
+</section>
+
+<div class="teacher-toolbar">
+    <nav class="teacher-tabs">
+        {% for tab_key, tab_label in [
+            ('overview', 'Overview'),
+            ('classes', 'Classes'),
+            ('students', 'Students'),
+            ('income', 'Income'),
+            ('performance', 'Performance'),
+            ('activity', 'Activity')
+        ] %}
+            {% if tab_key != 'activity' or (current_user and current_user.role == 'OWNER') %}
+            <a
+                href="{{ url_for('teacher_profile', teacher_id=teacher.id, tab=tab_key, month=selected_month) }}"
+                class="teacher-tab {% if active_tab == tab_key %}active{% endif %}"
+            >{{ tab_label }}</a>
+            {% endif %}
+        {% endfor %}
+    </nav>
+
+    <div class="month-control">
+        <a href="{{ url_for('teacher_profile', teacher_id=teacher.id, tab=active_tab, month=previous_month) }}">←</a>
+        <span>{{ month_label }}</span>
+        <a href="{{ url_for('teacher_profile', teacher_id=teacher.id, tab=active_tab, month=next_month) }}">→</a>
+    </div>
+</div>
+
+{% if active_tab == 'overview' %}
+<div class="summary-grid">
+    <div class="summary-card"><span>Active Classes</span><strong>{{ active_class_count }}</strong></div>
+    <div class="summary-card"><span>Students</span><strong class="blue">{{ end_students }}</strong></div>
+    <div class="summary-card"><span>Collected</span><strong class="green">Rs. {{ "{:,.0f}".format(total_collected or 0) }}</strong></div>
+    <div class="summary-card"><span>Teacher Income</span><strong class="green">Rs. {{ "{:,.0f}".format(total_teacher_share or 0) }}</strong></div>
+</div>
+
+<div class="profile-grid">
+    <section class="ui-panel">
+        <div class="ui-panel-header">
+            <div><h2>Teacher Information</h2><p>Profile and current assignment details</p></div>
+            <a href="{{ url_for('edit_teacher', teacher_id=teacher.id) }}" class="ui-panel-link">Edit →</a>
+        </div>
+        <div class="detail-grid">
+            <div class="detail-item"><span>Teacher Code</span><strong>{{ teacher.teacher_code }}</strong></div>
+            <div class="detail-item"><span>Subject</span><strong>{{ teacher.subject or '—' }}</strong></div>
+            <div class="detail-item"><span>Phone</span><strong>{{ teacher.phone or '—' }}</strong></div>
+            <div class="detail-item"><span>Status</span><strong>{{ teacher.status }}</strong></div>
+            <div class="detail-item"><span>Active Classes</span><strong>{{ active_class_count }}</strong></div>
+            <div class="detail-item"><span>Students</span><strong>{{ end_students }}</strong></div>
+        </div>
+    </section>
+
+    <section class="ui-panel">
+        <div class="ui-panel-header"><div><h2>Monthly Financials</h2><p>{{ month_label }}</p></div></div>
+        <div class="finance-list">
+            <div class="finance-row"><span>Expected</span><strong>Rs. {{ "{:,.2f}".format(total_expected or 0) }}</strong></div>
+            <div class="finance-row"><span>Collected</span><strong class="green">Rs. {{ "{:,.2f}".format(total_collected or 0) }}</strong></div>
+            <div class="finance-row"><span>Outstanding</span><strong class="orange">Rs. {{ "{:,.2f}".format(total_outstanding or 0) }}</strong></div>
+            <div class="finance-row"><span>Teacher Income</span><strong>Rs. {{ "{:,.2f}".format(total_teacher_share or 0) }}</strong></div>
+            <div class="finance-row"><span>Center Share</span><strong>Rs. {{ "{:,.2f}".format(total_center_share or 0) }}</strong></div>
+        </div>
+    </section>
+</div>
+
+{% elif active_tab == 'classes' %}
+<section class="ui-panel">
+    <div class="ui-panel-header"><div><h2>Assigned Classes</h2><p>Class performance for {{ month_label }}</p></div></div>
+    {% if classes %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th>Class</th><th>Schedule</th><th>Students</th><th>Expected</th><th>Collected</th><th>Outstanding</th><th>Attendance</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for class in classes %}
+            <tr>
+                <td><span class="table-primary">{{ class.class_code }} · {{ class.class_name }}</span><span class="table-secondary">{{ class.class_status }}</span></td>
+                <td>{{ class.day }} · {{ class.start_display }} - {{ class.end_display }}</td>
+                <td>{{ class.end_students }}</td>
+                <td>Rs. {{ "{:,.0f}".format(class.expected or 0) }}</td>
+                <td class="green">Rs. {{ "{:,.0f}".format(class.collected or 0) }}</td>
+                <td class="orange">Rs. {{ "{:,.0f}".format(class.outstanding or 0) }}</td>
+                <td>{{ class.attendance_rate }}%</td>
+                <td><a href="{{ url_for('class_profile', class_code=class.class_code, month=selected_month) }}" class="text-link">Open →</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}<div class="empty-state"><strong>No classes assigned.</strong></div>{% endif %}
+</section>
+
+{% elif active_tab == 'students' %}
+<section class="ui-panel">
+    <div class="ui-panel-header"><div><h2>Teacher Students</h2><p>Students active at the end of {{ month_label }}</p></div><span class="status-badge active">{{ teacher_students|length }} STUDENTS</span></div>
+    {% if teacher_students %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th>Student</th><th>Grade</th><th>School</th><th>Classes</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for student in teacher_students %}
+            <tr>
+                <td><span class="table-primary">{{ student.student_code }} · {{ student.full_name }}</span><span class="table-secondary">{{ student.phone or '—' }}</span></td>
+                <td>{{ student.grade }}</td>
+                <td>{{ student.school or '—' }}</td>
+                <td>{{ student.class_names or student.class_codes or '—' }}</td>
+                <td><span class="status-badge {{ student.student_status|lower }}">{{ student.student_status }}</span></td>
+                <td><a href="{{ url_for('student_profile', student_id=student.student_id) }}" class="text-link">Open →</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}<div class="empty-state"><strong>No students found.</strong><p>No active teacher students for {{ month_label }}.</p></div>{% endif %}
+</section>
+
+{% elif active_tab == 'income' %}
+<div class="summary-grid">
+    <div class="summary-card"><span>Expected</span><strong>Rs. {{ "{:,.0f}".format(total_expected or 0) }}</strong></div>
+    <div class="summary-card"><span>Collected</span><strong class="green">Rs. {{ "{:,.0f}".format(total_collected or 0) }}</strong></div>
+    <div class="summary-card"><span>Teacher Income</span><strong class="green">Rs. {{ "{:,.0f}".format(total_teacher_share or 0) }}</strong></div>
+    <div class="summary-card"><span>Center Share</span><strong>Rs. {{ "{:,.0f}".format(total_center_share or 0) }}</strong></div>
+</div>
+
+<section class="ui-panel">
+    <div class="ui-panel-header"><div><h2>Income Transactions</h2><p>Payments for {{ month_label }}</p></div><a href="{{ url_for('payments', month=selected_month) }}" class="ui-panel-link">Payments →</a></div>
+    {% if payment_records %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th>Receipt</th><th>Student</th><th>Class</th><th>Amount</th><th>Share %</th><th>Teacher Income</th><th>Center</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for payment in payment_records %}
+            <tr>
+                <td><a href="{{ url_for('payment_receipt', payment_id=payment.id) }}" class="text-link">{{ payment.receipt_no or ('#' ~ payment.id) }}</a></td>
+                <td>{{ payment.student_code }} · {{ payment.full_name }}</td>
+                <td>{{ payment.class_code }} · {{ payment.class_name }}</td>
+                <td>Rs. {{ "{:,.2f}".format(payment.amount or 0) }}</td>
+                <td>{{ payment.teacher_share_percent or 0 }}%</td>
+                <td class="green">Rs. {{ "{:,.2f}".format(payment.teacher_income or 0) }}</td>
+                <td>Rs. {{ "{:,.2f}".format(payment.center_income or 0) }}</td>
+                <td><span class="status-badge {{ payment.status|lower }}">{{ payment.status }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}<div class="empty-state"><strong>No payment transactions.</strong><p>No payments for this teacher in {{ month_label }}.</p></div>{% endif %}
+</section>
+
+{% elif active_tab == 'performance' %}
+<div class="summary-grid">
+    <div class="summary-card"><span>Start Students</span><strong>{{ start_students }}</strong></div>
+    <div class="summary-card"><span>End Students</span><strong>{{ end_students }}</strong></div>
+    <div class="summary-card"><span>Net Growth</span><strong class="{% if growth >= 0 %}green{% else %}orange{% endif %}">{{ growth }}</strong></div>
+    <div class="summary-card"><span>Avg Attendance Rate</span><strong class="blue">{{ average_attendance_rate }}%</strong></div>
+</div>
+
+<div class="profile-grid">
+    <section class="ui-panel">
+        <div class="ui-panel-header"><div><h2>Six-Month Student Growth</h2><p>Active students at each month end</p></div></div>
+        <div class="growth-wrap">
+            <div class="growth-bars">
+                {% for item in growth_history %}
+                <div class="growth-item">
+                    <div class="growth-track"><div class="growth-bar" style="height: {{ item.percent }}%;"></div></div>
+                    <strong>{{ item.count }}</strong>
+                    <span>{{ item.month }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="ui-panel">
+        <div class="ui-panel-header"><div><h2>Growth Summary</h2><p>{{ month_label }}</p></div></div>
+        <div class="finance-list">
+            <div class="finance-row"><span>Starting Students</span><strong>{{ start_students }}</strong></div>
+            <div class="finance-row"><span>New Students</span><strong class="green">{{ new_students }}</strong></div>
+            <div class="finance-row"><span>Left Students</span><strong class="orange">{{ left_students }}</strong></div>
+            <div class="finance-row"><span>Ending Students</span><strong>{{ end_students }}</strong></div>
+            <div class="finance-row"><span>Net Growth</span><strong>{{ growth }}</strong></div>
+            <div class="finance-row"><span>Growth Rate</span><strong>{{ growth_percent }}%</strong></div>
+        </div>
+    </section>
+</div>
+
+<section class="ui-panel" style="margin-top:12px;">
+    <div class="ui-panel-header"><div><h2>Class Performance</h2><p>Attendance and student movement by class</p></div></div>
+    {% if classes %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th>Class</th><th>Start</th><th>New</th><th>Left</th><th>End</th><th>Growth</th><th>Class Days</th><th>Avg Attendance</th><th>Rate</th></tr></thead>
+            <tbody>
+            {% for class in classes %}
+            <tr>
+                <td>{{ class.class_code }} · {{ class.class_name }}</td>
+                <td>{{ class.start_students }}</td>
+                <td>{{ class.new_students }}</td>
+                <td>{{ class.left_students }}</td>
+                <td>{{ class.end_students }}</td>
+                <td>{{ class.growth }}</td>
+                <td>{{ class.class_days }}</td>
+                <td>{{ class.average_attendance }}</td>
+                <td>{{ class.attendance_rate }}%</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</section>
+
+{% elif active_tab == 'activity' %}
+{% if current_user and current_user.role == 'OWNER' %}
+<section class="ui-panel">
+    <div class="ui-panel-header"><div><h2>Teacher Activity</h2><p>Audit events related to this teacher</p></div><a href="{{ url_for('audit_logs') }}" class="ui-panel-link">Audit Logs →</a></div>
+    {% if activity_records %}
+        {% for activity in activity_records %}
+        <div class="activity-row">
+            <div class="activity-time">{{ activity.created_at }}</div>
+            <div class="activity-main"><strong>{{ activity.action }}</strong><span>Status {{ activity.status_code or '—' }}</span></div>
+            <div class="activity-user"><strong>{{ activity.actor_full_name or activity.actor_username or 'Unknown' }}</strong><div style="color:var(--muted);margin-top:2px;">{{ activity.actor_role or '—' }}</div></div>
+        </div>
+        {% endfor %}
+    {% else %}<div class="empty-state"><strong>No teacher audit activity yet.</strong></div>{% endif %}
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

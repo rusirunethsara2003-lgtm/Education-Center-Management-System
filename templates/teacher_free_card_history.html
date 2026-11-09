@@ -1,0 +1,33 @@
+{% extends "teacher_base.html" %}
+{% block title %}Free Card History - Teacher Portal{% endblock %}
+{% block page_title %}Request History{% endblock %}
+{% block content %}
+<div class="page-stack">
+    <div class="page-intro">
+        <div><h2>My Free Card Requests</h2><p>Latest requests submitted by this Teacher account.</p></div>
+        <a class="btn btn-primary" href="{{ url_for('teacher_free_card_request_page', month=selected_month) }}">+ New Request</a>
+    </div>
+
+    <section class="ui-panel">
+        <div class="ui-panel-header"><div><h2>Request History</h2><p>Latest 20 requests</p></div></div>
+        <div class="panel-body table-wrap">
+            <table class="data-table">
+                <thead><tr><th>Student</th><th>Class</th><th>Month</th><th>Status</th><th>Requested</th></tr></thead>
+                <tbody>
+                {% for card in my_free_cards %}
+                    <tr>
+                        <td>{{ card.student_code }}<br><strong>{{ card.student_name }}</strong></td>
+                        <td>{{ card.class_code }}<br><span class="muted">{{ card.class_name }}</span></td>
+                        <td>{{ card.fee_month }}</td>
+                        <td><span class="status-pill {{ card.status }}">{{ card.status }}</span>{% if card.rejected_reason %}<br><span class="text-orange">{{ card.rejected_reason }}</span>{% endif %}</td>
+                        <td>{{ card.requested_at }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="empty-state">No Teacher Free Card requests yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

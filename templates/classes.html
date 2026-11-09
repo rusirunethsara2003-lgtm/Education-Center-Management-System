@@ -1,0 +1,1399 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Class Management - Sri Sumana
+{% endblock %}
+
+
+{% block page_title %}
+Class Management
+{% endblock %}
+
+
+{% block page_subtitle %}
+Manage classes, students, fees, teachers and schedules
+{% endblock %}
+
+
+{% block page_actions %}
+
+<a
+    href="{{ url_for('timetable') }}"
+    class="btn btn-secondary"
+>
+    Timetable
+</a>
+
+<a
+    href="{{ url_for('new_class') }}"
+    class="btn btn-primary"
+>
+    + Add Class
+</a>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =====================================================
+       PAGE
+    ====================================================== */
+
+    .classes-page {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       CLASS NAVIGATION
+    ====================================================== */
+
+    .class-tabs {
+        padding: 5px;
+
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        overflow-x: auto;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .class-tab {
+        min-height: 35px;
+
+        padding: 0 12px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 7px;
+
+        color: var(--muted);
+
+        text-decoration: none;
+
+        font-size: 9px;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+
+    .class-tab:hover {
+        background: #f5f5f5;
+        color: var(--text);
+    }
+
+
+    .class-tab.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       SUMMARY
+    ====================================================== */
+
+    .class-summary-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+
+    .class-summary-card {
+        min-height: 100px;
+
+        padding: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .class-summary-card span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    .class-summary-card strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 20px;
+        font-weight: 750;
+    }
+
+
+    .class-summary-card small {
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .class-summary-card.green strong {
+        color: var(--green);
+    }
+
+
+    .class-summary-card.orange strong {
+        color: var(--orange);
+    }
+
+
+    .class-summary-card.blue strong {
+        color: var(--blue);
+    }
+
+
+    /* =====================================================
+       TOOLBAR
+    ====================================================== */
+
+    .class-toolbar {
+        padding: 12px 14px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+
+    .class-toolbar-copy strong {
+        display: block;
+
+        font-size: 10px;
+    }
+
+
+    .class-toolbar-copy span {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .class-search {
+        width: 280px;
+
+        min-height: 36px;
+
+        padding: 0 11px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        outline: none;
+
+        font-size: 8px;
+    }
+
+
+    .class-search:focus {
+        border-color: var(--primary);
+
+        box-shadow:
+            0 0 0 3px
+            rgba(79, 70, 229, 0.08);
+    }
+
+
+    /* =====================================================
+       CLASS GRID
+    ====================================================== */
+
+    .class-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 12px;
+    }
+
+
+    /* =====================================================
+       CLASS CARD
+    ====================================================== */
+
+    .class-card {
+        overflow: hidden;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+
+    .class-card:hover {
+        border-color: #d4d4d8;
+
+        box-shadow:
+            0 5px 20px
+            rgba(0, 0, 0, 0.04);
+    }
+
+
+    .class-card.inactive-card {
+        opacity: 0.72;
+    }
+
+
+    /* =====================================================
+       CARD HEADER
+    ====================================================== */
+
+    .class-card-header {
+        padding: 14px;
+
+        display: flex;
+        align-items: flex-start;
+
+        gap: 11px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+
+    .class-icon {
+        width: 42px;
+        height: 42px;
+
+        flex: 0 0 42px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 10px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 8px;
+        font-weight: 800;
+    }
+
+
+    .class-heading {
+        min-width: 0;
+        flex: 1;
+    }
+
+
+    .class-code {
+        display: block;
+
+        color: var(--primary);
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .class-heading h3 {
+        margin: 4px 0 0;
+
+        overflow: hidden;
+
+        font-size: 13px;
+        font-weight: 760;
+
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+
+    .class-heading p {
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 7px;
+
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       STATUS
+    ====================================================== */
+
+    .class-status {
+        min-height: 25px;
+
+        padding: 0 8px;
+
+        display: inline-flex;
+        align-items: center;
+
+        border-radius: 999px;
+
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+
+    .class-status.active {
+        background: var(--green-soft);
+        color: var(--green);
+    }
+
+
+    .class-status.inactive {
+        background: var(--red-soft);
+        color: var(--red);
+    }
+
+
+    /* =====================================================
+       BODY
+    ====================================================== */
+
+    .class-card-body {
+        padding: 13px;
+    }
+
+
+    .class-info-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+
+        gap: 8px;
+    }
+
+
+    .class-info-box {
+        min-height: 63px;
+
+        padding: 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #fafafa;
+    }
+
+
+    .class-info-box span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .class-info-box strong {
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--text);
+
+        font-size: 8px;
+        font-weight: 700;
+
+        line-height: 1.4;
+    }
+
+
+    /* =====================================================
+       FEE BAR
+    ====================================================== */
+
+    .class-finance-row {
+        margin-top: 9px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+
+        gap: 8px;
+    }
+
+
+    .class-finance-box {
+        min-height: 61px;
+
+        padding: 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #ffffff;
+    }
+
+
+    .class-finance-box span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 7px;
+    }
+
+
+    .class-finance-box strong {
+        display: block;
+
+        margin-top: 5px;
+
+        font-size: 9px;
+        font-weight: 750;
+    }
+
+
+    .class-finance-box.students strong {
+        color: var(--blue);
+    }
+
+
+    /* =====================================================
+       ACTIONS
+    ====================================================== */
+
+    .class-card-actions {
+        padding: 12px 13px;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 7px;
+
+        border-top: 1px solid var(--border);
+
+        background: #fafafa;
+    }
+
+
+    .class-action {
+        min-height: 34px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 8px;
+
+        text-decoration: none;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        cursor: pointer;
+    }
+
+
+    .class-action.primary {
+        border: 1px solid var(--primary);
+
+        background: var(--primary);
+
+        color: #ffffff;
+    }
+
+
+    .class-action.primary:hover {
+        background: var(--primary-hover);
+    }
+
+
+    .class-action.secondary {
+        border: 1px solid var(--border);
+
+        background: #ffffff;
+
+        color: var(--text);
+    }
+
+
+    .class-action.secondary:hover {
+        background: #f5f5f5;
+    }
+
+
+    .class-action.danger {
+        border: 1px solid #fecaca;
+
+        background: var(--red-soft);
+
+        color: var(--red);
+    }
+
+
+    .class-action.danger:hover {
+        background: #fee2e2;
+    }
+
+
+    .class-action.activate {
+        border: 1px solid #bbf7d0;
+
+        background: var(--green-soft);
+
+        color: var(--green);
+    }
+
+
+    .class-action.activate:hover {
+        background: #dcfce7;
+    }
+
+
+    .class-toggle-form {
+        margin: 0;
+
+        grid-column: 1 / -1;
+    }
+
+
+    .class-toggle-form .class-action {
+        width: 100%;
+    }
+
+
+    /* =====================================================
+       EMPTY STATE
+    ====================================================== */
+
+    .classes-empty {
+        min-height: 320px;
+
+        padding: 40px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: #ffffff;
+
+        text-align: center;
+    }
+
+
+    .classes-empty-icon {
+        width: 54px;
+        height: 54px;
+
+        margin-bottom: 12px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 13px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+
+    .classes-empty strong {
+        font-size: 11px;
+    }
+
+
+    .classes-empty p {
+        max-width: 340px;
+
+        margin: 6px 0 15px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+
+        line-height: 1.6;
+    }
+
+
+    #classSearchEmpty {
+        display: none;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 1050px) {
+
+        .class-summary-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+
+        .class-grid {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 700px) {
+
+        .class-summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .class-toolbar {
+            align-items: stretch;
+
+            flex-direction: column;
+        }
+
+
+        .class-search {
+            width: 100%;
+        }
+
+
+        .class-info-grid,
+        .class-finance-row {
+            grid-template-columns: 1fr;
+        }
+
+
+        .class-card-actions {
+            grid-template-columns: 1fr;
+        }
+
+
+        .class-toggle-form {
+            grid-column: auto;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+{% set class_stats = namespace(
+    active=0,
+    inactive=0,
+    students=0,
+    monthly_fees=0
+) %}
+
+
+{% for item in classes %}
+
+    {% if item.status == "ACTIVE" %}
+
+        {% set class_stats.active =
+            class_stats.active + 1
+        %}
+
+    {% else %}
+
+        {% set class_stats.inactive =
+            class_stats.inactive + 1
+        %}
+
+    {% endif %}
+
+
+    {% set class_stats.students =
+        class_stats.students
+        +
+        (item.student_count or 0)
+    %}
+
+
+    {% if item.status == "ACTIVE" %}
+
+        {% set class_stats.monthly_fees =
+            class_stats.monthly_fees
+            +
+            (item.monthly_fee or 0)
+        %}
+
+    {% endif %}
+
+{% endfor %}
+
+
+<div class="classes-page">
+
+
+    <!-- =================================================
+         CLASS NAVIGATION
+    ================================================== -->
+
+    <nav class="class-tabs">
+
+        <a
+            href="{{ url_for('class_management') }}"
+            class="class-tab active"
+        >
+            Class Management
+        </a>
+
+
+        <a
+            href="{{ url_for('timetable') }}"
+            class="class-tab"
+        >
+            Timetable
+        </a>
+
+
+        <a
+            href="{{ url_for('teachers') }}"
+            class="class-tab"
+        >
+            Teachers
+        </a>
+
+    </nav>
+
+
+    <!-- =================================================
+         SUMMARY
+    ================================================== -->
+
+    <div class="class-summary-grid">
+
+
+        <div class="class-summary-card">
+
+            <span>
+                Total Classes
+            </span>
+
+            <strong>
+                {{ classes|length }}
+            </strong>
+
+            <small>
+                All classes in the system
+            </small>
+
+        </div>
+
+
+        <div class="class-summary-card green">
+
+            <span>
+                Active Classes
+            </span>
+
+            <strong>
+                {{ class_stats.active }}
+            </strong>
+
+            <small>
+                Classes currently available
+            </small>
+
+        </div>
+
+
+        <div class="class-summary-card blue">
+
+            <span>
+                Active Enrollments
+            </span>
+
+            <strong>
+                {{ class_stats.students }}
+            </strong>
+
+            <small>
+                Students currently enrolled
+            </small>
+
+        </div>
+
+
+        <div class="class-summary-card orange">
+
+            <span>
+                Inactive Classes
+            </span>
+
+            <strong>
+                {{ class_stats.inactive }}
+            </strong>
+
+            <small>
+                Classes currently disabled
+            </small>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =================================================
+         TOOLBAR
+    ================================================== -->
+
+    <section class="class-toolbar">
+
+        <div class="class-toolbar-copy">
+
+            <strong>
+                Class Directory
+            </strong>
+
+            <span>
+                Search by class code, grade, subject, teacher or schedule
+            </span>
+
+        </div>
+
+
+        <input
+            type="search"
+            id="classSearch"
+            class="class-search"
+            placeholder="Search classes..."
+            autocomplete="off"
+            oninput="filterClasses()"
+        >
+
+    </section>
+
+
+    <!-- =================================================
+         CLASS CARDS
+    ================================================== -->
+
+    {% if classes %}
+
+
+    <div
+        class="class-grid"
+        id="classGrid"
+    >
+
+
+        {% for item in classes %}
+
+
+        <article
+            class="
+                class-card
+                class-search-item
+
+                {% if item.status != 'ACTIVE' %}
+                    inactive-card
+                {% endif %}
+            "
+
+            data-search="
+                {{ item.class_code }}
+                {{ item.class_name }}
+                {{ item.grade }}
+                {{ item.subject }}
+                {{ item.teacher_name }}
+                {{ item.day_name }}
+                {{ item.room }}
+                {{ item.status }}
+            "
+        >
+
+
+            <!-- HEADER -->
+
+            <div class="class-card-header">
+
+
+                <div class="class-icon">
+                    {{ item.class_code }}
+                </div>
+
+
+                <div class="class-heading">
+
+                    <span class="class-code">
+                        {{ item.class_code }}
+                    </span>
+
+
+                    <h3>
+                        {{ item.class_name }}
+                    </h3>
+
+
+                    <p>
+                        {{ item.grade }}
+                        ·
+                        {{ item.subject }}
+                        ·
+                        {{ item.teacher_name }}
+                    </p>
+
+                </div>
+
+
+                {% if item.status == "ACTIVE" %}
+
+                    <span class="class-status active">
+                        ACTIVE
+                    </span>
+
+                {% else %}
+
+                    <span class="class-status inactive">
+                        {{ item.status }}
+                    </span>
+
+                {% endif %}
+
+
+            </div>
+
+
+            <!-- BODY -->
+
+            <div class="class-card-body">
+
+
+                <div class="class-info-grid">
+
+
+                    <div class="class-info-box">
+
+                        <span>
+                            Day
+                        </span>
+
+                        <strong>
+                            {{ item.day_name }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="class-info-box">
+
+                        <span>
+                            Time
+                        </span>
+
+                        <strong>
+                            {{ item.start_display }}
+                            –
+                            {{ item.end_display }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="class-info-box">
+
+                        <span>
+                            Room
+                        </span>
+
+                        <strong>
+                            {{ item.room or "—" }}
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="class-finance-row">
+
+
+                    <div class="class-finance-box students">
+
+                        <span>
+                            Students
+                        </span>
+
+                        <strong>
+                            {{ item.student_count or 0 }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="class-finance-box">
+
+                        <span>
+                            Monthly Fee
+                        </span>
+
+                        <strong>
+                            Rs.
+                            {{ "{:,.0f}".format(item.monthly_fee or 0) }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="class-finance-box">
+
+                        <span>
+                            Teacher Share
+                        </span>
+
+                        <strong>
+                            {{ item.teacher_share_percent or 0 }}%
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ACTIONS -->
+
+            <div class="class-card-actions">
+
+
+                <a
+                    href="{{ url_for(
+                        'class_profile',
+                        class_code=item.class_code
+                    ) }}"
+                    class="class-action primary"
+                >
+                    Open Profile
+                </a>
+
+
+                <a
+                    href="{{ url_for(
+                        'edit_class',
+                        class_id=item.id
+                    ) }}"
+                    class="class-action secondary"
+                >
+                    Edit Class
+                </a>
+
+
+                <form
+                    method="POST"
+                    action="{{ url_for(
+                        'toggle_class',
+                        class_id=item.id
+                    ) }}"
+                    class="class-toggle-form"
+
+                    onsubmit="
+                        return confirmClassStatus(
+                            '{{ item.class_name|e }}',
+                            '{{ item.status }}'
+                        );
+                    "
+                >
+
+                    {% if item.status == "ACTIVE" %}
+
+                    <button
+                        type="submit"
+                        class="class-action danger"
+                    >
+                        Deactivate Class
+                    </button>
+
+                    {% else %}
+
+                    <button
+                        type="submit"
+                        class="class-action activate"
+                    >
+                        Activate Class
+                    </button>
+
+                    {% endif %}
+
+                </form>
+
+
+            </div>
+
+
+        </article>
+
+
+        {% endfor %}
+
+
+    </div>
+
+
+    <!-- SEARCH EMPTY -->
+
+    <div
+        id="classSearchEmpty"
+        class="classes-empty"
+    >
+
+        <div class="classes-empty-icon">
+            ?
+        </div>
+
+
+        <strong>
+            No matching classes
+        </strong>
+
+
+        <p>
+            Try another class code, grade,
+            subject, teacher or schedule.
+        </p>
+
+    </div>
+
+
+    {% else %}
+
+
+    <!-- NO CLASSES -->
+
+    <div class="classes-empty">
+
+        <div class="classes-empty-icon">
+            C
+        </div>
+
+
+        <strong>
+            No classes created yet
+        </strong>
+
+
+        <p>
+            Create the first class to begin managing
+            student enrollments, schedules and fees.
+        </p>
+
+
+        <a
+            href="{{ url_for('new_class') }}"
+            class="btn btn-primary"
+        >
+            + Add First Class
+        </a>
+
+    </div>
+
+
+    {% endif %}
+
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+    /* =====================================================
+       CLASS SEARCH
+    ====================================================== */
+
+    function filterClasses() {
+
+        const input =
+            document.getElementById(
+                "classSearch"
+            );
+
+
+        const items =
+            document.querySelectorAll(
+                ".class-search-item"
+            );
+
+
+        const empty =
+            document.getElementById(
+                "classSearchEmpty"
+            );
+
+
+        if (!input) {
+            return;
+        }
+
+
+        const query =
+            input.value
+                .trim()
+                .toLowerCase();
+
+
+        let visibleCount = 0;
+
+
+        items.forEach(
+            function(item) {
+
+                const searchable =
+                    (
+                        item.dataset.search
+                        ||
+                        ""
+                    )
+                    .toLowerCase();
+
+
+                const visible =
+                    searchable.includes(
+                        query
+                    );
+
+
+                item.style.display =
+                    visible
+                    ?
+                    ""
+                    :
+                    "none";
+
+
+                if (visible) {
+                    visibleCount++;
+                }
+
+            }
+        );
+
+
+        if (empty) {
+
+            empty.style.display =
+                visibleCount === 0
+                ?
+                "flex"
+                :
+                "none";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       ACTIVATE / DEACTIVATE CONFIRMATION
+    ====================================================== */
+
+    function confirmClassStatus(
+        className,
+        currentStatus
+    ) {
+
+        if (
+            currentStatus
+            ===
+            "ACTIVE"
+        ) {
+
+            return confirm(
+                "Deactivate "
+                +
+                className
+                +
+                "? Students will remain in the database, but this class will no longer be active."
+            );
+
+        }
+
+
+        return confirm(
+            "Activate "
+            +
+            className
+            +
+            "? The class will become available again."
+        );
+
+    }
+
+</script>
+
+{% endblock %}

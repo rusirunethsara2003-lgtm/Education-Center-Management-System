@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <title>Registration Status - Sri Sumana</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        :root {
+            --bg: #f4f5f7;
+            --surface: #ffffff;
+            --text: #161616;
+            --muted: #737373;
+            --border: #e5e7eb;
+            --primary: #4f46e5;
+            --primary-soft: #eef2ff;
+            --green: #16a34a;
+            --green-soft: #ecfdf3;
+            --orange: #ea580c;
+            --orange-soft: #fff7ed;
+            --red: #dc2626;
+            --red-soft: #fef2f2;
+        }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+                BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .status-card {
+            width: min(720px, 100%);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: var(--surface);
+            box-shadow: 0 12px 36px rgba(15, 23, 42, .06);
+        }
+
+        .status-header {
+            padding: 28px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(145deg, #f8fafc, #ffffff);
+        }
+
+        .status-header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .status-header p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .status-body { padding: 24px; }
+
+        .student-name {
+            margin: 0 0 14px;
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .info-box {
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #fafafa;
+        }
+
+        .label {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .value {
+            margin-top: 5px;
+            font-size: 14px;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
+            padding: 0 10px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .04em;
+        }
+
+        .badge-pending {
+            color: #9a3412;
+            background: var(--orange-soft);
+            border: 1px solid #fed7aa;
+        }
+
+        .badge-approved {
+            color: #166534;
+            background: var(--green-soft);
+            border: 1px solid #bbf7d0;
+        }
+
+        .badge-rejected {
+            color: #991b1b;
+            background: var(--red-soft);
+            border: 1px solid #fecaca;
+        }
+
+        .state-box {
+            margin-top: 14px;
+            padding: 16px;
+            border-radius: 12px;
+            line-height: 1.6;
+        }
+
+        .state-box h2 {
+            margin: 0 0 6px;
+            font-size: 15px;
+        }
+
+        .state-box p {
+            margin: 0;
+            font-size: 12px;
+        }
+
+        .state-pending {
+            border: 1px solid #fed7aa;
+            background: var(--orange-soft);
+            color: #9a3412;
+        }
+
+        .state-approved {
+            border: 1px solid #bbf7d0;
+            background: var(--green-soft);
+            color: #166534;
+        }
+
+        .state-rejected {
+            border: 1px solid #fecaca;
+            background: var(--red-soft);
+            color: #991b1b;
+        }
+
+        .section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .section-title {
+            margin: 0 0 10px;
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .student-photo-wrap {
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .student-photo-card {
+            width: 132px;
+            height: 156px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #f8fafc;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
+        }
+
+        .student-photo-card img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+
+        .class-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .class-item {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .class-item strong {
+            display: block;
+            font-size: 12px;
+        }
+
+        .class-item span {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .qr-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .qr-box {
+            width: min(320px, 100%);
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #ffffff;
+        }
+
+        .qr-box img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .qr-note {
+            margin: 0;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.55;
+        }
+
+        .private-box {
+            margin-top: 16px;
+            padding: 13px;
+            border: 1px solid #c7d2fe;
+            border-radius: 10px;
+            background: var(--primary-soft);
+            color: #3730a3;
+            font-size: 11px;
+            line-height: 1.55;
+        }
+
+        .actions {
+            margin-top: 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .btn {
+            min-height: 46px;
+            padding: 0 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            background: var(--primary);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            .status-header { padding: 22px 18px; }
+            .status-body { padding: 18px; }
+            .info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="status-card">
+    <div class="status-header">
+        <h1>Registration Status</h1>
+        <p>Sri Sumana Education Center</p>
+    </div>
+
+    <div class="status-body">
+        <div class="student-name">
+            {{ registration.full_name }}
+        </div>
+
+        <div class="info-grid">
+            <div class="info-box">
+                <div class="label">Registration Reference</div>
+                <div class="value">{{ registration.registration_ref }}</div>
+            </div>
+
+            <div class="info-box">
+                <div class="label">Current Status</div>
+                <div class="value">
+                    {% if registration.status == 'APPROVED' %}
+                        <span class="badge badge-approved">APPROVED</span>
+                    {% elif registration.status == 'REJECTED' %}
+                        <span class="badge badge-rejected">REJECTED</span>
+                    {% else %}
+                        <span class="badge badge-pending">PENDING</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if registration.status == 'PENDING' %}
+            <div class="state-box state-pending">
+                <h2>Waiting for approval</h2>
+                <p>
+                    Your registration has been received and is currently
+                    waiting for Owner / Staff approval.
+                </p>
+            </div>
+
+            <div class="actions">
+                <button class="btn" type="button" onclick="window.location.reload()">
+                    Check Status Again
+                </button>
+            </div>
+
+        {% elif registration.status == 'REJECTED' %}
+            <div class="state-box state-rejected">
+                <h2>Registration rejected</h2>
+                <p>
+                    {% if registration.rejection_reason %}
+                        {{ registration.rejection_reason }}
+                    {% else %}
+                        No rejection reason was provided.
+                    {% endif %}
+                </p>
+            </div>
+
+        {% elif registration.status == 'APPROVED' %}
+            <div class="state-box state-approved">
+                <h2>Registration approved</h2>
+                <p>
+                    Your student account is active. Your Student ID and QR Pass
+                    are available below.
+                </p>
+            </div>
+
+            {% if student %}
+                <div class="section">
+                    <div class="section-title">Student Details</div>
+
+                    {% if photo_path %}
+                        <div class="student-photo-wrap">
+                            <div class="student-photo-card">
+                                <img
+                                    src="{{ photo_path }}"
+                                    alt="{{ registration.full_name }}"
+                                >
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="info-grid">
+                        <div class="info-box">
+                            <div class="label">Student ID</div>
+                            <div class="value">{{ student.student_code }}</div>
+                        </div>
+
+                        <div class="info-box">
+                            <div class="label">Grade</div>
+                            <div class="value">{{ student.grade }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Enrolled Classes</div>
+
+                    {% if classes %}
+                        <div class="class-list">
+                            {% for class_item in classes %}
+                                <div class="class-item">
+                                    <strong>
+                                        {{ class_item.class_code }} - {{ class_item.subject }}
+                                    </strong>
+                                    <span>{{ class_item.teacher }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="class-item">
+                            <strong>No active classes found.</strong>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Student QR Pass</div>
+
+                    {% if qr_path %}
+                        <div class="qr-wrap">
+                            <div class="qr-box">
+                                <img
+                                    src="{{ qr_path }}"
+                                    alt="Student QR Pass"
+                                >
+                            </div>
+
+                            <p class="qr-note">
+                                You can take a screenshot of this QR and keep it
+                                on the student's phone for attendance scanning.
+                            </p>
+                        </div>
+                    {% else %}
+                        <div class="state-box state-pending">
+                            <h2>QR Pass unavailable</h2>
+                            <p>
+                                The student's QR is currently unavailable or inactive.
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="state-box state-rejected">
+                    <h2>Student record not found</h2>
+                    <p>
+                        The registration is approved, but the linked student record
+                        could not be loaded. Please contact the education center.
+                    </p>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <div class="private-box">
+            <strong>Keep this private link safe.</strong><br>
+            Anyone who has this private link may be able to view this registration
+            status and, after approval, the student's QR pass.
+        </div>
+    </div>
+</div>
+</body>
+</html>
